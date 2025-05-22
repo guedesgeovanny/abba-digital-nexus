@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -29,53 +30,60 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
   </SidebarProvider>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route 
-            path="/dashboard" 
-            element={
-              <AuthenticatedLayout>
-                <Dashboard />
-              </AuthenticatedLayout>
-            } 
-          />
-          <Route 
-            path="/agents" 
-            element={
-              <AuthenticatedLayout>
-                <Agents />
-              </AuthenticatedLayout>
-            } 
-          />
-          <Route 
-            path="/analytics" 
-            element={
-              <AuthenticatedLayout>
-                <Dashboard />
-              </AuthenticatedLayout>
-            } 
-          />
-          <Route 
-            path="/settings" 
-            element={
-              <AuthenticatedLayout>
-                <Settings />
-              </AuthenticatedLayout>
-            } 
-          />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Apply dark mode
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <AuthenticatedLayout>
+                  <Dashboard />
+                </AuthenticatedLayout>
+              } 
+            />
+            <Route 
+              path="/agents" 
+              element={
+                <AuthenticatedLayout>
+                  <Agents />
+                </AuthenticatedLayout>
+              } 
+            />
+            <Route 
+              path="/analytics" 
+              element={
+                <AuthenticatedLayout>
+                  <Dashboard />
+                </AuthenticatedLayout>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <AuthenticatedLayout>
+                  <Settings />
+                </AuthenticatedLayout>
+              } 
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
