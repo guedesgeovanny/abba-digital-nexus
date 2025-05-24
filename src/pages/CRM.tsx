@@ -495,18 +495,18 @@ const CRM = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Kanban Board with ScrollArea */}
-      <ScrollArea className="w-full">
+      {/* Kanban Board - Área com scroll próprio */}
+      <div className="h-[calc(100vh-250px)] overflow-x-auto overflow-y-hidden">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="flex gap-6 pb-6 min-w-max">
+          <div className="flex gap-6 pb-6 min-w-max h-full">
             {stages.map((stage) => {
               const stageDeals = deals[stage as keyof typeof deals] || []
               const filteredStageDeals = getFilteredDeals(stageDeals)
               
               return (
-                <div key={stage} className="flex-shrink-0 w-80">
-                  <Card className="bg-abba-black border-2 h-full" style={{ borderColor: stageColorsMap[stage] }}>
-                    <CardHeader className="pb-3">
+                <div key={stage} className="flex-shrink-0 w-80 h-full">
+                  <Card className="bg-abba-black border-2 h-full flex flex-col" style={{ borderColor: stageColorsMap[stage] }}>
+                    <CardHeader className="pb-3 flex-shrink-0">
                       <div className="flex items-center justify-between">
                         {editingStage === stage ? (
                           <Input
@@ -568,7 +568,7 @@ const CRM = () => {
                         {getTotalValue(stageDeals)}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-3 flex-1 overflow-y-auto">
                       <SortableContext 
                         items={filteredStageDeals.map(deal => deal.id)} 
                         strategy={verticalListSortingStrategy}
@@ -597,7 +597,7 @@ const CRM = () => {
             })}
           </div>
         </DndContext>
-      </ScrollArea>
+      </div>
     </div>
   )
 }
