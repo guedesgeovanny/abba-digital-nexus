@@ -570,9 +570,9 @@ const CRM = () => {
                       </CardDescription>
                     </CardHeader>
                     
-                    {/* Área de scroll apenas para os cards */}
-                    <div className="flex-1 flex flex-col px-6">
-                      <div className="flex-1 overflow-y-auto space-y-3 pb-3">
+                    {/* Conteúdo com scroll */}
+                    <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+                      <div className="flex-1 overflow-y-auto px-6 space-y-3">
                         <SortableContext 
                           items={filteredStageDeals.map(deal => deal.id)} 
                           strategy={verticalListSortingStrategy}
@@ -588,7 +588,7 @@ const CRM = () => {
                       </div>
                       
                       {/* Botão fixo no final */}
-                      <div className="flex-shrink-0 pb-6">
+                      <div className="flex-shrink-0 p-6 pt-3">
                         <Button 
                           variant="outline" 
                           className="w-full border-dashed border-abba-gray text-gray-400 hover:text-abba-green hover:border-abba-green"
@@ -597,7 +597,7 @@ const CRM = () => {
                           Adicionar Lead
                         </Button>
                       </div>
-                    </div>
+                    </CardContent>
                   </Card>
                 </div>
               )
