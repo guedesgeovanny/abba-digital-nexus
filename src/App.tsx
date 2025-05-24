@@ -7,7 +7,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Header } from "@/components/Header";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import Contacts from "./pages/Contacts";
@@ -23,12 +27,15 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
   <SidebarProvider>
     <div className="min-h-screen flex w-full bg-abba-black">
       <AppSidebar />
-      <main className="flex-1">
+      <main className="flex-1 flex flex-col">
+        <Header />
         <div className="lg:hidden p-4 border-b border-abba-gray">
           <SidebarTrigger className="text-abba-green" />
         </div>
         <ThemeToggle />
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
       </main>
     </div>
   </SidebarProvider>
@@ -42,66 +49,81 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <AuthenticatedLayout>
-                  <Dashboard />
-                </AuthenticatedLayout>
-              } 
-            />
-            <Route 
-              path="/agents" 
-              element={
-                <AuthenticatedLayout>
-                  <Agents />
-                </AuthenticatedLayout>
-              } 
-            />
-            <Route 
-              path="/contacts" 
-              element={
-                <AuthenticatedLayout>
-                  <Contacts />
-                </AuthenticatedLayout>
-              } 
-            />
-            <Route 
-              path="/crm" 
-              element={
-                <AuthenticatedLayout>
-                  <CRM />
-                </AuthenticatedLayout>
-              } 
-            />
-            <Route 
-              path="/analytics" 
-              element={
-                <AuthenticatedLayout>
-                  <Dashboard />
-                </AuthenticatedLayout>
-              } 
-            />
-            <Route 
-              path="/settings" 
-              element={
-                <AuthenticatedLayout>
-                  <Settings />
-                </AuthenticatedLayout>
-              } 
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Dashboard />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/agents" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Agents />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/contacts" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Contacts />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/crm" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <CRM />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/analytics" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Dashboard />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Settings />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

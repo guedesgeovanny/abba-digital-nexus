@@ -1,49 +1,64 @@
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "@/hooks/use-toast"
 
-const Login = () => {
+const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [fullName, setFullName] = useState("")
   const [loading, setLoading] = useState(false)
   
-  const { signIn, user } = useAuth()
+  const { signUp } = useAuth()
   const navigate = useNavigate()
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      navigate("/dashboard")
-    }
-  }, [user, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
     
-    const { error } = await signIn(email, password)
+    const { error } = await signUp(email, password, fullName)
     
     if (error) {
-      console.error('Login error:', error)
+      console.error('Signup error:', error)
       toast({
-        title: "Erro no login",
-        description: error.message || "Email ou senha incorretos",
+        title: "Erro no cadastro",
+        description: error.message || "Erro ao criar conta",
         variant: "destructive",
       })
     } else {
       toast({
-        title: "Login realizado com sucesso!",
-        description: "Redirecionando para o dashboard...",
+        title: "Conta criada com sucesso!",
+        description: "Você pode fazer login agora",
       })
-      navigate("/dashboard")
+      navigate("/login")
     }
     
     setLoading(false)
@@ -73,15 +88,31 @@ const Login = () => {
             />
           </div>
           <CardTitle className="text-2xl font-bold text-abba-text">
-            Abba Digital Manager
+            Criar Conta
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Entre na sua conta para gerenciar seus agentes digitais
+            Crie sua conta para acessar o Abba Digital Manager
           </CardDescription>
         </CardHeader>
         
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-abba-text">Nome Completo</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="pl-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-abba-text">Email</Label>
               <div className="relative">
@@ -105,7 +136,7 @@ const Login = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Sua senha"
+                  placeholder="Sua senha (mín. 6 caracteres)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
@@ -121,27 +152,44 @@ const Login = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-abba-text">Confirmar Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirme sua senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-10 pr-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-abba-green"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
             <Button 
               type="submit" 
               className="w-full bg-abba-gradient hover:opacity-90 text-abba-black font-semibold py-2"
               disabled={loading}
             >
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? "Criando conta..." : "Criar Conta"}
             </Button>
           </form>
 
-          <div className="mt-6 text-center space-y-2">
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
-              Não tem uma conta?{" "}
-              <Link to="/signup" className="text-abba-green hover:underline">
-                Criar conta
+              Já tem uma conta?{" "}
+              <Link to="/login" className="text-abba-green hover:underline">
+                Fazer login
               </Link>
-            </p>
-            <p className="text-sm text-gray-400">
-              Esqueceu sua senha?{" "}
-              <a href="#" className="text-abba-green hover:underline">
-                Recuperar senha
-              </a>
             </p>
           </div>
         </CardContent>
@@ -150,4 +198,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default SignUp
