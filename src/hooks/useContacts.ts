@@ -52,8 +52,10 @@ export const useContacts = () => {
           contact_tag_relations (
             contact_tags (
               id,
+              user_id,
               name,
-              color
+              color,
+              created_at
             )
           )
         `)
