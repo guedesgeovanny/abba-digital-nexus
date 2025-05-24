@@ -1,11 +1,10 @@
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, MessageCircle, Instagram, Phone, Mail, Calendar, User, Building2, MapPin, Tag, Edit, Trash2 } from "lucide-react"
+import { Search, MessageCircle, Instagram, Phone, Mail, Calendar, User, Building2, MapPin, Tag, Edit, Trash2, Download, FileText, FileSpreadsheet } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
@@ -13,16 +12,22 @@ import { ContactForm } from "@/components/ContactForm"
 import { useContacts, ContactWithTags } from "@/hooks/useContacts"
 import { useContactTags } from "@/hooks/useContactTags"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { usePagination } from "@/hooks/usePagination"
+import { useContactExport } from "@/hooks/useContactExport"
 
 const Contacts = () => {
   const { contacts, isLoading, deleteContact } = useContacts()
   const { tags } = useContactTags()
+  const { exportToCSV, exportToPDF } = useContactExport()
   const [searchTerm, setSearchTerm] = useState("")
   const [filterChannel, setFilterChannel] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterTag, setFilterTag] = useState("all")
   const [selectedContact, setSelectedContact] = useState<ContactWithTags | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
 
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = 
@@ -36,6 +41,24 @@ const Contacts = () => {
 
     return matchesSearch && matchesChannel && matchesStatus && matchesTag
   })
+
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    paginatedData: paginatedContacts,
+    handlePageChange,
+    handleItemsPerPageChange,
+    startItem,
+    endItem,
+    resetPage,
+    itemsPerPageOptions
+  } = usePagination({ data: filteredContacts })
+
+  // Reset page when filters change
+  useEffect(() => {
+    resetPage()
+  }, [searchTerm, filterChannel, filterStatus, filterTag, resetPage])
 
   const getChannelIcon = (channel?: string) => {
     switch (channel) {
@@ -112,6 +135,43 @@ const Contacts = () => {
 
   const handleDeleteContact = (contactId: string) => {
     deleteContact(contactId)
+  }
+
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (format === 'csv') {
+      exportToCSV(filteredContacts)
+    } else {
+      exportToPDF(filteredContacts)
+    }
+    setIsExportDialogOpen(false)
+  }
+
+  const renderPaginationItems = () => {
+    const items = []
+    const maxVisiblePages = 5
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1)
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            onClick={() => handlePageChange(i)}
+            isActive={currentPage === i}
+            className="cursor-pointer"
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      )
+    }
+
+    return items
   }
 
   if (isLoading) {
@@ -211,10 +271,50 @@ const Contacts = () => {
       {/* Contacts Table */}
       <Card className="bg-abba-black border-abba-gray">
         <CardHeader>
-          <CardTitle className="text-abba-text">Contatos ({filteredContacts.length})</CardTitle>
-          <CardDescription className="text-gray-400">
-            Lista de todos os contatos e suas informações
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-abba-text">
+                Contatos ({filteredContacts.length})
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Lista de todos os contatos e suas informações
+              </CardDescription>
+            </div>
+            <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-abba-gray text-abba-text hover:bg-abba-gray">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-abba-black border-abba-gray">
+                <DialogHeader>
+                  <DialogTitle className="text-abba-text">Exportar Contatos</DialogTitle>
+                  <DialogDescription className="text-gray-400">
+                    Selecione o formato para exportar {filteredContacts.length} contato(s) filtrado(s).
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4 py-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExport('csv')}
+                    className="flex flex-col items-center gap-2 h-20 border-abba-gray text-abba-text hover:bg-abba-gray"
+                  >
+                    <FileSpreadsheet className="w-6 h-6" />
+                    <span>CSV</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExport('pdf')}
+                    className="flex flex-col items-center gap-2 h-20 border-abba-gray text-abba-text hover:bg-abba-gray"
+                  >
+                    <FileText className="w-6 h-6" />
+                    <span>PDF</span>
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border border-abba-gray">
@@ -232,7 +332,7 @@ const Contacts = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredContacts.map((contact) => (
+                {paginatedContacts.map((contact) => (
                   <TableRow 
                     key={contact.id} 
                     className="border-abba-gray hover:bg-abba-gray/50 cursor-pointer"
@@ -331,7 +431,7 @@ const Contacts = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredContacts.length === 0 && (
+                {paginatedContacts.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center text-gray-400 py-8">
                       Nenhum contato encontrado
@@ -341,6 +441,57 @@ const Contacts = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Footer */}
+          {filteredContacts.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Itens por página:</span>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(value) => handleItemsPerPageChange(Number(value))}
+                  >
+                    <SelectTrigger className="w-[80px] bg-abba-gray border-abba-gray text-abba-text">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {itemsPerPageOptions.map((option) => (
+                        <SelectItem key={option} value={option.toString()}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <span className="text-sm text-gray-400">
+                  Mostrando {startItem}-{endItem} de {filteredContacts.length} contatos
+                </span>
+              </div>
+
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {renderPaginationItems()}
+                    
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
