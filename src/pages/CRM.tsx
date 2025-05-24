@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -495,8 +496,8 @@ const CRM = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Kanban Board - Área com scroll próprio */}
-      <div className="h-[calc(100vh-250px)] overflow-x-auto overflow-y-hidden">
+      {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
+      <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="flex gap-6 pb-6 min-w-max h-full">
             {stages.map((stage) => {
@@ -568,29 +569,35 @@ const CRM = () => {
                         {getTotalValue(stageDeals)}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3 flex-1 overflow-y-auto">
-                      <SortableContext 
-                        items={filteredStageDeals.map(deal => deal.id)} 
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {filteredStageDeals.map((deal) => (
-                          <LeadCard 
-                            key={deal.id} 
-                            deal={deal} 
-                            stageColor={stageColorsMap[stage]} 
-                          />
-                        ))}
-                      </SortableContext>
+                    
+                    {/* Área de scroll apenas para os cards */}
+                    <div className="flex-1 flex flex-col px-6">
+                      <div className="flex-1 overflow-y-auto space-y-3 pb-3">
+                        <SortableContext 
+                          items={filteredStageDeals.map(deal => deal.id)} 
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {filteredStageDeals.map((deal) => (
+                            <LeadCard 
+                              key={deal.id} 
+                              deal={deal} 
+                              stageColor={stageColorsMap[stage]} 
+                            />
+                          ))}
+                        </SortableContext>
+                      </div>
                       
-                      {/* Add New Lead Button */}
-                      <Button 
-                        variant="outline" 
-                        className="w-full border-dashed border-abba-gray text-gray-400 hover:text-abba-green hover:border-abba-green"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Adicionar Lead
-                      </Button>
-                    </CardContent>
+                      {/* Botão fixo no final */}
+                      <div className="flex-shrink-0 pb-6">
+                        <Button 
+                          variant="outline" 
+                          className="w-full border-dashed border-abba-gray text-gray-400 hover:text-abba-green hover:border-abba-green"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Adicionar Lead
+                        </Button>
+                      </div>
+                    </div>
                   </Card>
                 </div>
               )
