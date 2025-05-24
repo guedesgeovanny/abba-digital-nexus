@@ -9,6 +9,164 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      contact_interactions: {
+        Row: {
+          channel: Database["public"]["Enums"]["contact_channel"] | null
+          contact_id: string
+          content: string
+          created_at: string
+          direction: string
+          id: string
+          type: string
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["contact_channel"] | null
+          contact_id: string
+          content: string
+          created_at?: string
+          direction?: string
+          id?: string
+          type?: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["contact_channel"] | null
+          contact_id?: string
+          content?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_interactions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_tag_relations: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_tag_relations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_tag_relations_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "contact_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          address: string | null
+          agent_assigned: string | null
+          channel: Database["public"]["Enums"]["contact_channel"] | null
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          instagram: string | null
+          last_contact_date: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["contact_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          agent_assigned?: string | null
+          channel?: Database["public"]["Enums"]["contact_channel"] | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          last_contact_date?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["contact_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          agent_assigned?: string | null
+          channel?: Database["public"]["Enums"]["contact_channel"] | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          instagram?: string | null
+          last_contact_date?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["contact_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -44,7 +202,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      contact_channel:
+        | "instagram"
+        | "whatsapp"
+        | "messenger"
+        | "email"
+        | "telefone"
+        | "site"
+        | "indicacao"
+      contact_status:
+        | "novo"
+        | "em_andamento"
+        | "qualificado"
+        | "convertido"
+        | "perdido"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -159,6 +330,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      contact_channel: [
+        "instagram",
+        "whatsapp",
+        "messenger",
+        "email",
+        "telefone",
+        "site",
+        "indicacao",
+      ],
+      contact_status: [
+        "novo",
+        "em_andamento",
+        "qualificado",
+        "convertido",
+        "perdido",
+      ],
+    },
   },
 } as const
