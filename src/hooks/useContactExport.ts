@@ -1,6 +1,4 @@
 
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import { ContactWithTags } from './useContacts'
 
 export const useContactExport = () => {
@@ -94,54 +92,7 @@ export const useContactExport = () => {
     document.body.removeChild(link)
   }
 
-  const exportToPDF = (contacts: ContactWithTags[]) => {
-    const doc = new jsPDF()
-    
-    // Header
-    doc.setFontSize(18)
-    doc.text('Relatório de Contatos', 14, 22)
-    
-    doc.setFontSize(11)
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 30)
-    doc.text(`Total de contatos: ${contacts.length}`, 14, 36)
-
-    // Table data
-    const tableData = contacts.map(contact => [
-      contact.name,
-      contact.email || '-',
-      contact.phone || '-',
-      contact.company || '-',
-      getStatusLabel(contact.status),
-      getChannelLabel(contact.channel),
-      contact.tags?.map(tag => tag.name).join(', ') || '-',
-      formatDate(contact.last_contact_date)
-    ])
-
-    autoTable(doc, {
-      head: [['Nome', 'Email', 'Telefone', 'Empresa', 'Status', 'Canal', 'Tags', 'Último Contato']],
-      body: tableData,
-      startY: 45,
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-      },
-      headStyles: {
-        fillColor: [99, 102, 241],
-        textColor: 255,
-        fontSize: 9,
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      },
-      margin: { top: 45, left: 14, right: 14 }
-    })
-
-    doc.save(`contatos_${new Date().toISOString().split('T')[0]}.pdf`)
-  }
-
   return {
-    exportToCSV,
-    exportToPDF
+    exportToCSV
   }
 }
