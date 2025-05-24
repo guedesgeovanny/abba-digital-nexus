@@ -1,16 +1,17 @@
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Plus, MoreVertical, Calendar, Phone, Mail, Instagram, Edit2, Palette, X } from "lucide-react"
+import { Plus, MoreVertical, Calendar, Phone, Mail, Instagram, Edit2, Palette, X, Filter } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 const mockDeals = {
   "Novo Lead": [
@@ -96,12 +97,12 @@ const stageColors = [
   "#EC4899", // pink
 ]
 
-interface DealCardProps {
+interface LeadCardProps {
   deal: any
   stageColor: string
 }
 
-const DealCard = ({ deal, stageColor }: DealCardProps) => {
+const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
   const {
     attributes,
     listeners,
@@ -216,6 +217,12 @@ const CRM = () => {
   const [editingValue, setEditingValue] = useState("")
   const [isAddingStage, setIsAddingStage] = useState(false)
   const [newStageName, setNewStageName] = useState("")
+  
+  // Filter states
+  const [filterAgent, setFilterAgent] = useState("")
+  const [filterChannel, setFilterChannel] = useState("")
+  const [filterTag, setFilterTag] = useState("")
+  const [showFilters, setShowFilters] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -223,6 +230,22 @@ const CRM = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
+
+  // Get unique values for filters
+  const allAgents = Array.from(new Set(Object.values(deals).flat().map(deal => deal.agent)))
+  const allChannels = Array.from(new Set(Object.values(deals).flat().map(deal => deal.source)))
+  const allTags = Array.from(new Set(Object.values(deals).flat().flatMap(deal => deal.tags)))
+
+  // Filter deals
+  const getFilteredDeals = (stageDeals: any[]) => {
+    return stageDeals.filter(deal => {
+      return (
+        (filterAgent === "" || deal.agent === filterAgent) &&
+        (filterChannel === "" || deal.source === filterChannel) &&
+        (filterTag === "" || deal.tags.includes(filterTag))
+      )
+    })
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -271,7 +294,8 @@ const CRM = () => {
   }
 
   const getTotalValue = (stageDeals: any[]) => {
-    return stageDeals.reduce((total, deal) => {
+    const filtered = getFilteredDeals(stageDeals)
+    return filtered.reduce((total, deal) => {
       const value = parseFloat(deal.value.replace('R$ ', '').replace('.', ''))
       return total + value
     }, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -356,6 +380,14 @@ const CRM = () => {
         </div>
         <div className="flex gap-2">
           <Button 
+            onClick={() => setShowFilters(!showFilters)}
+            variant="outline" 
+            className="border-abba-gray text-abba-text hover:bg-abba-gray"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filtros
+          </Button>
+          <Button 
             onClick={() => setIsAddingStage(true)}
             variant="outline" 
             className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-black"
@@ -365,10 +397,76 @@ const CRM = () => {
           </Button>
           <Button className="bg-abba-green text-abba-black hover:bg-abba-green-light">
             <Plus className="w-4 h-4 mr-2" />
-            Novo Deal
+            Novo Lead
           </Button>
         </div>
       </div>
+
+      {/* Filters */}
+      {showFilters && (
+        <Card className="bg-abba-black border-abba-gray">
+          <CardHeader>
+            <CardTitle className="text-abba-text">Filtros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 flex-wrap">
+              <Select value={filterAgent} onValueChange={setFilterAgent}>
+                <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
+                  <SelectValue placeholder="Agente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os agentes</SelectItem>
+                  {allAgents.map((agent) => (
+                    <SelectItem key={agent} value={agent}>
+                      {agent}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterChannel} onValueChange={setFilterChannel}>
+                <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
+                  <SelectValue placeholder="Canal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os canais</SelectItem>
+                  {allChannels.map((channel) => (
+                    <SelectItem key={channel} value={channel}>
+                      {channel}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterTag} onValueChange={setFilterTag}>
+                <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
+                  <SelectValue placeholder="Tag" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas as tags</SelectItem>
+                  {allTags.map((tag) => (
+                    <SelectItem key={tag} value={tag}>
+                      {tag}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Button 
+                onClick={() => {
+                  setFilterAgent("")
+                  setFilterChannel("")
+                  setFilterTag("")
+                }}
+                variant="outline"
+                className="border-abba-gray text-abba-text hover:bg-abba-gray"
+              >
+                Limpar Filtros
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Dialog para adicionar nova etapa */}
       <Dialog open={isAddingStage} onOpenChange={setIsAddingStage}>
@@ -397,102 +495,109 @@ const CRM = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Kanban Board */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 overflow-x-auto pb-6">
-          {stages.map((stage) => (
-            <div key={stage} className="flex-shrink-0 w-80">
-              <Card className="bg-abba-black border-2 h-full" style={{ borderColor: stageColorsMap[stage] }}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    {editingStage === stage ? (
-                      <Input
-                        value={editingValue}
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        onBlur={handleStageRename}
-                        onKeyDown={(e) => e.key === 'Enter' && handleStageRename()}
-                        className="bg-abba-gray border-abba-gray text-abba-text text-lg font-medium"
-                        autoFocus
-                      />
-                    ) : (
-                      <CardTitle className="text-abba-text text-lg">{stage}</CardTitle>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {deals[stage as keyof typeof deals]?.length || 0}
-                      </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleStageEdit(stage)}>
-                            <Edit2 className="w-4 h-4 mr-2" />
-                            Editar Nome
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => {}}
-                            className="focus:bg-transparent"
-                          >
-                            <Palette className="w-4 h-4 mr-2" />
-                            <div className="flex gap-1">
-                              {stageColors.map((color) => (
-                                <button
-                                  key={color}
-                                  className="w-4 h-4 rounded-full border border-gray-300"
-                                  style={{ backgroundColor: color }}
-                                  onClick={() => handleColorChange(stage, color)}
-                                />
-                              ))}
-                            </div>
-                          </DropdownMenuItem>
-                          {stages.length > 1 && (
-                            <DropdownMenuItem 
-                              onClick={() => removeStage(stage)}
-                              className="text-red-400"
-                            >
-                              <X className="w-4 h-4 mr-2" />
-                              Remover
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                  <CardDescription className="text-gray-400">
-                    {getTotalValue(deals[stage as keyof typeof deals] || [])}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <SortableContext 
-                    items={deals[stage as keyof typeof deals]?.map(deal => deal.id) || []} 
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {deals[stage as keyof typeof deals]?.map((deal) => (
-                      <DealCard 
-                        key={deal.id} 
-                        deal={deal} 
-                        stageColor={stageColorsMap[stage]} 
-                      />
-                    ))}
-                  </SortableContext>
-                  
-                  {/* Add New Deal Button */}
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-dashed border-abba-gray text-gray-400 hover:text-abba-green hover:border-abba-green"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar Deal
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          ))}
-        </div>
-      </DndContext>
+      {/* Kanban Board with ScrollArea */}
+      <ScrollArea className="w-full">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className="flex gap-6 pb-6 min-w-max">
+            {stages.map((stage) => {
+              const stageDeals = deals[stage as keyof typeof deals] || []
+              const filteredStageDeals = getFilteredDeals(stageDeals)
+              
+              return (
+                <div key={stage} className="flex-shrink-0 w-80">
+                  <Card className="bg-abba-black border-2 h-full" style={{ borderColor: stageColorsMap[stage] }}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        {editingStage === stage ? (
+                          <Input
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={handleStageRename}
+                            onKeyDown={(e) => e.key === 'Enter' && handleStageRename()}
+                            className="bg-abba-gray border-abba-gray text-abba-text text-lg font-medium"
+                            autoFocus
+                          />
+                        ) : (
+                          <CardTitle className="text-abba-text text-lg">{stage}</CardTitle>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {filteredStageDeals.length}
+                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleStageEdit(stage)}>
+                                <Edit2 className="w-4 h-4 mr-2" />
+                                Editar Nome
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {}}
+                                className="focus:bg-transparent"
+                              >
+                                <Palette className="w-4 h-4 mr-2" />
+                                <div className="flex gap-1">
+                                  {stageColors.map((color) => (
+                                    <button
+                                      key={color}
+                                      className="w-4 h-4 rounded-full border border-gray-300"
+                                      style={{ backgroundColor: color }}
+                                      onClick={() => handleColorChange(stage, color)}
+                                    />
+                                  ))}
+                                </div>
+                              </DropdownMenuItem>
+                              {stages.length > 1 && (
+                                <DropdownMenuItem 
+                                  onClick={() => removeStage(stage)}
+                                  className="text-red-400"
+                                >
+                                  <X className="w-4 h-4 mr-2" />
+                                  Remover
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                      <CardDescription className="text-gray-400">
+                        {getTotalValue(stageDeals)}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <SortableContext 
+                        items={filteredStageDeals.map(deal => deal.id)} 
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {filteredStageDeals.map((deal) => (
+                          <LeadCard 
+                            key={deal.id} 
+                            deal={deal} 
+                            stageColor={stageColorsMap[stage]} 
+                          />
+                        ))}
+                      </SortableContext>
+                      
+                      {/* Add New Lead Button */}
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-dashed border-abba-gray text-gray-400 hover:text-abba-green hover:border-abba-green"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Adicionar Lead
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )
+            })}
+          </div>
+        </DndContext>
+      </ScrollArea>
     </div>
   )
 }

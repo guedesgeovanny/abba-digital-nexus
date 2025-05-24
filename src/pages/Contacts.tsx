@@ -147,8 +147,12 @@ const Contacts = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterChannel, setFilterChannel] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
+  const [filterTag, setFilterTag] = useState("")
   const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+
+  // Get all unique tags from contacts
+  const allTags = Array.from(new Set(mockContacts.flatMap(contact => contact.tags)))
 
   const filteredContacts = mockContacts.filter(contact => {
     return (
@@ -157,7 +161,8 @@ const Contacts = () => {
       contact.company.toLowerCase().includes(searchTerm.toLowerCase())
     ) &&
     (filterChannel === "" || contact.channel === filterChannel) &&
-    (filterStatus === "" || contact.status === filterStatus)
+    (filterStatus === "" || contact.status === filterStatus) &&
+    (filterTag === "" || contact.tags.includes(filterTag))
   })
 
   const getChannelIcon = (channel: string) => {
@@ -221,8 +226,8 @@ const Contacts = () => {
           <CardTitle className="text-abba-text">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex-1 min-w-[300px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -238,7 +243,7 @@ const Contacts = () => {
                 <SelectValue placeholder="Canal" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os canais</SelectItem>
+                <SelectItem value="">Todos os canais</SelectItem>
                 <SelectItem value="Instagram">Instagram</SelectItem>
                 <SelectItem value="WhatsApp">WhatsApp</SelectItem>
                 <SelectItem value="Messenger">Messenger</SelectItem>
@@ -249,10 +254,23 @@ const Contacts = () => {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="">Todos os status</SelectItem>
                 <SelectItem value="Novo">Novo</SelectItem>
                 <SelectItem value="Em andamento">Em andamento</SelectItem>
                 <SelectItem value="Qualificado">Qualificado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterTag} onValueChange={setFilterTag}>
+              <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
+                <SelectValue placeholder="Tag" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas as tags</SelectItem>
+                {allTags.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
