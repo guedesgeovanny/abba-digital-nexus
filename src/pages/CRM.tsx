@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -110,6 +109,7 @@ const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ id: deal.id })
 
   const style = {
@@ -134,7 +134,11 @@ const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
       style={style} 
       {...attributes} 
       {...listeners}
-      className="bg-abba-gray border-abba-gray hover:border-abba-green transition-all cursor-grab active:cursor-grabbing"
+      className={`
+        bg-abba-gray border-abba-gray transition-all duration-200 cursor-grab active:cursor-grabbing
+        hover:border-abba-green hover:shadow-lg hover:shadow-abba-green/20 hover:scale-[1.02]
+        ${isDragging ? 'shadow-2xl shadow-abba-green/40 scale-105 rotate-2 border-abba-green' : ''}
+      `}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
@@ -383,7 +387,7 @@ const CRM = () => {
           <Button 
             onClick={() => setShowFilters(!showFilters)}
             variant="outline" 
-            className="border-abba-gray text-abba-text hover:bg-abba-gray"
+            className="border-abba-gray text-abba-text"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filtros
@@ -391,7 +395,7 @@ const CRM = () => {
           <Button 
             onClick={() => setIsAddingStage(true)}
             variant="outline" 
-            className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-black"
+            className="border-abba-green text-abba-green"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nova Etapa
@@ -460,7 +464,7 @@ const CRM = () => {
                   setFilterTag("")
                 }}
                 variant="outline"
-                className="border-abba-gray text-abba-text hover:bg-abba-gray"
+                className="border-abba-gray text-abba-text"
               >
                 Limpar Filtros
               </Button>
@@ -591,7 +595,7 @@ const CRM = () => {
                       <div className="flex-shrink-0 p-6 pt-3">
                         <Button 
                           variant="outline" 
-                          className="w-full border-dashed border-abba-gray text-gray-400 hover:text-abba-green hover:border-abba-green"
+                          className="w-full border-dashed border-abba-gray text-gray-400"
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Adicionar Lead
