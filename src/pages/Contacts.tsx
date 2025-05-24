@@ -18,9 +18,9 @@ const Contacts = () => {
   const { contacts, isLoading, deleteContact } = useContacts()
   const { tags } = useContactTags()
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterChannel, setFilterChannel] = useState("")
-  const [filterStatus, setFilterStatus] = useState("")
-  const [filterTag, setFilterTag] = useState("")
+  const [filterChannel, setFilterChannel] = useState("all")
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [filterTag, setFilterTag] = useState("all")
   const [selectedContact, setSelectedContact] = useState<ContactWithTags | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
 
@@ -30,9 +30,9 @@ const Contacts = () => {
       contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.company?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesChannel = filterChannel === "" || contact.channel === filterChannel
-    const matchesStatus = filterStatus === "" || contact.status === filterStatus
-    const matchesTag = filterTag === "" || contact.tags.some(tag => tag.name === filterTag)
+    const matchesChannel = filterChannel === "all" || contact.channel === filterChannel
+    const matchesStatus = filterStatus === "all" || contact.status === filterStatus
+    const matchesTag = filterTag === "all" || contact.tags.some(tag => tag.name === filterTag)
 
     return matchesSearch && matchesChannel && matchesStatus && matchesTag
   })
@@ -168,7 +168,7 @@ const Contacts = () => {
                 <SelectValue placeholder="Canal" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os canais</SelectItem>
+                <SelectItem value="all">Todos os canais</SelectItem>
                 <SelectItem value="instagram">Instagram</SelectItem>
                 <SelectItem value="whatsapp">WhatsApp</SelectItem>
                 <SelectItem value="messenger">Messenger</SelectItem>
@@ -183,7 +183,7 @@ const Contacts = () => {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="novo">Novo</SelectItem>
                 <SelectItem value="em_andamento">Em andamento</SelectItem>
                 <SelectItem value="qualificado">Qualificado</SelectItem>
@@ -196,7 +196,7 @@ const Contacts = () => {
                 <SelectValue placeholder="Tag" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as tags</SelectItem>
+                <SelectItem value="all">Todas as tags</SelectItem>
                 {tags.map((tag) => (
                   <SelectItem key={tag.id} value={tag.name}>
                     {tag.name}
