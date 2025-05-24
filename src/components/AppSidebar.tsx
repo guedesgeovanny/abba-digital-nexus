@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Inbox, Search, Settings, Bot, BarChart3, Users, CreditCard } from "lucide-react"
+import { Home, Bot, BarChart3, Settings, Users, Contact, Trello, LogOut } from "lucide-react"
 import { useLocation } from "react-router-dom"
 import {
   Sidebar,
@@ -13,6 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 
 // Menu items
 const items = [
@@ -25,6 +26,16 @@ const items = [
     title: "Agentes",
     url: "/agents",
     icon: Bot,
+  },
+  {
+    title: "Contatos",
+    url: "/contacts",
+    icon: Contact,
+  },
+  {
+    title: "CRM",
+    url: "/crm",
+    icon: Trello,
   },
   {
     title: "Analytics",
@@ -41,12 +52,18 @@ const items = [
 export function AppSidebar() {
   const location = useLocation()
 
+  const handleLogout = () => {
+    // Aqui você implementará a lógica de logout posteriormente
+    console.log("Logout realizado")
+    window.location.href = "/login"
+  }
+
   return (
     <Sidebar className="border-r border-abba-gray bg-abba-black">
       <SidebarHeader className="border-b border-abba-gray p-4">
         <div className="flex items-center gap-3">
           <img 
-            src="/lovable-uploads/a7cf582e-5718-4f64-912a-e05c747864bf.png" 
+            src="/lovable-uploads/fb0eee38-84d5-47c6-b95f-cb80e02e53d3.png" 
             alt="Abba Digital" 
             className="w-8 h-8"
           />
@@ -86,7 +103,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="border-t border-abba-gray p-4">
+      <SidebarFooter className="border-t border-abba-gray p-4 space-y-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
             <Users className="w-4 h-4 text-abba-black" />
@@ -96,6 +113,16 @@ export function AppSidebar() {
             <span className="text-xs text-gray-400">admin@abba.digital</span>
           </div>
         </div>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLogout}
+          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-400/10"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sair
+        </Button>
       </SidebarFooter>
     </Sidebar>
   )

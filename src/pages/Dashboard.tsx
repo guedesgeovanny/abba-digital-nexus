@@ -1,17 +1,17 @@
 
 import { KPICard } from "@/components/KPICard"
-import { Bot, MessageSquare, TrendingUp, Zap, Activity, Users } from "lucide-react"
+import { Bot, MessageSquare, TrendingUp, Activity } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts"
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 const data = [
-  { name: 'Jan', tokens: 4000, agentes: 24 },
-  { name: 'Fev', tokens: 3000, agentes: 28 },
-  { name: 'Mar', tokens: 2000, agentes: 32 },
-  { name: 'Abr', tokens: 2780, agentes: 35 },
-  { name: 'Mai', tokens: 1890, agentes: 38 },
-  { name: 'Jun', tokens: 2390, agentes: 42 },
-  { name: 'Jul', tokens: 3490, agentes: 45 },
+  { name: 'Jan', tokens: 4000 },
+  { name: 'Fev', tokens: 3000 },
+  { name: 'Mar', tokens: 2000 },
+  { name: 'Abr', tokens: 2780 },
+  { name: 'Mai', tokens: 1890 },
+  { name: 'Jun', tokens: 2390 },
+  { name: 'Jul', tokens: 3490 },
 ]
 
 const Dashboard = () => {
@@ -20,7 +20,7 @@ const Dashboard = () => {
       {/* Watermark */}
       <div className="fixed bottom-4 right-4 opacity-10 pointer-events-none">
         <img 
-          src="/lovable-uploads/a7cf582e-5718-4f64-912a-e05c747864bf.png" 
+          src="/lovable-uploads/fb0eee38-84d5-47c6-b95f-cb80e02e53d3.png" 
           alt="Abba Digital" 
           className="w-16 h-16"
         />
@@ -36,7 +36,7 @@ const Dashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <KPICard
           title="Agentes Ativos"
           value="45"
@@ -52,13 +52,6 @@ const Dashboard = () => {
           description="Interações realizadas"
         />
         <KPICard
-          title="Tokens Utilizados"
-          value="89.2K"
-          icon={Zap}
-          trend={{ value: -3, isPositive: false }}
-          description="Consumo de API"
-        />
-        <KPICard
           title="Taxa de Sucesso"
           value="94.5%"
           icon={TrendingUp}
@@ -67,77 +60,43 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="bg-abba-black border-abba-gray">
-          <CardHeader>
-            <CardTitle className="text-abba-text">Uso de Tokens</CardTitle>
-            <CardDescription className="text-gray-400">
-              Consumo mensal de tokens por agente
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#111" />
-                <XAxis dataKey="name" stroke="#8ED93C" />
-                <YAxis stroke="#8ED93C" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#000', 
-                    border: '1px solid #8ED93C',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="tokens" 
-                  stroke="#8ED93C" 
-                  fill="url(#gradient)" 
-                />
-                <defs>
-                  <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8ED93C" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#8ED93C" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-abba-black border-abba-gray">
-          <CardHeader>
-            <CardTitle className="text-abba-text">Crescimento de Agentes</CardTitle>
-            <CardDescription className="text-gray-400">
-              Evolução do número de agentes ativos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#111" />
-                <XAxis dataKey="name" stroke="#8ED93C" />
-                <YAxis stroke="#8ED93C" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#000', 
-                    border: '1px solid #8ED93C',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="agentes" 
-                  stroke="#8ED93C" 
-                  strokeWidth={3}
-                  dot={{ fill: '#8ED93C', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Tokens Usage Chart */}
+      <Card className="bg-abba-black border-abba-gray">
+        <CardHeader>
+          <CardTitle className="text-abba-text">Uso de Tokens</CardTitle>
+          <CardDescription className="text-gray-400">
+            Consumo mensal de tokens por agente
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2">
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#111" />
+              <XAxis dataKey="name" stroke="#8ED93C" />
+              <YAxis stroke="#8ED93C" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#000', 
+                  border: '1px solid #8ED93C',
+                  borderRadius: '8px'
+                }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="tokens" 
+                stroke="#8ED93C" 
+                fill="url(#gradient)" 
+              />
+              <defs>
+                <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8ED93C" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#8ED93C" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <Card className="bg-abba-black border-abba-gray">

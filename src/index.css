@@ -6,44 +6,52 @@
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 210 40% 98%;
+    --background: 255 255 255;
+    --foreground: 15 23 42;
 
-    --card: 0 0% 0%;
-    --card-foreground: 210 40% 98%;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
 
-    --popover: 0 0% 0%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
 
     --primary: 82 83% 52%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 6.7%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
 
-    --muted: 0 0% 6.7%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
 
-    --accent: 0 0% 6.7%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 241 245 249;
+    --accent-foreground: 15 23 42;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 255 255 255;
 
-    --border: 0 0% 6.7%;
-    --input: 0 0% 6.7%;
+    --border: 226 232 240;
+    --input: 226 232 240;
     --ring: 82 83% 52%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 210 40% 98%;
+    --sidebar-background: 255 255 255;
+    --sidebar-foreground: 15 23 42;
     --sidebar-primary: 82 83% 52%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 6.7%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 0 0% 6.7%;
+    --sidebar-accent: 241 245 249;
+    --sidebar-accent-foreground: 15 23 42;
+    --sidebar-border: 226 232 240;
     --sidebar-ring: 82 83% 52%;
+
+    /* Light theme custom colors */
+    --abba-green: #8ED93C;
+    --abba-green-light: #A6FF59;
+    --abba-green-dark: #56C236;
+    --abba-black: #FFFFFF;
+    --abba-gray: #F1F5F9;
+    --abba-text: #1E293B;
   }
 
   .dark {
@@ -74,6 +82,23 @@
     --border: 0 0% 6.7%;
     --input: 0 0% 6.7%;
     --ring: 82 83% 52%;
+
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 82 83% 52%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 6.7%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 0 0% 6.7%;
+    --sidebar-ring: 82 83% 52%;
+
+    /* Dark theme custom colors */
+    --abba-green: #8ED93C;
+    --abba-green-light: #A6FF59;
+    --abba-green-dark: #56C236;
+    --abba-black: #000000;
+    --abba-gray: #111111;
+    --abba-text: #F7FAFC;
   }
 }
 
@@ -93,7 +118,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  @apply bg-abba-black;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -107,8 +132,7 @@
 
 /* Code editor styles */
 .code-editor {
-  background-color: #000000;
-  color: #F7FAFC;
+  @apply bg-abba-black text-abba-text;
 }
 
 .code-insertion {

@@ -6,9 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
+import Contacts from "./pages/Contacts";
+import CRM from "./pages/CRM";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
@@ -24,6 +27,7 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
         <div className="lg:hidden p-4 border-b border-abba-gray">
           <SidebarTrigger className="text-abba-green" />
         </div>
+        <ThemeToggle />
         {children}
       </main>
     </div>
@@ -58,6 +62,22 @@ const App = () => {
               element={
                 <AuthenticatedLayout>
                   <Agents />
+                </AuthenticatedLayout>
+              } 
+            />
+            <Route 
+              path="/contacts" 
+              element={
+                <AuthenticatedLayout>
+                  <Contacts />
+                </AuthenticatedLayout>
+              } 
+            />
+            <Route 
+              path="/crm" 
+              element={
+                <AuthenticatedLayout>
+                  <CRM />
                 </AuthenticatedLayout>
               } 
             />
