@@ -4,14 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 interface UseQRCodeTimerProps {
   duration?: number
   onExpire?: () => void
-  onTick?: () => Promise<void>
   isActive: boolean
 }
 
 export const useQRCodeTimer = ({ 
   duration = 60, 
   onExpire, 
-  onTick,
   isActive 
 }: UseQRCodeTimerProps) => {
   const [timeLeft, setTimeLeft] = useState(duration)
@@ -33,7 +31,7 @@ export const useQRCodeTimer = ({
       return
     }
 
-    const timer = setInterval(async () => {
+    const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           setIsExpired(true)
@@ -42,15 +40,10 @@ export const useQRCodeTimer = ({
         }
         return prev - 1
       })
-
-      // Executar onTick a cada 3 segundos para fazer polling
-      if (onTick && timeLeft % 3 === 0) {
-        await onTick()
-      }
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeLeft, isActive, isExpired, onExpire, onTick])
+  }, [timeLeft, isActive, isExpired, onExpire])
 
   // Reset timer when becoming active
   useEffect(() => {

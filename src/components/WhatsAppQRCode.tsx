@@ -3,13 +3,6 @@ import { Button } from "@/components/ui/button"
 import { AlertCircle } from "lucide-react"
 import { QRCodeData } from "@/utils/whatsappUtils"
 import { WhatsAppQRCodeTimer } from "./WhatsAppQRCodeTimer"
-import { WhatsAppProfileDisplay } from "./WhatsAppProfileDisplay"
-
-interface ProfileData {
-  profilePictureUrl: string
-  owner: string
-  profileName: string
-}
 
 interface WhatsAppQRCodeProps {
   qrCodeData: QRCodeData
@@ -17,9 +10,7 @@ interface WhatsAppQRCodeProps {
   isExpired: boolean
   timeLeft: number
   formattedTime: string
-  connectionStatus: 'checking' | 'connected' | 'disconnected'
   instanceName?: string
-  profileData?: ProfileData | null
   onImageError: () => void
   onImageLoad: () => void
   onRetryQrCode: () => void
@@ -32,32 +23,12 @@ export const WhatsAppQRCode = ({
   isExpired,
   timeLeft,
   formattedTime,
-  connectionStatus,
   instanceName,
-  profileData,
   onImageError,
   onImageLoad,
   onRetryQrCode,
   onNewConnection
 }: WhatsAppQRCodeProps) => {
-  // Se conectado e tem dados do perfil, mostrar perfil
-  if (connectionStatus === 'connected' && profileData) {
-    return (
-      <div className="w-full flex flex-col items-center space-y-4">
-        <WhatsAppProfileDisplay profileData={profileData} />
-        
-        <Button
-          onClick={onNewConnection}
-          variant="outline"
-          size="sm"
-          className="text-sm"
-        >
-          Conectar Novo WhatsApp
-        </Button>
-      </div>
-    )
-  }
-
   return (
     <div className="w-full flex flex-col items-center space-y-3">
       <div className="bg-white p-3 rounded-lg border-2 border-gray-200 relative">
@@ -104,6 +75,12 @@ export const WhatsAppQRCode = ({
           Escaneie com seu WhatsApp
         </p>
         
+        {instanceName && (
+          <p className="text-xs text-gray-500">
+            Instância: {instanceName}
+          </p>
+        )}
+        
         {/* Timer do QR Code */}
         <WhatsAppQRCodeTimer 
           timeLeft={timeLeft}
@@ -117,7 +94,6 @@ export const WhatsAppQRCode = ({
         variant="outline"
         size="sm"
         className="text-sm"
-        disabled={connectionStatus === 'checking'}
       >
         {isExpired ? 'Gerar Novo QR Code' : 'Cancelar'}
       </Button>

@@ -4,12 +4,6 @@ import { useToast } from "@/hooks/use-toast"
 import { isValidBase64, QRCodeData, WhatsAppResponse } from "@/utils/whatsappUtils"
 import { useQRCodeTimer } from "./useQRCodeTimer"
 
-interface ProfileData {
-  profilePictureUrl: string
-  owner: string
-  profileName: string
-}
-
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
 }
@@ -20,63 +14,9 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
   const [connectionResult, setConnectionResult] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   const [instanceName, setInstanceName] = useState<string | null>(null)
-  const [profileData, setProfileData] = useState<ProfileData | null>(null)
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('disconnected')
   const { toast } = useToast()
 
-  // Função para fazer polling da conexão
-  const checkConnectionStatus = async (instance: string) => {
-    try {
-      console.log(`🔍 Verificando status da conexão para instância: ${instance}`)
-      
-      const response = await fetch(`https://api.abbadigital.com.br/instance/fetchInstances?instanceName=${instance}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        console.log(`❌ Erro na requisição: ${response.status}`)
-        return false
-      }
-
-      const data = await response.json()
-      console.log('📋 Resposta do fetchInstances:', JSON.stringify(data, null, 2))
-
-      // Verificar se tem dados de perfil válidos
-      if (data.profilePictureUrl && data.owner && data.profileName) {
-        console.log('✅ Perfil encontrado, conexão bem-sucedida!')
-        
-        // Limpar o número removendo @s.whatsapp.net
-        const cleanOwner = data.owner.replace('@s.whatsapp.net', '')
-        
-        setProfileData({
-          profilePictureUrl: data.profilePictureUrl,
-          owner: cleanOwner,
-          profileName: data.profileName
-        })
-        
-        setConnectionStatus('connected')
-        setConnectionResult("WhatsApp conectado com sucesso!")
-        setQrCodeData(null)
-        
-        toast({
-          title: "WhatsApp Conectado!",
-          description: `Conectado como ${data.profileName}`,
-        })
-        
-        return true
-      }
-
-      return false
-    } catch (error) {
-      console.error('❌ Erro ao verificar status da conexão:', error)
-      return false
-    }
-  }
-
-  // Timer para o QR Code com polling
+  // Timer simples para o QR Code (sem polling)
   const {
     timeLeft,
     isExpired,
@@ -86,25 +26,41 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     duration: 60,
     onExpire: () => {
       console.log('⏰ QR Code expirado')
-      setConnectionStatus('disconnected')
       toast({
         title: "QR Code Expirado",
         description: "Gere um novo QR Code para continuar.",
         variant: "destructive",
       })
     },
-    isActive: !!qrCodeData && !connectionResult && !profileData,
-    onTick: async () => {
-      // Fazer polling a cada tick (3-5 segundos) se temos uma instância
-      if (instanceName && connectionStatus === 'checking') {
-        const isConnected = await checkConnectionStatus(instanceName)
-        if (isConnected) {
-          // Conexão bem-sucedida, o timer será parado automaticamente
-          return
-        }
-      }
-    }
+    isActive: !!qrCodeData && !connectionResult
   })
+
+  // Função para enviar dados da instância via webhook
+  const sendInstanceData = async (instanceName: string) => {
+    try {
+      console.log(`📤 Enviando dados da instância para webhook: ${instanceName}`)
+      
+      const response = await fetch('https://webhook.abbadigital.com.br/webhook/dados-da-instancia', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instanceName: instanceName
+        }),
+      })
+
+      if (!response.ok) {
+        console.error(`❌ Erro ao enviar dados da instância: ${response.status}`)
+        return
+      }
+
+      console.log('✅ Dados da instância enviados com sucesso')
+      
+    } catch (error) {
+      console.error('❌ Erro ao enviar dados da instância:', error)
+    }
+  }
 
   const handleConnect = async () => {
     setIsConnecting(true)
@@ -112,8 +68,6 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setQrCodeData(null)
     setImageError(false)
     setInstanceName(null)
-    setProfileData(null)
-    setConnectionStatus('disconnected')
 
     try {
       const response = await onConnect()
@@ -139,10 +93,11 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
         // Extrair nome da instância do código
         const extractedInstanceName = response.code
         setInstanceName(extractedInstanceName)
-        setConnectionStatus('checking')
         
         console.log(`📱 Instância criada: ${extractedInstanceName}`)
-        console.log('🔄 Iniciando verificação de conexão...')
+        
+        // Enviar dados da instância para o webhook
+        await sendInstanceData(extractedInstanceName)
         
         resetTimer()
         
@@ -183,8 +138,6 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setConnectionResult(null)
     setImageError(false)
     setInstanceName(null)
-    setProfileData(null)
-    setConnectionStatus('disconnected')
     resetTimer()
   }
 
@@ -216,8 +169,6 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     timeLeft,
     isExpired,
     formattedTime,
-    connectionStatus,
-    profileData,
     handleConnect,
     handleNewConnection,
     handleImageError,
