@@ -29,6 +29,7 @@ export const WhatsAppConnection = ({
 
     try {
       const response = await onConnect()
+      console.log('Resposta da conexão:', response)
       
       if (response.code && response.base64) {
         setQrCodeData({
@@ -94,37 +95,36 @@ export const WhatsAppConnection = ({
 
         {qrCodeData && (
           <div className="space-y-4">
-            <div className="flex flex-col items-center space-y-3">
-              <div className="flex items-center gap-2 text-green-400">
-                <QrCode className="h-5 w-5" />
-                <span className="font-medium">QR Code gerado</span>
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg">
-                <img 
-                  src={`data:image/png;base64,${qrCodeData.base64}`}
-                  alt="QR Code WhatsApp"
-                  className="w-48 h-48 mx-auto"
-                />
-              </div>
-              
-              <div className="text-center space-y-2">
-                <p className="text-sm text-gray-300">
-                  Escaneie este QR Code com seu WhatsApp
-                </p>
-                <p className="text-xs text-gray-400">
-                  Código: {qrCodeData.code}
-                </p>
-              </div>
-              
-              <Button
-                onClick={handleNewConnection}
-                variant="outline"
-                className="text-sm"
-              >
-                Gerar Novo QR Code
-              </Button>
+            <div className="flex items-center justify-center gap-2 text-green-400">
+              <QrCode className="h-5 w-5" />
+              <span className="font-medium">QR Code gerado</span>
             </div>
+            
+            <div className="w-full bg-white p-4 rounded-lg flex justify-center">
+              <img 
+                src={`data:image/png;base64,${qrCodeData.base64}`}
+                alt="QR Code WhatsApp"
+                className="max-w-full h-auto"
+                style={{ maxWidth: '100%', height: 'auto' }}
+              />
+            </div>
+            
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-300">
+                Escaneie este QR Code com seu WhatsApp
+              </p>
+              <p className="text-xs text-gray-400">
+                Código: {qrCodeData.code}
+              </p>
+            </div>
+            
+            <Button
+              onClick={handleNewConnection}
+              variant="outline"
+              className="w-full text-sm"
+            >
+              Gerar Novo QR Code
+            </Button>
           </div>
         )}
 
