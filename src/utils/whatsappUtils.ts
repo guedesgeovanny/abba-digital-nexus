@@ -16,4 +16,7 @@ export interface WhatsAppResponse {
   code?: string
   base64?: string
   message?: string
+  instanceName?: string
+  "instance-Name"?: string
+  instanceId?: string
 }
