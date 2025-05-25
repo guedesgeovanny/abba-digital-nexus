@@ -36,7 +36,6 @@ export const CreateAgentDialog = ({
     description: "",
     channel: "" as AgentChannel,
   })
-  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,7 +65,6 @@ export const CreateAgentDialog = ({
         description: "",
         channel: "" as AgentChannel,
       })
-      setCreatedAgentId(null)
       onClose()
     }
   }
@@ -177,7 +175,6 @@ export const CreateAgentDialog = ({
             formData={formData}
             setFormData={setFormData}
             onWhatsAppConnect={handleWhatsAppConnect}
-            agentId={createdAgentId}
           />
 
           <DialogFooter>
