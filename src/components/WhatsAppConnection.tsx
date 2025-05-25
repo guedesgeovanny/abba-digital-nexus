@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageSquare, Loader2, QrCode, AlertCircle } from "lucide-react"
+import { MessageSquare, Loader2, QrCode, AlertCircle, CheckCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface WhatsAppConnectionProps {
@@ -142,99 +142,113 @@ export const WhatsAppConnection = ({
           Configure a conexão com a API Evolution para este agente
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {!qrCodeData && !connectionResult && (
+      <CardContent className="space-y-6">
+        {/* Botão de conectar sempre visível */}
+        <div className="flex flex-col items-center space-y-4">
           <Button
             onClick={handleConnect}
-            disabled={isConnecting}
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
+            disabled={isConnecting || !!qrCodeData || !!connectionResult}
+            className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-600"
           >
             {isConnecting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Conectando...
               </>
+            ) : qrCodeData ? (
+              <>
+                <QrCode className="mr-2 h-4 w-4" />
+                QR Code Gerado
+              </>
+            ) : connectionResult ? (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                WhatsApp Conectado
+              </>
             ) : (
               "Conectar WhatsApp"
             )}
           </Button>
-        )}
 
-        {qrCodeData && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-center gap-2 text-green-400">
-              <QrCode className="h-5 w-5" />
-              <span className="font-medium">QR Code gerado</span>
-            </div>
-            
-            <div className="w-full bg-white p-4 rounded-lg flex justify-center items-center min-h-[200px]">
-              {!imageError ? (
-                <img 
-                  id="qr-code-img"
-                  src={`data:image/png;base64,${qrCodeData.base64}`}
-                  alt="QR Code WhatsApp"
-                  className="w-48 h-48 object-contain"
-                  style={{ maxWidth: '192px', maxHeight: '192px' }}
-                  onError={handleImageError}
-                  onLoad={handleImageLoad}
-                />
-              ) : (
-                <div className="text-center space-y-3">
-                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-                  <p className="text-red-600 text-sm">
-                    Erro ao carregar QR Code
-                  </p>
-                  <Button
-                    onClick={retryQrCode}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    Tentar Novamente
-                  </Button>
+          {/* QR Code diretamente abaixo do botão */}
+          {qrCodeData && (
+            <div className="w-full flex flex-col items-center space-y-3">
+              <div className="bg-white p-3 rounded-lg border-2 border-gray-200">
+                {!imageError ? (
+                  <img 
+                    id="qr-code-img"
+                    src={`data:image/png;base64,${qrCodeData.base64}`}
+                    alt="QR Code WhatsApp"
+                    className="w-40 h-40 object-contain"
+                    onError={handleImageError}
+                    onLoad={handleImageLoad}
+                  />
+                ) : (
+                  <div className="w-40 h-40 flex flex-col items-center justify-center text-center space-y-2">
+                    <AlertCircle className="h-8 w-8 text-red-500" />
+                    <p className="text-red-600 text-xs">
+                      Erro ao carregar QR Code
+                    </p>
+                    <Button
+                      onClick={retryQrCode}
+                      variant="outline"
+                      size="sm"
+                      className="text-xs px-2 py-1 h-6"
+                    >
+                      Tentar Novamente
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="text-center space-y-1">
+                <p className="text-sm text-gray-300 font-medium">
+                  Escaneie com seu WhatsApp
+                </p>
+                <p className="text-xs text-gray-400">
+                  Código: {qrCodeData.code}
+                </p>
+                <div className="flex items-center justify-center gap-1">
+                  <span className="text-xs text-gray-500">Status:</span>
+                  {isValidBase64(qrCodeData.base64) ? (
+                    <span className="text-xs text-green-400">✅ Válido</span>
+                  ) : (
+                    <span className="text-xs text-red-400">❌ Inválido</span>
+                  )}
                 </div>
-              )}
+              </div>
+              
+              <Button
+                onClick={handleNewConnection}
+                variant="outline"
+                size="sm"
+                className="text-sm"
+              >
+                Gerar Novo QR Code
+              </Button>
             </div>
-            
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-300">
-                Escaneie este QR Code com seu WhatsApp
-              </p>
-              <p className="text-xs text-gray-400">
-                Código: {qrCodeData.code}
-              </p>
-              <p className="text-xs text-gray-500">
-                Base64 válido: {isValidBase64(qrCodeData.base64) ? '✅' : '❌'}
-              </p>
-            </div>
-            
-            <Button
-              onClick={handleNewConnection}
-              variant="outline"
-              className="w-full text-sm"
-            >
-              Gerar Novo QR Code
-            </Button>
-          </div>
-        )}
+          )}
 
-        {connectionResult && (
-          <div className="space-y-3">
-            <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-md">
-              <p className="text-green-400 text-sm font-medium">
-                {connectionResult}
-              </p>
+          {/* Mensagem de sucesso */}
+          {connectionResult && (
+            <div className="w-full space-y-3">
+              <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-md text-center">
+                <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
+                <p className="text-green-400 text-sm font-medium">
+                  {connectionResult}
+                </p>
+              </div>
+              
+              <Button
+                onClick={handleNewConnection}
+                variant="outline"
+                className="w-full text-sm"
+              >
+                Conectar Novo WhatsApp
+              </Button>
             </div>
-            
-            <Button
-              onClick={handleNewConnection}
-              variant="outline"
-              className="w-full text-sm"
-            >
-              Conectar Novo WhatsApp
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   )
