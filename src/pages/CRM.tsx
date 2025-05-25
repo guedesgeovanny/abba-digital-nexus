@@ -1,17 +1,12 @@
+
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Plus, MoreVertical, Calendar, Phone, Mail, Instagram, Edit2, Palette, X, Filter } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Plus, Filter } from "lucide-react"
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { CRMFilters } from "@/components/CRMFilters"
+import { AddStageDialog } from "@/components/AddStageDialog"
+import { StageColumn } from "@/components/StageColumn"
 
 const mockDeals = {
   "Novo Lead": [
@@ -97,117 +92,6 @@ const stageColors = [
   "#EC4899", // pink
 ]
 
-interface LeadCardProps {
-  deal: any
-  stageColor: string
-}
-
-const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: deal.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
-  const getSourceIcon = (source: string) => {
-    switch (source) {
-      case "Instagram":
-        return <Instagram className="w-3 h-3" />
-      case "WhatsApp":
-        return <Phone className="w-3 h-3" />
-      default:
-        return <Mail className="w-3 h-3" />
-    }
-  }
-
-  return (
-    <Card 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners}
-      className={`
-        bg-abba-gray border-abba-gray transition-all duration-200 cursor-grab active:cursor-grabbing
-        hover:border-abba-green hover:shadow-lg hover:shadow-abba-green/20 hover:scale-[1.02]
-        ${isDragging ? 'shadow-2xl shadow-abba-green/40 scale-105 rotate-2 border-abba-green' : ''}
-      `}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h4 className="font-medium text-abba-text">{deal.name}</h4>
-            <p className="text-sm text-gray-400">{deal.company}</p>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Editar</DropdownMenuItem>
-              <DropdownMenuItem>Mover</DropdownMenuItem>
-              <DropdownMenuItem className="text-red-400">Excluir</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        <div className="space-y-2 mb-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-abba-green">{deal.value}</span>
-            <div className="flex items-center gap-1">
-              {getSourceIcon(deal.source)}
-              <span className="text-xs text-gray-400">{deal.source}</span>
-            </div>
-          </div>
-          
-          <div className="text-xs text-gray-400">
-            Agente: {deal.agent}
-          </div>
-          
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <Calendar className="w-3 h-3" />
-            {deal.daysInStage} dias neste estágio
-          </div>
-        </div>
-        
-        <div className="space-y-1 mb-3 text-xs">
-          <div className="flex items-center gap-2 text-gray-400">
-            <Phone className="w-3 h-3" />
-            {deal.contact}
-          </div>
-          <div className="flex items-center gap-2 text-gray-400">
-            <Mail className="w-3 h-3" />
-            {deal.email}
-          </div>
-          {deal.instagram && (
-            <div className="flex items-center gap-2 text-gray-400">
-              <Instagram className="w-3 h-3" />
-              {deal.instagram}
-            </div>
-          )}
-        </div>
-        
-        <div className="flex gap-1 flex-wrap">
-          {deal.tags.map((tag, index) => (
-            <Badge key={index} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 const CRM = () => {
   const [deals, setDeals] = useState(mockDeals)
   const [stages, setStages] = useState(["Novo Lead", "Qualificado", "Proposta", "Negociação", "Fechado"])
@@ -218,10 +102,7 @@ const CRM = () => {
     "Negociação": "#F97316",
     "Fechado": "#22C55E"
   })
-  const [editingStage, setEditingStage] = useState<string | null>(null)
-  const [editingValue, setEditingValue] = useState("")
   const [isAddingStage, setIsAddingStage] = useState(false)
-  const [newStageName, setNewStageName] = useState("")
   
   // Filter states
   const [filterAgent, setFilterAgent] = useState("")
@@ -306,45 +187,28 @@ const CRM = () => {
     }, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   }
 
-  const handleStageEdit = (stage: string) => {
-    setEditingStage(stage)
-    setEditingValue(stage)
+  const handleStageRename = (oldName: string, newName: string) => {
+    setStages(prev => prev.map(s => s === oldName ? newName : s))
+    setDeals(prev => {
+      const newDeals = { ...prev }
+      if (newDeals[oldName as keyof typeof newDeals]) {
+        newDeals[newName as keyof typeof newDeals] = newDeals[oldName as keyof typeof newDeals]
+        delete newDeals[oldName as keyof typeof newDeals]
+      }
+      return newDeals
+    })
+    setStageColorsMap(prev => {
+      const newColors = { ...prev }
+      newColors[newName] = prev[oldName]
+      delete newColors[oldName]
+      return newColors
+    })
   }
 
-  const handleStageRename = () => {
-    if (editingStage && editingValue.trim()) {
-      const oldName = editingStage
-      const newName = editingValue.trim()
-      
-      setStages(prev => prev.map(s => s === oldName ? newName : s))
-      setDeals(prev => {
-        const newDeals = { ...prev }
-        if (newDeals[oldName as keyof typeof newDeals]) {
-          newDeals[newName as keyof typeof newDeals] = newDeals[oldName as keyof typeof newDeals]
-          delete newDeals[oldName as keyof typeof newDeals]
-        }
-        return newDeals
-      })
-      setStageColorsMap(prev => {
-        const newColors = { ...prev }
-        newColors[newName] = prev[oldName]
-        delete newColors[oldName]
-        return newColors
-      })
-    }
-    setEditingStage(null)
-    setEditingValue("")
-  }
-
-  const handleAddStage = () => {
-    if (newStageName.trim()) {
-      const stageName = newStageName.trim()
-      setStages(prev => [...prev, stageName])
-      setDeals(prev => ({ ...prev, [stageName]: [] }))
-      setStageColorsMap(prev => ({ ...prev, [stageName]: stageColors[stages.length % stageColors.length] }))
-      setNewStageName("")
-      setIsAddingStage(false)
-    }
+  const handleAddStage = (stageName: string) => {
+    setStages(prev => [...prev, stageName])
+    setDeals(prev => ({ ...prev, [stageName]: [] }))
+    setStageColorsMap(prev => ({ ...prev, [stageName]: stageColors[stages.length % stageColors.length] }))
   }
 
   const handleColorChange = (stage: string, color: string) => {
@@ -407,98 +271,24 @@ const CRM = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <Card className="bg-abba-black border-abba-gray">
-          <CardHeader>
-            <CardTitle className="text-abba-text">Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 flex-wrap">
-              <Select value={filterAgent} onValueChange={setFilterAgent}>
-                <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
-                  <SelectValue placeholder="Agente" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os agentes</SelectItem>
-                  {allAgents.map((agent) => (
-                    <SelectItem key={agent} value={agent}>
-                      {agent}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Select value={filterChannel} onValueChange={setFilterChannel}>
-                <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
-                  <SelectValue placeholder="Canal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os canais</SelectItem>
-                  {allChannels.map((channel) => (
-                    <SelectItem key={channel} value={channel}>
-                      {channel}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Select value={filterTag} onValueChange={setFilterTag}>
-                <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
-                  <SelectValue placeholder="Tag" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas as tags</SelectItem>
-                  {allTags.map((tag) => (
-                    <SelectItem key={tag} value={tag}>
-                      {tag}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Button 
-                onClick={() => {
-                  setFilterAgent("")
-                  setFilterChannel("")
-                  setFilterTag("")
-                }}
-                variant="outline"
-                className="border-abba-gray text-abba-text"
-              >
-                Limpar Filtros
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <CRMFilters 
+        showFilters={showFilters}
+        filterAgent={filterAgent}
+        filterChannel={filterChannel}
+        filterTag={filterTag}
+        allAgents={allAgents}
+        allChannels={allChannels}
+        allTags={allTags}
+        setFilterAgent={setFilterAgent}
+        setFilterChannel={setFilterChannel}
+        setFilterTag={setFilterTag}
+      />
 
-      {/* Dialog para adicionar nova etapa */}
-      <Dialog open={isAddingStage} onOpenChange={setIsAddingStage}>
-        <DialogContent className="bg-abba-black border-abba-gray">
-          <DialogHeader>
-            <DialogTitle className="text-abba-text">Adicionar Nova Etapa</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Digite o nome da nova etapa do pipeline
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            value={newStageName}
-            onChange={(e) => setNewStageName(e.target.value)}
-            placeholder="Nome da etapa..."
-            className="bg-abba-gray border-abba-gray text-abba-text"
-            onKeyDown={(e) => e.key === 'Enter' && handleAddStage()}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddingStage(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleAddStage} className="bg-abba-green text-abba-black hover:bg-abba-green-light">
-              Adicionar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddStageDialog 
+        isOpen={isAddingStage}
+        onClose={() => setIsAddingStage(false)}
+        onAdd={handleAddStage}
+      />
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
       <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">
@@ -509,101 +299,18 @@ const CRM = () => {
               const filteredStageDeals = getFilteredDeals(stageDeals)
               
               return (
-                <div key={stage} className="flex-shrink-0 w-80 h-full">
-                  <Card className="bg-abba-black border-2 h-full flex flex-col" style={{ borderColor: stageColorsMap[stage] }}>
-                    <CardHeader className="pb-3 flex-shrink-0">
-                      <div className="flex items-center justify-between">
-                        {editingStage === stage ? (
-                          <Input
-                            value={editingValue}
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={handleStageRename}
-                            onKeyDown={(e) => e.key === 'Enter' && handleStageRename()}
-                            className="bg-abba-gray border-abba-gray text-abba-text text-lg font-medium"
-                            autoFocus
-                          />
-                        ) : (
-                          <CardTitle className="text-abba-text text-lg">{stage}</CardTitle>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-xs">
-                            {filteredStageDeals.length}
-                          </Badge>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleStageEdit(stage)}>
-                                <Edit2 className="w-4 h-4 mr-2" />
-                                Editar Nome
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => {}}
-                                className="focus:bg-transparent"
-                              >
-                                <Palette className="w-4 h-4 mr-2" />
-                                <div className="flex gap-1">
-                                  {stageColors.map((color) => (
-                                    <button
-                                      key={color}
-                                      className="w-4 h-4 rounded-full border border-gray-300"
-                                      style={{ backgroundColor: color }}
-                                      onClick={() => handleColorChange(stage, color)}
-                                    />
-                                  ))}
-                                </div>
-                              </DropdownMenuItem>
-                              {stages.length > 1 && (
-                                <DropdownMenuItem 
-                                  onClick={() => removeStage(stage)}
-                                  className="text-red-400"
-                                >
-                                  <X className="w-4 h-4 mr-2" />
-                                  Remover
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                      <CardDescription className="text-gray-400">
-                        {getTotalValue(stageDeals)}
-                      </CardDescription>
-                    </CardHeader>
-                    
-                    {/* Conteúdo com scroll */}
-                    <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-                      <div className="flex-1 overflow-y-auto px-6 space-y-3">
-                        <SortableContext 
-                          items={filteredStageDeals.map(deal => deal.id)} 
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {filteredStageDeals.map((deal) => (
-                            <LeadCard 
-                              key={deal.id} 
-                              deal={deal} 
-                              stageColor={stageColorsMap[stage]} 
-                            />
-                          ))}
-                        </SortableContext>
-                      </div>
-                      
-                      {/* Botão fixo no final */}
-                      <div className="flex-shrink-0 p-6 pt-3">
-                        <Button 
-                          variant="outline" 
-                          className="w-full border-dashed border-abba-gray text-gray-400"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Adicionar Lead
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <StageColumn
+                  key={stage}
+                  stage={stage}
+                  stageDeals={stageDeals}
+                  filteredStageDeals={filteredStageDeals}
+                  stageColorsMap={stageColorsMap}
+                  stages={stages}
+                  getTotalValue={getTotalValue}
+                  onStageRename={handleStageRename}
+                  onColorChange={handleColorChange}
+                  onRemoveStage={removeStage}
+                />
               )
             })}
           </div>
