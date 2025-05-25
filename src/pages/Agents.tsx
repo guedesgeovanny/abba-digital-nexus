@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { useAgents } from "@/hooks/useAgents"
 import { AgentsPageHeader } from "@/components/AgentsPageHeader"
@@ -14,6 +13,7 @@ type Agent = Tables<'agents'>
 const Agents = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
   const { toast } = useToast()
   
   const { 
@@ -35,7 +35,8 @@ const Agents = () => {
 
   const handleCreateAgent = (agentData: Parameters<typeof createAgent>[0]) => {
     createAgent(agentData, {
-      onSuccess: () => {
+      onSuccess: (newAgent) => {
+        setCreatedAgentId(newAgent.id)
         toast({
           title: "Agente criado com sucesso!",
           description: `O agente ${agentData.name} foi criado e está pronto para uso.`,
@@ -95,8 +96,15 @@ const Agents = () => {
     })
   }
 
-  const openCreateDialog = () => setIsCreateDialogOpen(true)
-  const closeCreateDialog = () => setIsCreateDialogOpen(false)
+  const openCreateDialog = () => {
+    setCreatedAgentId(null)
+    setIsCreateDialogOpen(true)
+  }
+  
+  const closeCreateDialog = () => {
+    setIsCreateDialogOpen(false)
+    setCreatedAgentId(null)
+  }
 
   if (isLoading) {
     return (

@@ -36,6 +36,7 @@ export const CreateAgentDialog = ({
     description: "",
     channel: "" as AgentChannel,
   })
+  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,24 +49,31 @@ export const CreateAgentDialog = ({
         connection_status: 'disconnected'
       } : undefined
 
-      onCreateAgent({
+      // Criar agente e capturar o ID
+      const agentData = {
         name: formData.name,
         type: formData.type,
         status: formData.status,
         description: formData.description || undefined,
         channel: formData.channel || undefined,
         configuration,
-      })
+      }
+
+      // Simular callback para capturar o ID do agente criado
+      onCreateAgent(agentData)
       
-      // Reset form
-      setFormData({
-        name: "",
-        type: "" as AgentType,
-        status: "inactive",
-        description: "",
-        channel: "" as AgentChannel,
-      })
-      onClose()
+      // Reset form mas manter dialog aberto se for WhatsApp para permitir conexão
+      if (formData.channel !== 'whatsapp') {
+        setFormData({
+          name: "",
+          type: "" as AgentType,
+          status: "inactive",
+          description: "",
+          channel: "" as AgentChannel,
+        })
+        setCreatedAgentId(null)
+        onClose()
+      }
     }
   }
 
@@ -160,8 +168,20 @@ export const CreateAgentDialog = ({
     }
   }
 
+  const handleClose = () => {
+    setFormData({
+      name: "",
+      type: "" as AgentType,
+      status: "inactive",
+      description: "",
+      channel: "" as AgentChannel,
+    })
+    setCreatedAgentId(null)
+    onClose()
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="bg-abba-black border-abba-gray max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-abba-text">Criar Novo Agente</DialogTitle>
@@ -175,10 +195,11 @@ export const CreateAgentDialog = ({
             formData={formData}
             setFormData={setFormData}
             onWhatsAppConnect={handleWhatsAppConnect}
+            agentId={createdAgentId}
           />
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>
             <Button 

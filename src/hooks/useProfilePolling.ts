@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
-import { getInstanceProfile, downloadProfileImage, saveProfileToDatabase } from '@/services/webhookService'
+import { getInstanceProfile, downloadProfileImage } from '@/services/webhookService'
 import { ProfileData } from '@/utils/whatsappUtils'
 import { useAgents } from '@/hooks/useAgents'
 
@@ -48,7 +48,7 @@ export const useProfilePolling = ({
         if (agentId) {
           console.log('💾 Salvando dados do perfil no banco...')
           
-          // Usar a nova função do hook useAgents para salvar no banco
+          // Usar a função do hook useAgents para salvar no banco
           updateAgentWhatsAppProfile({
             agentId,
             profileName: profileData.profilename,
