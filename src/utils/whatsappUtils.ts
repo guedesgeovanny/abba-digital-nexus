@@ -14,10 +14,11 @@ export interface QRCodeData {
 
 export interface WhatsAppResponse {
   instanceId?: string
-  "Nome da instância"?: string
+  "Nome da instância"?: string | any
   code?: string
   base64?: string
   message?: string
   instanceName?: string
   "instance-Name"?: string
+  [key: string]: any // Permite campos adicionais
 }

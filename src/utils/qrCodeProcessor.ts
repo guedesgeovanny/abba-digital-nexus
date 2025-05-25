@@ -42,17 +42,36 @@ export const processQRCodeResponse = (response: WhatsAppResponse) => {
 }
 
 const extractInstanceName = (response: WhatsAppResponse): string => {
-  // Usar APENAS o campo "Nome da instância" da resposta
-  const instanceName = response["Nome da instância"]
-  
   console.log('=== EXTRAÇÃO DO NOME DA INSTÂNCIA ===')
-  console.log('Campo "Nome da instância":', instanceName)
+  console.log('Campos disponíveis na resposta:', Object.keys(response))
+  console.log('Valor do campo "Nome da instância":', response["Nome da instância"])
+  console.log('Tipo do valor:', typeof response["Nome da instância"])
+  
+  // Tentar diferentes formas de extrair o nome da instância
+  let instanceName: string | undefined
+  
+  // Primeira tentativa: campo "Nome da instância"
+  if (response["Nome da instância"] && typeof response["Nome da instância"] === 'string') {
+    instanceName = response["Nome da instância"]
+    console.log('✅ Nome extraído do campo "Nome da instância":', instanceName)
+  }
+  // Segunda tentativa: campo instanceName
+  else if (response.instanceName && typeof response.instanceName === 'string') {
+    instanceName = response.instanceName
+    console.log('✅ Nome extraído do campo "instanceName":', instanceName)
+  }
+  // Terceira tentativa: usar instanceId como fallback
+  else if (response.instanceId && typeof response.instanceId === 'string') {
+    instanceName = response.instanceId
+    console.log('⚠️ Usando instanceId como nome da instância:', instanceName)
+  }
   
   if (!instanceName) {
-    console.error('❌ Campo "Nome da instância" não encontrado na resposta!')
+    console.error('❌ Não foi possível extrair o nome da instância!')
+    console.error('Resposta completa:', JSON.stringify(response, null, 2))
     throw new Error('Nome da instância não encontrado na resposta da API')
   }
   
-  console.log('✅ Nome da instância extraído:', instanceName)
+  console.log('✅ Nome da instância final:', instanceName)
   return instanceName
 }
