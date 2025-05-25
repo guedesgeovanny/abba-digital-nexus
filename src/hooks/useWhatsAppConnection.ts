@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { isValidBase64, QRCodeData, WhatsAppResponse } from "@/utils/whatsappUtils"
@@ -73,6 +72,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
       const response = await onConnect()
       console.log('=== RESPOSTA COMPLETA DA API ===')
       console.log('Estrutura da resposta:', JSON.stringify(response, null, 2))
+      console.log('Campos disponíveis:', Object.keys(response))
       
       if (response.code && response.base64) {
         // Processar o base64 corretamente
@@ -93,11 +93,13 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           base64: processedBase64
         })
         
-        // Usar o response.code como nome da instância
-        const extractedInstanceName = response.code
+        // Extrair o nome da instância do campo correto
+        const extractedInstanceName = response["instance-Name"] || response.instanceName || response.code
         setInstanceName(extractedInstanceName)
         
-        console.log(`📱 Instância criada: ${extractedInstanceName}`)
+        console.log(`📱 Nome da instância extraído: ${extractedInstanceName}`)
+        console.log('Campo instance-Name:', response["instance-Name"])
+        console.log('Campo instanceName:', response.instanceName)
         
         // Enviar dados da instância para o webhook APÓS gerar o QR Code
         await sendInstanceData(extractedInstanceName)
