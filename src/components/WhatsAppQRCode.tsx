@@ -31,6 +31,35 @@ export const WhatsAppQRCode = ({
   onRetryQrCode,
   onNewConnection
 }: WhatsAppQRCodeProps) => {
+  const handleCancelConnection = async () => {
+    if (instanceName) {
+      try {
+        console.log('🗑️ Enviando requisição para excluir instância:', instanceName)
+        
+        const response = await fetch('https://webhook.abbadigital.com.br/webhook/exclui-instancia', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            instanceName: instanceName
+          }),
+        })
+
+        if (!response.ok) {
+          console.error('❌ Erro ao excluir instância:', response.status)
+        } else {
+          console.log('✅ Instância excluída com sucesso')
+        }
+      } catch (error) {
+        console.error('❌ Erro ao enviar requisição de exclusão:', error)
+      }
+    }
+    
+    // Chama a função original para limpar o estado
+    onNewConnection()
+  }
+
   return (
     <div className="w-full flex flex-col items-center space-y-3">
       <div className="bg-white p-3 rounded-lg border-2 border-gray-200 relative">
@@ -77,12 +106,12 @@ export const WhatsAppQRCode = ({
           Escaneie com seu WhatsApp
         </p>
         
-        {/* Indicador de polling ativo com mais destaque */}
+        {/* Indicador de polling ativo simplificado */}
         {isPolling && (
           <div className="flex items-center justify-center gap-2 text-blue-400">
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
             <p className="text-xs font-medium">
-              Verificando conexão a cada 3s...
+              Verificando conexão
             </p>
           </div>
         )}
@@ -96,7 +125,7 @@ export const WhatsAppQRCode = ({
       </div>
       
       <Button
-        onClick={onNewConnection}
+        onClick={isExpired ? onNewConnection : handleCancelConnection}
         variant="outline"
         size="sm"
         className="text-sm"
