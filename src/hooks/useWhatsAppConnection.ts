@@ -93,13 +93,26 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           base64: processedBase64
         })
         
-        // Extrair o nome da instância do campo correto
-        const extractedInstanceName = response["instance-Name"] || response.instanceName || response.code
+        // Extrair o nome da instância do campo correto - PRIORIZAR "instance-Name"
+        let extractedInstanceName: string
+        
+        if (response["instance-Name"]) {
+          extractedInstanceName = response["instance-Name"]
+          console.log('✅ Nome da instância extraído do campo "instance-Name":', extractedInstanceName)
+        } else if (response.instanceName) {
+          extractedInstanceName = response.instanceName
+          console.log('✅ Nome da instância extraído do campo "instanceName":', extractedInstanceName)
+        } else {
+          extractedInstanceName = response.code
+          console.log('⚠️ Nome da instância não encontrado, usando code como fallback:', extractedInstanceName)
+        }
+        
         setInstanceName(extractedInstanceName)
         
-        console.log(`📱 Nome da instância extraído: ${extractedInstanceName}`)
-        console.log('Campo instance-Name:', response["instance-Name"])
-        console.log('Campo instanceName:', response.instanceName)
+        console.log('=== DEBUG DOS CAMPOS DE INSTÂNCIA ===')
+        console.log('Campo "instance-Name":', response["instance-Name"])
+        console.log('Campo "instanceName":', response.instanceName)
+        console.log('Nome final extraído:', extractedInstanceName)
         
         // Enviar dados da instância para o webhook APÓS gerar o QR Code
         await sendInstanceData(extractedInstanceName)
