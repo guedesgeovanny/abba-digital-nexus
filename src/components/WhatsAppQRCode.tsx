@@ -1,8 +1,9 @@
 
 import { Button } from "@/components/ui/button"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { QRCodeData } from "@/utils/whatsappUtils"
 import { WhatsAppQRCodeTimer } from "./WhatsAppQRCodeTimer"
+import { useState } from "react"
 
 interface WhatsAppQRCodeProps {
   qrCodeData: QRCodeData
@@ -31,33 +32,53 @@ export const WhatsAppQRCode = ({
   onRetryQrCode,
   onNewConnection
 }: WhatsAppQRCodeProps) => {
-  const handleCancelConnection = async () => {
-    if (instanceName) {
-      try {
-        console.log('🗑️ Enviando requisição para excluir instância:', instanceName)
-        
-        const response = await fetch('https://webhook.abbadigital.com.br/webhook/exclui-instancia', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            instanceName: instanceName
-          }),
-        })
+  const [isCanceling, setIsCanceling] = useState(false)
 
-        if (!response.ok) {
-          console.error('❌ Erro ao excluir instância:', response.status)
-        } else {
-          console.log('✅ Instância excluída com sucesso')
-        }
-      } catch (error) {
-        console.error('❌ Erro ao enviar requisição de exclusão:', error)
-      }
+  const handleCancelConnection = async () => {
+    if (!instanceName) {
+      console.error('❌ Nome da instância não disponível')
+      onNewConnection()
+      return
     }
+
+    setIsCanceling(true)
     
-    // Chama a função original para limpar o estado
-    onNewConnection()
+    try {
+      console.log('🗑️ Enviando requisição para excluir instância:', instanceName)
+      
+      const response = await fetch('https://webhook.abbadigital.com.br/webhook/exclui-instancia', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instanceName: instanceName
+        }),
+      })
+
+      console.log('📡 Resposta da requisição:', response.status, response.statusText)
+
+      if (!response.ok) {
+        console.error('❌ Erro ao excluir instância:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('❌ Detalhes do erro:', errorText)
+      } else {
+        const responseData = await response.json()
+        console.log('✅ Resposta do servidor:', responseData)
+        
+        // Aguardar um pouco para o fluxo terminar de rodar
+        console.log('⏳ Aguardando finalização do fluxo...')
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        console.log('✅ Instância excluída e fluxo finalizado')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar requisição de exclusão:', error)
+    } finally {
+      setIsCanceling(false)
+      // Chama a função original para limpar o estado
+      onNewConnection()
+    }
   }
 
   return (
@@ -107,11 +128,21 @@ export const WhatsAppQRCode = ({
         </p>
         
         {/* Indicador de polling ativo simplificado */}
-        {isPolling && (
+        {isPolling && !isCanceling && (
           <div className="flex items-center justify-center gap-2 text-blue-400">
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
             <p className="text-xs font-medium">
               Verificando conexão
+            </p>
+          </div>
+        )}
+
+        {/* Indicador de cancelamento */}
+        {isCanceling && (
+          <div className="flex items-center justify-center gap-2 text-orange-400">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <p className="text-xs font-medium">
+              Cancelando conexão...
             </p>
           </div>
         )}
@@ -129,8 +160,18 @@ export const WhatsAppQRCode = ({
         variant="outline"
         size="sm"
         className="text-sm"
+        disabled={isCanceling}
       >
-        {isExpired ? 'Gerar Novo QR Code' : 'Cancelar'}
+        {isCanceling ? (
+          <>
+            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+            Cancelando...
+          </>
+        ) : isExpired ? (
+          'Gerar Novo QR Code'
+        ) : (
+          'Cancelar'
+        )}
       </Button>
     </div>
   )
