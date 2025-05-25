@@ -9,15 +9,16 @@ import { WhatsAppResponse } from "@/utils/whatsappUtils"
 
 interface WhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
+  instanceName: string // Adicionar instanceName como prop obrigatória
 }
 
-export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
+export const WhatsAppConnection = ({ onConnect, instanceName }: WhatsAppConnectionProps) => {
   const {
     isConnecting,
     qrCodeData,
     connectionResult,
     imageError,
-    instanceName,
+    instanceName: currentInstanceName,
     timeLeft,
     isExpired,
     formattedTime,
@@ -26,7 +27,7 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
     handleImageError,
     handleImageLoad,
     retryQrCode
-  } = useWhatsAppConnection({ onConnect })
+  } = useWhatsAppConnection({ onConnect, instanceName })
 
   return (
     <Card className="bg-abba-gray border-abba-gray">
@@ -55,7 +56,7 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
               isExpired={isExpired}
               timeLeft={timeLeft}
               formattedTime={formattedTime}
-              instanceName={instanceName}
+              instanceName={currentInstanceName}
               onImageError={handleImageError}
               onImageLoad={handleImageLoad}
               onRetryQrCode={retryQrCode}

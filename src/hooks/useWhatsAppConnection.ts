@@ -8,9 +8,10 @@ import { processQRCodeResponse } from "@/utils/qrCodeProcessor"
 
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
+  instanceName: string // Adicionar o instanceName como prop
 }
 
-export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps) => {
+export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppConnectionProps) => {
   const { toast } = useToast()
   
   const {
@@ -21,7 +22,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     connectionResult,
     setConnectionResult,
     imageError,
-    instanceName,
+    instanceName: storedInstanceName,
     setInstanceName,
     resetState,
     handleNewConnection,
@@ -54,14 +55,18 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     resetState()
 
     try {
+      console.log('🔄 Conectando com instanceName:', instanceName)
       const response = await onConnect()
-      const processedResponse = processQRCodeResponse(response)
+      
+      // Passar o instanceName original para o processador
+      const processedResponse = processQRCodeResponse(response, instanceName)
       
       if (processedResponse.qrCodeData) {
         setQrCodeData(processedResponse.qrCodeData)
         setInstanceName(processedResponse.instanceName)
         
-        // Enviar dados da instância para o webhook APÓS gerar o QR Code
+        // Enviar dados da instância para o webhook com o nome correto
+        console.log('📤 Enviando instanceName para webhook:', processedResponse.instanceName)
         await sendInstanceData(processedResponse.instanceName)
         
         resetTimer()
@@ -72,6 +77,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
         })
       } else if (processedResponse.message) {
         setConnectionResult(processedResponse.message)
+        setInstanceName(processedResponse.instanceName)
         toast({
           title: "Conexão realizada!",
           description: "WhatsApp conectado com sucesso.",
@@ -95,7 +101,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     qrCodeData,
     connectionResult,
     imageError,
-    instanceName,
+    instanceName: storedInstanceName,
     timeLeft,
     isExpired,
     formattedTime,
