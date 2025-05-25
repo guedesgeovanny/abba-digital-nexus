@@ -3,7 +3,6 @@ import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { isValidBase64, QRCodeData, WhatsAppResponse } from "@/utils/whatsappUtils"
 import { useQRCodeTimer } from "./useQRCodeTimer"
-import { useConnectionStatus } from "./useConnectionStatus"
 
 interface ProfileData {
   profilePictureUrl: string
@@ -22,9 +21,62 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
   const [imageError, setImageError] = useState(false)
   const [instanceName, setInstanceName] = useState<string | null>(null)
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('disconnected')
   const { toast } = useToast()
 
-  // Timer para o QR Code
+  // Função para fazer polling da conexão
+  const checkConnectionStatus = async (instance: string) => {
+    try {
+      console.log(`🔍 Verificando status da conexão para instância: ${instance}`)
+      
+      const response = await fetch(`https://api.abbadigital.com.br/instance/fetchInstances?instanceName=${instance}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        console.log(`❌ Erro na requisição: ${response.status}`)
+        return false
+      }
+
+      const data = await response.json()
+      console.log('📋 Resposta do fetchInstances:', JSON.stringify(data, null, 2))
+
+      // Verificar se tem dados de perfil válidos
+      if (data.profilePictureUrl && data.owner && data.profileName) {
+        console.log('✅ Perfil encontrado, conexão bem-sucedida!')
+        
+        // Limpar o número removendo @s.whatsapp.net
+        const cleanOwner = data.owner.replace('@s.whatsapp.net', '')
+        
+        setProfileData({
+          profilePictureUrl: data.profilePictureUrl,
+          owner: cleanOwner,
+          profileName: data.profileName
+        })
+        
+        setConnectionStatus('connected')
+        setConnectionResult("WhatsApp conectado com sucesso!")
+        setQrCodeData(null)
+        
+        toast({
+          title: "WhatsApp Conectado!",
+          description: `Conectado como ${data.profileName}`,
+        })
+        
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error('❌ Erro ao verificar status da conexão:', error)
+      return false
+    }
+  }
+
+  // Timer para o QR Code com polling
   const {
     timeLeft,
     isExpired,
@@ -33,24 +85,24 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
   } = useQRCodeTimer({
     duration: 60,
     onExpire: () => {
-      console.log('QR Code expirado')
+      console.log('⏰ QR Code expirado')
+      setConnectionStatus('disconnected')
       toast({
         title: "QR Code Expirado",
         description: "Gere um novo QR Code para continuar.",
         variant: "destructive",
       })
     },
-    isActive: !!qrCodeData && !connectionResult && !profileData
-  })
-
-  // Verificação de status da conexão
-  const { connectionStatus, resetStatus } = useConnectionStatus({
-    instanceName,
-    isActive: !!qrCodeData && !isExpired && !connectionResult && !profileData,
-    onConnected: (profile) => {
-      setProfileData(profile)
-      setConnectionResult("WhatsApp conectado com sucesso!")
-      setQrCodeData(null)
+    isActive: !!qrCodeData && !connectionResult && !profileData,
+    onTick: async () => {
+      // Fazer polling a cada tick (3-5 segundos) se temos uma instância
+      if (instanceName && connectionStatus === 'checking') {
+        const isConnected = await checkConnectionStatus(instanceName)
+        if (isConnected) {
+          // Conexão bem-sucedida, o timer será parado automaticamente
+          return
+        }
+      }
     }
   })
 
@@ -61,7 +113,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setImageError(false)
     setInstanceName(null)
     setProfileData(null)
-    resetStatus()
+    setConnectionStatus('disconnected')
 
     try {
       const response = await onConnect()
@@ -84,8 +136,13 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           base64: response.base64
         })
         
-        // Extrair nome da instância do código (assumindo que está no formato esperado)
-        setInstanceName(response.code)
+        // Extrair nome da instância do código
+        const extractedInstanceName = response.code
+        setInstanceName(extractedInstanceName)
+        setConnectionStatus('checking')
+        
+        console.log(`📱 Instância criada: ${extractedInstanceName}`)
+        console.log('🔄 Iniciando verificação de conexão...')
         
         resetTimer()
         
@@ -94,7 +151,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           description: "Escaneie o QR Code com seu WhatsApp para conectar.",
         })
       } else if (response.message) {
-        console.log('Mensagem de conexão:', response.message)
+        console.log('📝 Mensagem de conexão:', response.message)
         setConnectionResult(response.message)
         toast({
           title: "Conexão realizada!",
@@ -127,7 +184,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setImageError(false)
     setInstanceName(null)
     setProfileData(null)
-    resetStatus()
+    setConnectionStatus('disconnected')
     resetTimer()
   }
 
