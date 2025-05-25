@@ -10,9 +10,10 @@ import { processQRCodeResponse } from "@/utils/qrCodeProcessor"
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
   instanceName: string
+  agentId?: string
 }
 
-export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppConnectionProps) => {
+export const useWhatsAppConnection = ({ onConnect, instanceName, agentId }: UseWhatsAppConnectionProps) => {
   const { toast } = useToast()
   
   const {
@@ -55,9 +56,10 @@ export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppCo
     isActive: !!qrCodeData && !connectionResult && !profileData
   })
 
-  // Polling para buscar dados do perfil
+  // Polling para buscar dados do perfil - só ativo enquanto o timer não expirou
   const { isPolling } = useProfilePolling({
     instanceName: storedInstanceName,
+    agentId,
     isActive: !!qrCodeData && !connectionResult && !profileData && !isExpired,
     onProfileReceived: (receivedProfileData: ProfileData) => {
       console.log('✅ Perfil recebido via polling:', receivedProfileData)

@@ -77,11 +77,14 @@ export const WhatsAppQRCode = ({
           Escaneie com seu WhatsApp
         </p>
         
-        {/* Indicador de polling se ativo */}
+        {/* Indicador de polling ativo com mais destaque */}
         {isPolling && (
-          <p className="text-xs text-blue-400">
-            Aguardando conexão...
-          </p>
+          <div className="flex items-center justify-center gap-2 text-blue-400">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
+            <p className="text-xs font-medium">
+              Verificando conexão a cada 3s...
+            </p>
+          </div>
         )}
         
         {/* Timer do QR Code */}

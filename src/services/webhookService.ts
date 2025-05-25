@@ -29,7 +29,7 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
   try {
     console.log(`🔍 Buscando dados do perfil da instância: ${instanceName}`)
     
-    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/dados-da-instancia/${instanceName}`, {
+    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/dados-da-instancia?instanceName=${instanceName}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -44,11 +44,12 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     const data = await response.json()
     console.log('📋 Dados recebidos do perfil:', data)
 
-    // Validar se todos os campos obrigatórios estão preenchidos
+    // Validar se todos os campos obrigatórios estão preenchidos e não vazios
     const { profilename, contato, fotodoperfil } = data
     
-    if (!profilename || !contato || !fotodoperfil) {
-      console.log('⚠️ Dados do perfil incompletos, continuando polling...')
+    if (!profilename || !contato || !fotodoperfil || 
+        profilename.trim() === '' || contato.trim() === '' || fotodoperfil.trim() === '') {
+      console.log('⚠️ Dados do perfil incompletos ou vazios, continuando polling...')
       console.log('profilename:', profilename)
       console.log('contato:', contato) 
       console.log('fotodoperfil:', fotodoperfil)
@@ -61,6 +62,83 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
   } catch (error) {
     console.error('❌ Erro ao buscar dados do perfil:', error)
     return null
+  }
+}
+
+export const downloadProfileImage = async (imageUrl: string): Promise<string | null> => {
+  try {
+    console.log('📸 Baixando imagem do perfil:', imageUrl)
+    
+    const response = await fetch(imageUrl)
+    if (!response.ok) {
+      console.error('❌ Erro ao baixar imagem:', response.status)
+      return null
+    }
+    
+    const blob = await response.blob()
+    
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64 = reader.result as string
+        console.log('✅ Imagem convertida para base64')
+        resolve(base64)
+      }
+      reader.onerror = () => {
+        console.error('❌ Erro ao converter imagem para base64')
+        resolve(null)
+      }
+      reader.readAsDataURL(blob)
+    })
+    
+  } catch (error) {
+    console.error('❌ Erro ao baixar imagem do perfil:', error)
+    return null
+  }
+}
+
+export const saveProfileToDatabase = async (
+  agentId: string, 
+  profileData: {
+    profileName: string
+    contact: string
+    profilePictureUrl: string
+    profilePictureData: string
+  }
+): Promise<boolean> => {
+  try {
+    console.log('💾 Salvando dados do perfil no banco:', agentId)
+    
+    const { supabase } = await import('@/integrations/supabase/client')
+    
+    const configuration = {
+      connection_status: 'connected',
+      profile_name: profileData.profileName,
+      contact: profileData.contact,
+      profile_picture_url: profileData.profilePictureUrl,
+      profile_picture_data: profileData.profilePictureData,
+      connected_at: new Date().toISOString()
+    }
+    
+    const { error } = await supabase
+      .from('agents')
+      .update({ 
+        configuration,
+        status: 'active'
+      })
+      .eq('id', agentId)
+    
+    if (error) {
+      console.error('❌ Erro ao salvar no banco:', error)
+      return false
+    }
+    
+    console.log('✅ Dados do perfil salvos no banco com sucesso')
+    return true
+    
+  } catch (error) {
+    console.error('❌ Erro ao salvar dados do perfil:', error)
+    return false
   }
 }
 
