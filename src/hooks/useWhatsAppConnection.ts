@@ -1,19 +1,34 @@
-import { useState } from "react"
+
 import { useToast } from "@/hooks/use-toast"
-import { isValidBase64, QRCodeData, WhatsAppResponse } from "@/utils/whatsappUtils"
+import { WhatsAppResponse } from "@/utils/whatsappUtils"
 import { useQRCodeTimer } from "./useQRCodeTimer"
+import { useConnectionState } from "./useConnectionState"
+import { sendInstanceData } from "@/services/webhookService"
+import { processQRCodeResponse } from "@/utils/qrCodeProcessor"
 
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
 }
 
 export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps) => {
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [qrCodeData, setQrCodeData] = useState<QRCodeData | null>(null)
-  const [connectionResult, setConnectionResult] = useState<string | null>(null)
-  const [imageError, setImageError] = useState(false)
-  const [instanceName, setInstanceName] = useState<string | null>(null)
   const { toast } = useToast()
+  
+  const {
+    isConnecting,
+    setIsConnecting,
+    qrCodeData,
+    setQrCodeData,
+    connectionResult,
+    setConnectionResult,
+    imageError,
+    instanceName,
+    setInstanceName,
+    resetState,
+    handleNewConnection,
+    handleImageError,
+    handleImageLoad,
+    retryQrCode
+  } = useConnectionState()
 
   // Timer simples para o QR Code (60 segundos)
   const {
@@ -34,92 +49,20 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     isActive: !!qrCodeData && !connectionResult
   })
 
-  // Função para enviar dados da instância via webhook
-  const sendInstanceData = async (instanceName: string) => {
-    try {
-      console.log(`📤 Enviando dados da instância para webhook: ${instanceName}`)
-      
-      const response = await fetch('https://webhook.abbadigital.com.br/webhook/dados-da-instancia', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          instanceName: instanceName
-        }),
-      })
-
-      if (!response.ok) {
-        console.error(`❌ Erro ao enviar dados da instância: ${response.status}`)
-        return
-      }
-
-      console.log('✅ Dados da instância enviados com sucesso')
-      
-    } catch (error) {
-      console.error('❌ Erro ao enviar dados da instância:', error)
-    }
-  }
-
   const handleConnect = async () => {
     setIsConnecting(true)
-    setConnectionResult(null)
-    setQrCodeData(null)
-    setImageError(false)
-    setInstanceName(null)
+    resetState()
 
     try {
       const response = await onConnect()
-      console.log('=== RESPOSTA COMPLETA DA API ===')
-      console.log('Estrutura da resposta:', JSON.stringify(response, null, 2))
-      console.log('Campos disponíveis:', Object.keys(response))
+      const processedResponse = processQRCodeResponse(response)
       
-      if (response.code && response.base64) {
-        // Processar o base64 corretamente
-        let processedBase64 = response.base64
-        
-        // Se já tem o prefixo data:image, usar diretamente
-        if (!response.base64.startsWith('data:image/')) {
-          // Se não tem o prefixo, adicionar
-          processedBase64 = `data:image/png;base64,${response.base64}`
-        }
-        
-        console.log('✅ QR Code recebido com sucesso')
-        console.log('Code:', response.code)
-        console.log('Base64 prefix:', processedBase64.substring(0, 30))
-
-        setQrCodeData({
-          code: response.code,
-          base64: processedBase64
-        })
-        
-        // Extrair o nome da instância do campo "Nome da instância"
-        let extractedInstanceName: string
-        
-        if (response["Nome da instância"]) {
-          extractedInstanceName = response["Nome da instância"]
-          console.log('✅ Nome da instância extraído do campo "Nome da instância":', extractedInstanceName)
-        } else if (response.instanceName) {
-          extractedInstanceName = response.instanceName
-          console.log('✅ Nome da instância extraído do campo "instanceName":', extractedInstanceName)
-        } else if (response.instanceId) {
-          extractedInstanceName = response.instanceId
-          console.log('⚠️ Nome da instância não encontrado, usando instanceId como fallback:', extractedInstanceName)
-        } else {
-          extractedInstanceName = response.code
-          console.log('⚠️ Nome da instância não encontrado, usando code como fallback:', extractedInstanceName)
-        }
-        
-        setInstanceName(extractedInstanceName)
-        
-        console.log('=== DEBUG DOS CAMPOS DE INSTÂNCIA ===')
-        console.log('Campo "Nome da instância":', response["Nome da instância"])
-        console.log('Campo "instanceName":', response.instanceName)
-        console.log('Campo "instanceId":', response.instanceId)
-        console.log('Nome final extraído:', extractedInstanceName)
+      if (processedResponse.qrCodeData) {
+        setQrCodeData(processedResponse.qrCodeData)
+        setInstanceName(processedResponse.instanceName)
         
         // Enviar dados da instância para o webhook APÓS gerar o QR Code
-        await sendInstanceData(extractedInstanceName)
+        await sendInstanceData(processedResponse.instanceName)
         
         resetTimer()
         
@@ -127,19 +70,11 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           title: "QR Code gerado!",
           description: "Escaneie o QR Code com seu WhatsApp para conectar.",
         })
-      } else if (response.message) {
-        console.log('📝 Mensagem de conexão:', response.message)
-        setConnectionResult(response.message)
+      } else if (processedResponse.message) {
+        setConnectionResult(processedResponse.message)
         toast({
           title: "Conexão realizada!",
           description: "WhatsApp conectado com sucesso.",
-        })
-      } else {
-        console.error('Resposta inesperada da API:', response)
-        toast({
-          title: "Resposta inesperada",
-          description: "A API retornou dados inesperados. Verifique o console.",
-          variant: "destructive",
         })
       }
     } catch (error) {
@@ -152,33 +87,6 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
       })
     } finally {
       setIsConnecting(false)
-    }
-  }
-
-  const handleNewConnection = () => {
-    setQrCodeData(null)
-    setConnectionResult(null)
-    setImageError(false)
-    setInstanceName(null)
-    resetTimer()
-  }
-
-  const handleImageError = () => {
-    console.error('=== ERRO AO CARREGAR IMAGEM DO QR CODE ===')
-    setImageError(true)
-  }
-
-  const handleImageLoad = () => {
-    console.log('✅ QR Code carregado com sucesso!')
-    setImageError(false)
-  }
-
-  const retryQrCode = () => {
-    console.log('🔄 Tentando recarregar QR Code...')
-    setImageError(false)
-    const img = document.querySelector('#qr-code-img') as HTMLImageElement
-    if (img && qrCodeData) {
-      img.src = qrCodeData.base64
     }
   }
 
