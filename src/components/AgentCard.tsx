@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -143,7 +142,7 @@ export const AgentCard = ({
   }
 
   const getWhatsAppContact = () => {
-    return agent.whatsapp_contact || "Não conectado"
+    return agent.whatsapp_contact || null
   }
 
   const getWhatsAppProfileName = () => {
@@ -151,7 +150,7 @@ export const AgentCard = ({
   }
 
   const isWhatsAppConnected = () => {
-    return !!(agent.whatsapp_profile_name && agent.whatsapp_contact)
+    return !!(agent.whatsapp_contact)
   }
 
   return (
@@ -227,7 +226,9 @@ export const AgentCard = ({
                   {getWhatsAppProfileName() && (
                     <div><strong>Nome:</strong> {getWhatsAppProfileName()}</div>
                   )}
-                  <div><strong>Contato:</strong> {getWhatsAppContact()}</div>
+                  {getWhatsAppContact() && (
+                    <div><strong>Contato:</strong> {getWhatsAppContact()}</div>
+                  )}
                 </div>
               </div>
             )}
