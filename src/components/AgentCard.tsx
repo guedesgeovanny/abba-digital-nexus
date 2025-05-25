@@ -1,10 +1,11 @@
+
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Bot, MoreVertical, Activity, MessageSquare, TrendingUp } from "lucide-react"
+import { Bot, MoreVertical, Activity, MessageSquare, TrendingUp, Smartphone } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -153,6 +154,12 @@ export const AgentCard = ({
     return !!(agent.whatsapp_contact)
   }
 
+  const handleConnectWhatsApp = () => {
+    // Aqui você pode implementar a lógica para abrir o dialog de conexão
+    // Por enquanto, vamos apenas chamar o onEdit para abrir o dialog de edição
+    onEdit(agent)
+  }
+
   return (
     <>
       <Card className="bg-abba-black border-abba-gray hover:border-abba-green transition-all duration-200 cursor-pointer">
@@ -213,15 +220,18 @@ export const AgentCard = ({
               </CardDescription>
             </div>
 
-            {/* Mostrar informações do WhatsApp se conectado */}
-            {isWhatsAppConnected() && (
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-green-400 font-medium">WhatsApp Conectado</span>
-                  <Badge variant="outline" className="border-green-400 text-green-400 text-xs">
-                    Ativo
-                  </Badge>
-                </div>
+            {/* Seção do WhatsApp com estado conectado/desconectado */}
+            <div className={`${isWhatsAppConnected() ? 'bg-green-900/20 border-green-500/30' : 'bg-gray-900/20 border-gray-500/30'} border rounded-lg p-3 space-y-2`}>
+              <div className="flex items-center justify-between text-xs">
+                <span className={`${isWhatsAppConnected() ? 'text-green-400' : 'text-gray-400'} font-medium`}>
+                  WhatsApp {isWhatsAppConnected() ? 'Conectado' : 'Desconectado'}
+                </span>
+                <Badge variant="outline" className={`${isWhatsAppConnected() ? 'border-green-400 text-green-400' : 'border-gray-400 text-gray-400'} text-xs`}>
+                  {isWhatsAppConnected() ? 'Conectado' : 'Desconectado'}
+                </Badge>
+              </div>
+              
+              {isWhatsAppConnected() ? (
                 <div className="text-xs text-green-300">
                   {getWhatsAppProfileName() && (
                     <div><strong>Nome:</strong> {getWhatsAppProfileName()}</div>
@@ -230,8 +240,21 @@ export const AgentCard = ({
                     <div><strong>Contato:</strong> {getWhatsAppContact()}</div>
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Nenhum WhatsApp conectado</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="h-6 text-xs border-green-500 text-green-400 hover:bg-green-500 hover:text-white"
+                    onClick={handleConnectWhatsApp}
+                  >
+                    <Smartphone className="h-3 w-3 mr-1" />
+                    Conectar
+                  </Button>
+                </div>
+              )}
+            </div>
             
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-400">Tipo:</span>
