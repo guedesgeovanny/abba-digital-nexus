@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -131,7 +130,27 @@ export const AgentCard = ({
   }
 
   const getProfilePicture = () => {
+    // Primeiro tenta usar a foto do WhatsApp salva no banco
+    if (agent.whatsapp_profile_picture_data) {
+      return `data:image/jpeg;base64,${agent.whatsapp_profile_picture_data}`
+    }
+    if (agent.whatsapp_profile_picture_url) {
+      return agent.whatsapp_profile_picture_url
+    }
+    // Fallback para configuração antiga
     return configuration?.profile_picture_data || null
+  }
+
+  const getWhatsAppContact = () => {
+    return agent.whatsapp_contact || "Não conectado"
+  }
+
+  const getWhatsAppProfileName = () => {
+    return agent.whatsapp_profile_name || "Perfil não definido"
+  }
+
+  const isWhatsAppConnected = () => {
+    return !!(agent.whatsapp_profile_name && agent.whatsapp_contact)
   }
 
   return (
@@ -193,6 +212,22 @@ export const AgentCard = ({
                 {getInstanceName()}
               </CardDescription>
             </div>
+
+            {/* Mostrar informações do WhatsApp se conectado */}
+            {isWhatsAppConnected() && (
+              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-green-400 font-medium">WhatsApp Conectado</span>
+                  <Badge variant="outline" className="border-green-400 text-green-400 text-xs">
+                    Ativo
+                  </Badge>
+                </div>
+                <div className="text-xs text-green-300">
+                  <div><strong>Nome:</strong> {getWhatsAppProfileName()}</div>
+                  <div><strong>Contato:</strong> {getWhatsAppContact()}</div>
+                </div>
+              </div>
+            )}
             
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-400">Tipo:</span>

@@ -117,6 +117,41 @@ export const useAgents = () => {
     },
   })
 
+  const updateAgentWhatsAppProfile = useMutation({
+    mutationFn: async ({
+      agentId,
+      profileName,
+      contact,
+      profilePictureUrl,
+      profilePictureData,
+    }: {
+      agentId: string
+      profileName: string
+      contact: string
+      profilePictureUrl?: string
+      profilePictureData?: string
+    }) => {
+      const { data, error } = await supabase
+        .from('agents')
+        .update({
+          whatsapp_profile_name: profileName,
+          whatsapp_contact: contact,
+          whatsapp_profile_picture_url: profilePictureUrl,
+          whatsapp_profile_picture_data: profilePictureData,
+          whatsapp_connected_at: new Date().toISOString(),
+        })
+        .eq('id', agentId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents'] })
+    },
+  })
+
   return {
     agents: agentsQuery.data || [],
     isLoading: agentsQuery.isLoading,
@@ -125,6 +160,7 @@ export const useAgents = () => {
     updateAgent: updateAgentMutation.mutate,
     deleteAgent: deleteAgentMutation.mutate,
     updateAgentMetrics: updateAgentMetricsMutation.mutate,
+    updateAgentWhatsAppProfile: updateAgentWhatsAppProfile.mutate,
     isCreating: createAgentMutation.isPending,
     isUpdating: updateAgentMutation.isPending,
     isDeleting: deleteAgentMutation.isPending,

@@ -56,6 +56,11 @@ export type Database = {
           type: Database["public"]["Enums"]["agent_type"]
           updated_at: string
           user_id: string
+          whatsapp_connected_at: string | null
+          whatsapp_contact: string | null
+          whatsapp_profile_name: string | null
+          whatsapp_profile_picture_data: string | null
+          whatsapp_profile_picture_url: string | null
         }
         Insert: {
           channel?: Database["public"]["Enums"]["agent_channel"] | null
@@ -68,6 +73,11 @@ export type Database = {
           type: Database["public"]["Enums"]["agent_type"]
           updated_at?: string
           user_id: string
+          whatsapp_connected_at?: string | null
+          whatsapp_contact?: string | null
+          whatsapp_profile_name?: string | null
+          whatsapp_profile_picture_data?: string | null
+          whatsapp_profile_picture_url?: string | null
         }
         Update: {
           channel?: Database["public"]["Enums"]["agent_channel"] | null
@@ -80,6 +90,11 @@ export type Database = {
           type?: Database["public"]["Enums"]["agent_type"]
           updated_at?: string
           user_id?: string
+          whatsapp_connected_at?: string | null
+          whatsapp_contact?: string | null
+          whatsapp_profile_name?: string | null
+          whatsapp_profile_picture_data?: string | null
+          whatsapp_profile_picture_url?: string | null
         }
         Relationships: []
       }

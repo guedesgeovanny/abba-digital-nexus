@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getInstanceProfile, downloadProfileImage, saveProfileToDatabase } from '@/services/webhookService'
 import { ProfileData } from '@/utils/whatsappUtils'
+import { useAgents } from '@/hooks/useAgents'
 
 interface UseProfilePollingProps {
   instanceName: string | null
@@ -17,6 +18,7 @@ export const useProfilePolling = ({
   onProfileReceived 
 }: UseProfilePollingProps) => {
   const [isPolling, setIsPolling] = useState(false)
+  const { updateAgentWhatsAppProfile } = useAgents()
 
   const pollProfile = useCallback(async () => {
     if (!instanceName || !isActive) return
@@ -44,16 +46,18 @@ export const useProfilePolling = ({
         
         // Salvar no banco se temos o agentId
         if (agentId) {
-          const saved = await saveProfileToDatabase(agentId, {
+          console.log('💾 Salvando dados do perfil no banco...')
+          
+          // Usar a nova função do hook useAgents para salvar no banco
+          updateAgentWhatsAppProfile({
+            agentId,
             profileName: profileData.profilename,
             contact: profileData.contato,
             profilePictureUrl: profileData.fotodoperfil,
             profilePictureData: profilePictureData
           })
-          
-          if (saved) {
-            console.log('✅ Dados salvos no banco com sucesso')
-          }
+
+          console.log('✅ Dados do perfil salvos no banco com sucesso')
         }
         
         setIsPolling(false)
@@ -64,7 +68,7 @@ export const useProfilePolling = ({
     } catch (error) {
       console.error('❌ Erro no polling do perfil:', error)
     }
-  }, [instanceName, agentId, isActive, onProfileReceived])
+  }, [instanceName, agentId, isActive, onProfileReceived, updateAgentWhatsAppProfile])
 
   useEffect(() => {
     if (!isActive || !instanceName) {
