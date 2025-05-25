@@ -9,6 +9,77 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_metrics: {
+        Row: {
+          agent_id: string
+          conversations_count: number
+          id: string
+          last_activity: string | null
+          success_rate: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          conversations_count?: number
+          id?: string
+          last_activity?: string | null
+          success_rate?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          conversations_count?: number
+          id?: string
+          last_activity?: string | null
+          success_rate?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_metrics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          configuration: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["agent_status"]
+          type: Database["public"]["Enums"]["agent_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["agent_status"]
+          type: Database["public"]["Enums"]["agent_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["agent_status"]
+          type?: Database["public"]["Enums"]["agent_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_interactions: {
         Row: {
           channel: Database["public"]["Enums"]["contact_channel"] | null
@@ -202,6 +273,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      agent_status: "active" | "inactive" | "training"
+      agent_type:
+        | "vendas"
+        | "atendimento"
+        | "marketing"
+        | "rh"
+        | "personalizado"
       contact_channel:
         | "instagram"
         | "whatsapp"
@@ -331,6 +409,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_status: ["active", "inactive", "training"],
+      agent_type: ["vendas", "atendimento", "marketing", "rh", "personalizado"],
       contact_channel: [
         "instagram",
         "whatsapp",
