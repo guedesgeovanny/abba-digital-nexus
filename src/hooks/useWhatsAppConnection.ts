@@ -75,28 +75,31 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
       console.log('Estrutura da resposta:', JSON.stringify(response, null, 2))
       
       if (response.code && response.base64) {
-        if (!isValidBase64(response.base64)) {
-          console.error('Base64 inválido recebido!')
-          toast({
-            title: "Erro no QR Code",
-            description: "Dados do QR Code inválidos. Tente novamente.",
-            variant: "destructive",
-          })
-          return
+        // Processar o base64 corretamente
+        let processedBase64 = response.base64
+        
+        // Se já tem o prefixo data:image, usar diretamente
+        if (!response.base64.startsWith('data:image/')) {
+          // Se não tem o prefixo, adicionar
+          processedBase64 = `data:image/png;base64,${response.base64}`
         }
+        
+        console.log('✅ QR Code recebido com sucesso')
+        console.log('Code:', response.code)
+        console.log('Base64 prefix:', processedBase64.substring(0, 30))
 
         setQrCodeData({
           code: response.code,
-          base64: response.base64
+          base64: processedBase64
         })
         
-        // Usar o response.code como nome da instância (que vem do backend)
+        // Usar o response.code como nome da instância
         const extractedInstanceName = response.code
         setInstanceName(extractedInstanceName)
         
         console.log(`📱 Instância criada: ${extractedInstanceName}`)
         
-        // Enviar dados da instância para o webhook
+        // Enviar dados da instância para o webhook APÓS gerar o QR Code
         await sendInstanceData(extractedInstanceName)
         
         resetTimer()

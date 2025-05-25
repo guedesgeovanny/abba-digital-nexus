@@ -75,12 +75,6 @@ export const WhatsAppQRCode = ({
           Escaneie com seu WhatsApp
         </p>
         
-        {instanceName && (
-          <p className="text-xs text-gray-500">
-            Instância: {instanceName}
-          </p>
-        )}
-        
         {/* Timer do QR Code */}
         <WhatsAppQRCodeTimer 
           timeLeft={timeLeft}
