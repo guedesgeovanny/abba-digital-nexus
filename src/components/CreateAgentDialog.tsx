@@ -100,51 +100,58 @@ export const CreateAgentDialog = ({
       console.log('Tipo da resposta:', typeof data)
       console.log('Keys da resposta:', Object.keys(data || {}))
       
-      // Verificar a nova estrutura JSON
-      if (data.qrcode) {
-        console.log('=== OBJETO QRCODE ENCONTRADO ===')
-        console.log('QRCode object:', JSON.stringify(data.qrcode, null, 2))
-        console.log('QRCode keys:', Object.keys(data.qrcode))
+      // Verificar se os dados estão diretamente no root (nova estrutura)
+      if (data.code && data.base64) {
+        console.log('✅ Dados encontrados no root da resposta')
+        console.log('Code:', data.code)
+        console.log('Base64 length:', data.base64.length)
+        console.log('Base64 prefix:', data.base64.substring(0, 30))
         
-        if (data.qrcode.code) {
-          console.log('✅ Code encontrado:', data.qrcode.code)
-        } else {
-          console.log('❌ Code não encontrado')
+        // Verificar se o base64 já tem o prefixo data:image
+        let cleanBase64 = data.base64
+        if (data.base64.startsWith('data:image/')) {
+          cleanBase64 = data.base64.split(',')[1]
+          console.log('✅ Removido prefixo data:image do base64')
         }
         
-        if (data.qrcode.base64) {
-          console.log('✅ Base64 encontrado')
-          console.log('Tamanho do base64:', data.qrcode.base64.length)
-          console.log('Primeiros 50 chars:', data.qrcode.base64.substring(0, 50))
-          console.log('Últimos 50 chars:', data.qrcode.base64.substring(data.qrcode.base64.length - 50))
-        } else {
-          console.log('❌ Base64 não encontrado')
-        }
-      } else {
-        console.log('❌ Objeto qrcode não encontrado na resposta')
-      }
-      
-      if (data.instanceId) {
-        console.log('✅ Instance ID encontrado:', data.instanceId)
-      }
-      
-      // Retornar os dados com a nova estrutura
-      if (data.qrcode && data.qrcode.code && data.qrcode.base64) {
         return {
-          code: data.qrcode.code,
-          base64: data.qrcode.base64,
+          code: data.code,
+          base64: cleanBase64,
           instanceId: data.instanceId
         }
-      } else if (data.message) {
+      }
+      
+      // Verificar estrutura aninhada (compatibilidade)
+      if (data.qrcode && data.qrcode.code && data.qrcode.base64) {
+        console.log('✅ Dados encontrados em data.qrcode')
+        
+        let cleanBase64 = data.qrcode.base64
+        if (data.qrcode.base64.startsWith('data:image/')) {
+          cleanBase64 = data.qrcode.base64.split(',')[1]
+          console.log('✅ Removido prefixo data:image do base64')
+        }
+        
+        return {
+          code: data.qrcode.code,
+          base64: cleanBase64,
+          instanceId: data.instanceId
+        }
+      }
+      
+      // Se há uma mensagem mas não QR code
+      if (data.message) {
         console.log('📝 Mensagem de conexão:', data.message)
         return {
           message: data.message,
           instanceId: data.instanceId
         }
-      } else {
-        console.error('❌ Estrutura de resposta inesperada:', data)
-        throw new Error('Estrutura de resposta inválida da API')
       }
+      
+      // Se chegou até aqui, a estrutura está inesperada
+      console.error('❌ Estrutura de resposta inesperada:', data)
+      console.error('Campos disponíveis:', Object.keys(data))
+      throw new Error('Dados do QR Code não encontrados na resposta da API')
+      
     } catch (error) {
       console.error("=== ERRO AO CONECTAR WHATSAPP ===")
       console.error("Tipo do erro:", typeof error)
