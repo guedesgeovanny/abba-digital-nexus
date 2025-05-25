@@ -93,10 +93,13 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           base64: processedBase64
         })
         
-        // Extrair o nome da instância do campo correto - PRIORIZAR "instance-Name"
+        // Extrair o nome da instância do campo correto "Nome da instância"
         let extractedInstanceName: string
         
-        if (response["instance-Name"]) {
+        if (response["Nome da instância"]) {
+          extractedInstanceName = response["Nome da instância"]
+          console.log('✅ Nome da instância extraído do campo "Nome da instância":', extractedInstanceName)
+        } else if (response["instance-Name"]) {
           extractedInstanceName = response["instance-Name"]
           console.log('✅ Nome da instância extraído do campo "instance-Name":', extractedInstanceName)
         } else if (response.instanceName) {
@@ -110,6 +113,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
         setInstanceName(extractedInstanceName)
         
         console.log('=== DEBUG DOS CAMPOS DE INSTÂNCIA ===')
+        console.log('Campo "Nome da instância":', response["Nome da instância"])
         console.log('Campo "instance-Name":', response["instance-Name"])
         console.log('Campo "instanceName":', response.instanceName)
         console.log('Nome final extraído:', extractedInstanceName)

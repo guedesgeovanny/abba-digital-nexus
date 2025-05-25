@@ -13,10 +13,11 @@ export interface QRCodeData {
 }
 
 export interface WhatsAppResponse {
+  instanceId?: string
+  "Nome da instância"?: string
   code?: string
   base64?: string
   message?: string
   instanceName?: string
   "instance-Name"?: string
-  instanceId?: string
 }
