@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -94,7 +93,15 @@ export const CreateAgentDialog = ({
         throw new Error('Erro na requisição')
       }
 
-      // A resposta será mostrada pelo componente WhatsAppConnection
+      const data = await response.json()
+      console.log('Resposta da API:', data)
+      
+      // Retorna os dados para o componente WhatsAppConnection
+      return {
+        code: data.code,
+        base64: data.base64,
+        message: data.message
+      }
     } catch (error) {
       console.error('Erro ao conectar WhatsApp:', error)
       throw error
