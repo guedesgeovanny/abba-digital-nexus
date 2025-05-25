@@ -16,7 +16,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
   const [instanceName, setInstanceName] = useState<string | null>(null)
   const { toast } = useToast()
 
-  // Timer simples para o QR Code (sem polling)
+  // Timer simples para o QR Code (60 segundos)
   const {
     timeLeft,
     isExpired,
@@ -90,7 +90,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           base64: response.base64
         })
         
-        // Extrair nome da instância do código
+        // Usar o response.code como nome da instância (que vem do backend)
         const extractedInstanceName = response.code
         setInstanceName(extractedInstanceName)
         
@@ -156,7 +156,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setImageError(false)
     const img = document.querySelector('#qr-code-img') as HTMLImageElement
     if (img && qrCodeData) {
-      img.src = `data:image/png;base64,${qrCodeData.base64}`
+      img.src = qrCodeData.base64
     }
   }
 
