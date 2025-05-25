@@ -17,6 +17,11 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
     qrCodeData,
     connectionResult,
     imageError,
+    instanceName,
+    timeLeft,
+    isExpired,
+    formattedTime,
+    connectionStatus,
     handleConnect,
     handleNewConnection,
     handleImageError,
@@ -48,6 +53,11 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
             <WhatsAppQRCode
               qrCodeData={qrCodeData}
               imageError={imageError}
+              isExpired={isExpired}
+              timeLeft={timeLeft}
+              formattedTime={formattedTime}
+              connectionStatus={connectionStatus}
+              instanceName={instanceName}
               onImageError={handleImageError}
               onImageLoad={handleImageLoad}
               onRetryQrCode={retryQrCode}
@@ -55,7 +65,7 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
             />
           )}
 
-          {connectionResult && (
+          {connectionResult && connectionStatus !== 'connected' && (
             <WhatsAppConnectionResult
               connectionResult={connectionResult}
               onNewConnection={handleNewConnection}

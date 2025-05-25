@@ -2,6 +2,8 @@
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { isValidBase64, QRCodeData, WhatsAppResponse } from "@/utils/whatsappUtils"
+import { useQRCodeTimer } from "./useQRCodeTimer"
+import { useConnectionStatus } from "./useConnectionStatus"
 
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
@@ -12,32 +14,50 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
   const [qrCodeData, setQrCodeData] = useState<QRCodeData | null>(null)
   const [connectionResult, setConnectionResult] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
+  const [instanceName, setInstanceName] = useState<string | null>(null)
   const { toast } = useToast()
+
+  // Timer para o QR Code
+  const {
+    timeLeft,
+    isExpired,
+    resetTimer,
+    formattedTime
+  } = useQRCodeTimer({
+    duration: 60,
+    onExpire: () => {
+      console.log('QR Code expirado')
+      toast({
+        title: "QR Code Expirado",
+        description: "Gere um novo QR Code para continuar.",
+        variant: "destructive",
+      })
+    },
+    isActive: !!qrCodeData && !connectionResult
+  })
+
+  // Verificação de status da conexão
+  const { connectionStatus, resetStatus } = useConnectionStatus({
+    instanceName,
+    isActive: !!qrCodeData && !isExpired && !connectionResult,
+    onConnected: () => {
+      setConnectionResult("WhatsApp conectado com sucesso!")
+      setQrCodeData(null)
+    }
+  })
 
   const handleConnect = async () => {
     setIsConnecting(true)
     setConnectionResult(null)
     setQrCodeData(null)
     setImageError(false)
+    setInstanceName(null)
+    resetStatus()
 
     try {
       const response = await onConnect()
       console.log('=== RESPOSTA COMPLETA DA API ===')
       console.log('Estrutura da resposta:', JSON.stringify(response, null, 2))
-      console.log('Tipo da resposta:', typeof response)
-      console.log('Keys da resposta:', Object.keys(response || {}))
-      
-      if (response.code) {
-        console.log('Código encontrado:', response.code)
-      }
-      
-      if (response.base64) {
-        console.log('Base64 encontrado')
-        console.log('Tamanho do base64:', response.base64.length)
-        console.log('Primeiros 50 chars:', response.base64.substring(0, 50))
-        console.log('Últimos 50 chars:', response.base64.substring(response.base64.length - 50))
-        console.log('É base64 válido?', isValidBase64(response.base64))
-      }
       
       if (response.code && response.base64) {
         if (!isValidBase64(response.base64)) {
@@ -54,6 +74,12 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
           code: response.code,
           base64: response.base64
         })
+        
+        // Extrair nome da instância do código (assumindo que está no formato esperado)
+        setInstanceName(response.code)
+        
+        resetTimer()
+        
         toast({
           title: "QR Code gerado!",
           description: "Escaneie o QR Code com seu WhatsApp para conectar.",
@@ -75,7 +101,6 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
       }
     } catch (error) {
       console.error("=== ERRO AO CONECTAR WHATSAPP ===")
-      console.error("Tipo do erro:", typeof error)
       console.error("Erro completo:", error)
       toast({
         title: "Erro na conexão",
@@ -91,11 +116,13 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setQrCodeData(null)
     setConnectionResult(null)
     setImageError(false)
+    setInstanceName(null)
+    resetStatus()
+    resetTimer()
   }
 
   const handleImageError = () => {
     console.error('=== ERRO AO CARREGAR IMAGEM DO QR CODE ===')
-    console.error('Base64 que falhou:', qrCodeData?.base64?.substring(0, 100) + '...')
     setImageError(true)
   }
 
@@ -118,6 +145,11 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     qrCodeData,
     connectionResult,
     imageError,
+    instanceName,
+    timeLeft,
+    isExpired,
+    formattedTime,
+    connectionStatus,
     handleConnect,
     handleNewConnection,
     handleImageError,
