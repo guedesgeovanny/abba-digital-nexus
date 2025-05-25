@@ -73,6 +73,9 @@ export const CreateAgentDialog = ({
     try {
       const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
       
+      console.log('=== ENVIANDO REQUISIÇÃO PARA API ===')
+      console.log('Instance Name:', instanceName)
+      
       const response = await fetch('https://webhook.abbadigital.com.br/webhook/nova-instancia', {
         method: 'POST',
         headers: {
@@ -88,19 +91,64 @@ export const CreateAgentDialog = ({
       })
 
       if (!response.ok) {
-        throw new Error('Erro na requisição')
+        throw new Error(`Erro HTTP: ${response.status}`)
       }
 
       const data = await response.json()
-      console.log('Resposta da API:', data)
+      console.log('=== RESPOSTA COMPLETA DA API ===')
+      console.log('Estrutura da resposta:', JSON.stringify(data, null, 2))
+      console.log('Tipo da resposta:', typeof data)
+      console.log('Keys da resposta:', Object.keys(data || {}))
       
-      return {
-        code: data.code,
-        base64: data.base64,
-        message: data.message
+      // Verificar a nova estrutura JSON
+      if (data.qrcode) {
+        console.log('=== OBJETO QRCODE ENCONTRADO ===')
+        console.log('QRCode object:', JSON.stringify(data.qrcode, null, 2))
+        console.log('QRCode keys:', Object.keys(data.qrcode))
+        
+        if (data.qrcode.code) {
+          console.log('✅ Code encontrado:', data.qrcode.code)
+        } else {
+          console.log('❌ Code não encontrado')
+        }
+        
+        if (data.qrcode.base64) {
+          console.log('✅ Base64 encontrado')
+          console.log('Tamanho do base64:', data.qrcode.base64.length)
+          console.log('Primeiros 50 chars:', data.qrcode.base64.substring(0, 50))
+          console.log('Últimos 50 chars:', data.qrcode.base64.substring(data.qrcode.base64.length - 50))
+        } else {
+          console.log('❌ Base64 não encontrado')
+        }
+      } else {
+        console.log('❌ Objeto qrcode não encontrado na resposta')
+      }
+      
+      if (data.instanceId) {
+        console.log('✅ Instance ID encontrado:', data.instanceId)
+      }
+      
+      // Retornar os dados com a nova estrutura
+      if (data.qrcode && data.qrcode.code && data.qrcode.base64) {
+        return {
+          code: data.qrcode.code,
+          base64: data.qrcode.base64,
+          instanceId: data.instanceId
+        }
+      } else if (data.message) {
+        console.log('📝 Mensagem de conexão:', data.message)
+        return {
+          message: data.message,
+          instanceId: data.instanceId
+        }
+      } else {
+        console.error('❌ Estrutura de resposta inesperada:', data)
+        throw new Error('Estrutura de resposta inválida da API')
       }
     } catch (error) {
-      console.error('Erro ao conectar WhatsApp:', error)
+      console.error("=== ERRO AO CONECTAR WHATSAPP ===")
+      console.error("Tipo do erro:", typeof error)
+      console.error("Erro completo:", error)
       throw error
     }
   }
