@@ -1,24 +1,15 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageSquare, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface WhatsAppConnectionProps {
-  instanceName: string
-  onInstanceNameChange: (value: string) => void
-  apiKey: string
-  onApiKeyChange: (value: string) => void
   onConnect: () => Promise<void>
 }
 
 export const WhatsAppConnection = ({
-  instanceName,
-  onInstanceNameChange,
-  apiKey,
-  onApiKeyChange,
   onConnect
 }: WhatsAppConnectionProps) => {
   const [isConnecting, setIsConnecting] = useState(false)
@@ -26,15 +17,6 @@ export const WhatsAppConnection = ({
   const { toast } = useToast()
 
   const handleConnect = async () => {
-    if (!instanceName.trim() || !apiKey.trim()) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha o nome da instância e a chave API.",
-        variant: "destructive",
-      })
-      return
-    }
-
     setIsConnecting(true)
     setConnectionResult(null)
 
@@ -69,37 +51,9 @@ export const WhatsAppConnection = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-abba-text mb-2 block">
-            Nome da Instância
-          </label>
-          <Input
-            value={instanceName}
-            onChange={(e) => onInstanceNameChange(e.target.value)}
-            placeholder="Ex: meu-agente-vendas"
-            className="bg-abba-black border-abba-gray text-abba-text"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Este será o nome usado na API Evolution
-          </p>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-abba-text mb-2 block">
-            Chave API Evolution
-          </label>
-          <Input
-            type="password"
-            value={apiKey}
-            onChange={(e) => onApiKeyChange(e.target.value)}
-            placeholder="Sua chave API da Evolution"
-            className="bg-abba-black border-abba-gray text-abba-text"
-          />
-        </div>
-
         <Button
           onClick={handleConnect}
-          disabled={isConnecting || !instanceName.trim() || !apiKey.trim()}
+          disabled={isConnecting}
           className="w-full bg-green-600 hover:bg-green-700 text-white"
         >
           {isConnecting ? (

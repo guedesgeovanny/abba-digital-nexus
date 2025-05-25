@@ -40,17 +40,14 @@ export const CreateAgentDialog = ({
     channel: "" as AgentChannel,
   })
 
-  const [whatsappConfig, setWhatsappConfig] = useState({
-    instanceName: "",
-    apiKey: "",
-  })
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.name && formData.type) {
+      const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      
       const configuration = formData.channel === 'whatsapp' ? {
-        evolution_instance_name: whatsappConfig.instanceName,
-        evolution_api_key: whatsappConfig.apiKey,
+        evolution_instance_name: instanceName,
+        evolution_api_key: "673dc3960df85e704b3db2f1362f0e99",
         connection_status: 'disconnected'
       } : undefined
 
@@ -71,16 +68,14 @@ export const CreateAgentDialog = ({
         description: "",
         channel: "" as AgentChannel,
       })
-      setWhatsappConfig({
-        instanceName: "",
-        apiKey: "",
-      })
       onClose()
     }
   }
 
   const handleWhatsAppConnect = async () => {
     try {
+      const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      
       const response = await fetch('https://webhook.abbadigital.com.br/webhook/nova-instancia', {
         method: 'POST',
         headers: {
@@ -90,8 +85,8 @@ export const CreateAgentDialog = ({
           agentName: formData.name,
           agentType: formData.type,
           channel: 'whatsapp',
-          instanceName: whatsappConfig.instanceName,
-          apiKey: whatsappConfig.apiKey,
+          instanceName: instanceName,
+          apiKey: "673dc3960df85e704b3db2f1362f0e99",
         }),
       })
 
@@ -103,27 +98,6 @@ export const CreateAgentDialog = ({
     } catch (error) {
       console.error('Erro ao conectar WhatsApp:', error)
       throw error
-    }
-  }
-
-  // Auto-fill instance name when agent name changes
-  const handleNameChange = (value: string) => {
-    setFormData({ ...formData, name: value })
-    if (formData.channel === 'whatsapp') {
-      setWhatsappConfig({ 
-        ...whatsappConfig, 
-        instanceName: value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-      })
-    }
-  }
-
-  const handleChannelChange = (value: AgentChannel) => {
-    setFormData({ ...formData, channel: value })
-    if (value === 'whatsapp' && formData.name) {
-      setWhatsappConfig({ 
-        ...whatsappConfig, 
-        instanceName: formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-      })
     }
   }
 
@@ -173,7 +147,7 @@ export const CreateAgentDialog = ({
             </label>
             <Input
               value={formData.name}
-              onChange={(e) => handleNameChange(e.target.value)}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: Agente Vendas Pro"
               className="bg-abba-gray border-abba-gray text-abba-text"
               required
@@ -208,7 +182,7 @@ export const CreateAgentDialog = ({
             </label>
             <Select 
               value={formData.channel || ""} 
-              onValueChange={handleChannelChange}
+              onValueChange={(value: AgentChannel) => setFormData({ ...formData, channel: value })}
             >
               <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text">
                 <SelectValue placeholder="Selecione o canal" />
@@ -255,10 +229,6 @@ export const CreateAgentDialog = ({
 
           {formData.channel === 'whatsapp' && (
             <WhatsAppConnection
-              instanceName={whatsappConfig.instanceName}
-              onInstanceNameChange={(value) => setWhatsappConfig({ ...whatsappConfig, instanceName: value })}
-              apiKey={whatsappConfig.apiKey}
-              onApiKeyChange={(value) => setWhatsappConfig({ ...whatsappConfig, apiKey: value })}
               onConnect={handleWhatsAppConnect}
             />
           )}
