@@ -11,6 +11,7 @@ interface WhatsAppQRCodeProps {
   timeLeft: number
   formattedTime: string
   instanceName?: string
+  isPolling: boolean
   onImageError: () => void
   onImageLoad: () => void
   onRetryQrCode: () => void
@@ -24,6 +25,7 @@ export const WhatsAppQRCode = ({
   timeLeft,
   formattedTime,
   instanceName,
+  isPolling,
   onImageError,
   onImageLoad,
   onRetryQrCode,
@@ -74,6 +76,13 @@ export const WhatsAppQRCode = ({
         <p className="text-sm text-gray-300 font-medium">
           Escaneie com seu WhatsApp
         </p>
+        
+        {/* Indicador de polling se ativo */}
+        {isPolling && (
+          <p className="text-xs text-blue-400">
+            Aguardando conexão...
+          </p>
+        )}
         
         {/* Timer do QR Code */}
         <WhatsAppQRCodeTimer 
