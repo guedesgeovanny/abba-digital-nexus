@@ -42,27 +42,17 @@ export const processQRCodeResponse = (response: WhatsAppResponse) => {
 }
 
 const extractInstanceName = (response: WhatsAppResponse): string => {
-  let extractedInstanceName: string
+  // Usar APENAS o campo "Nome da instância" da resposta
+  const instanceName = response["Nome da instância"]
   
-  if (response["Nome da instância"]) {
-    extractedInstanceName = response["Nome da instância"]
-    console.log('✅ Nome da instância extraído do campo "Nome da instância":', extractedInstanceName)
-  } else if (response.instanceName) {
-    extractedInstanceName = response.instanceName
-    console.log('✅ Nome da instância extraído do campo "instanceName":', extractedInstanceName)
-  } else if (response.instanceId) {
-    extractedInstanceName = response.instanceId
-    console.log('⚠️ Nome da instância não encontrado, usando instanceId como fallback:', extractedInstanceName)
-  } else {
-    extractedInstanceName = response.code || 'unknown'
-    console.log('⚠️ Nome da instância não encontrado, usando code como fallback:', extractedInstanceName)
+  console.log('=== EXTRAÇÃO DO NOME DA INSTÂNCIA ===')
+  console.log('Campo "Nome da instância":', instanceName)
+  
+  if (!instanceName) {
+    console.error('❌ Campo "Nome da instância" não encontrado na resposta!')
+    throw new Error('Nome da instância não encontrado na resposta da API')
   }
   
-  console.log('=== DEBUG DOS CAMPOS DE INSTÂNCIA ===')
-  console.log('Campo "Nome da instância":', response["Nome da instância"])
-  console.log('Campo "instanceName":', response.instanceName)
-  console.log('Campo "instanceId":', response.instanceId)
-  console.log('Nome final extraído:', extractedInstanceName)
-  
-  return extractedInstanceName
+  console.log('✅ Nome da instância extraído:', instanceName)
+  return instanceName
 }
