@@ -1,10 +1,10 @@
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Plus, Search, Bot } from "lucide-react"
 import { useAgents } from "@/hooks/useAgents"
-import { AgentCard } from "@/components/AgentCard"
+import { AgentsPageHeader } from "@/components/AgentsPageHeader"
+import { AgentSearch } from "@/components/AgentSearch"
+import { AgentsList } from "@/components/AgentsList"
+import { EmptyAgentsState } from "@/components/EmptyAgentsState"
 import { CreateAgentDialog } from "@/components/CreateAgentDialog"
 import { Tables } from "@/integrations/supabase/types"
 import { useToast } from "@/hooks/use-toast"
@@ -75,6 +75,9 @@ const Agents = () => {
     }
   }
 
+  const openCreateDialog = () => setIsCreateDialogOpen(true)
+  const closeCreateDialog = () => setIsCreateDialogOpen(false)
+
   if (isLoading) {
     return (
       <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
@@ -96,72 +99,29 @@ const Agents = () => {
         />
       </div>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-abba-text">Agentes</h2>
-          <p className="text-gray-400">
-            Gerencie seus agentes digitais inteligentes
-          </p>
-        </div>
-        <Button 
-          onClick={() => setIsCreateDialogOpen(true)}
-          className="bg-abba-gradient hover:opacity-90 text-abba-black font-semibold"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Agente
-        </Button>
-      </div>
+      <AgentsPageHeader onCreateAgent={openCreateDialog} />
 
-      {/* Search and Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Buscar agentes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
-          />
-        </div>
-      </div>
+      <AgentSearch 
+        searchTerm={searchTerm} 
+        onSearchChange={setSearchTerm} 
+      />
 
-      {/* Agents Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredAgents.map((agent) => (
-          <AgentCard
-            key={agent.id}
-            agent={agent}
-            onEdit={handleEditAgent}
-            onDelete={handleDeleteAgent}
-          />
-        ))}
-      </div>
-
-      {filteredAgents.length === 0 && (
-        <div className="text-center py-12">
-          <Bot className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-abba-text mb-2">
-            {agents.length === 0 ? "Nenhum agente criado ainda" : "Nenhum agente encontrado"}
-          </h3>
-          <p className="text-gray-400 mb-4">
-            {agents.length === 0 
-              ? "Crie seu primeiro agente para começar a automatizar suas conversas."
-              : "Tente ajustar sua pesquisa ou criar um novo agente."
-            }
-          </p>
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="bg-abba-gradient hover:opacity-90 text-abba-black font-semibold"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {agents.length === 0 ? "Criar Primeiro Agente" : "Novo Agente"}
-          </Button>
-        </div>
+      {filteredAgents.length === 0 ? (
+        <EmptyAgentsState 
+          hasAgents={agents.length > 0}
+          onCreateAgent={openCreateDialog}
+        />
+      ) : (
+        <AgentsList
+          agents={filteredAgents}
+          onEdit={handleEditAgent}
+          onDelete={handleDeleteAgent}
+        />
       )}
 
       <CreateAgentDialog
         isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
+        onClose={closeCreateDialog}
         onCreateAgent={handleCreateAgent}
         isCreating={isCreating}
       />
