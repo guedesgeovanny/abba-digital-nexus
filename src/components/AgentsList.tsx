@@ -11,10 +11,19 @@ interface AgentsListProps {
   agents: AgentWithMetrics[]
   onEdit: (agent: Agent) => void
   onDelete: (id: string) => void
+  onToggleStatus: (id: string, newStatus: 'active' | 'inactive') => void
   isDeleting?: boolean
+  isUpdating?: boolean
 }
 
-export const AgentsList = ({ agents, onEdit, onDelete, isDeleting = false }: AgentsListProps) => {
+export const AgentsList = ({ 
+  agents, 
+  onEdit, 
+  onDelete, 
+  onToggleStatus,
+  isDeleting = false,
+  isUpdating = false 
+}: AgentsListProps) => {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {agents.map((agent) => (
@@ -23,7 +32,9 @@ export const AgentsList = ({ agents, onEdit, onDelete, isDeleting = false }: Age
           agent={agent}
           onEdit={onEdit}
           onDelete={onDelete}
+          onToggleStatus={onToggleStatus}
           isDeleting={isDeleting}
+          isUpdating={isUpdating}
         />
       ))}
     </div>

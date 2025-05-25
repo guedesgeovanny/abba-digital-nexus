@@ -20,8 +20,10 @@ const Agents = () => {
     agents, 
     isLoading, 
     createAgent, 
+    updateAgent,
     deleteAgent, 
     isCreating,
+    isUpdating,
     isDeleting
   } = useAgents()
 
@@ -74,6 +76,25 @@ const Agents = () => {
     })
   }
 
+  const handleToggleStatus = (id: string, newStatus: 'active' | 'inactive') => {
+    updateAgent({ id, status: newStatus }, {
+      onSuccess: () => {
+        toast({
+          title: "Status atualizado",
+          description: `Agente ${newStatus === 'active' ? 'ativado' : 'desativado'} com sucesso.`,
+        })
+      },
+      onError: (error) => {
+        toast({
+          title: "Erro ao atualizar status",
+          description: "Ocorreu um erro ao alterar o status do agente. Tente novamente.",
+          variant: "destructive",
+        })
+        console.error("Error updating agent status:", error)
+      }
+    })
+  }
+
   const openCreateDialog = () => setIsCreateDialogOpen(true)
   const closeCreateDialog = () => setIsCreateDialogOpen(false)
 
@@ -115,7 +136,9 @@ const Agents = () => {
           agents={filteredAgents}
           onEdit={handleEditAgent}
           onDelete={handleDeleteAgent}
+          onToggleStatus={handleToggleStatus}
           isDeleting={isDeleting}
+          isUpdating={isUpdating}
         />
       )}
 
