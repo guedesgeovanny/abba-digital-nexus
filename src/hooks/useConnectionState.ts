@@ -1,6 +1,6 @@
 
 import { useState } from "react"
-import { QRCodeData } from "@/utils/whatsappUtils"
+import { QRCodeData, ProfileData } from "@/utils/whatsappUtils"
 
 export const useConnectionState = () => {
   const [isConnecting, setIsConnecting] = useState(false)
@@ -8,12 +8,16 @@ export const useConnectionState = () => {
   const [connectionResult, setConnectionResult] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   const [instanceName, setInstanceName] = useState<string | null>(null)
+  const [profileData, setProfileData] = useState<ProfileData | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const resetState = () => {
     setConnectionResult(null)
     setQrCodeData(null)
     setImageError(false)
     setInstanceName(null)
+    setProfileData(null)
+    setIsDeleting(false)
   }
 
   const handleNewConnection = () => {
@@ -50,6 +54,10 @@ export const useConnectionState = () => {
     setImageError,
     instanceName,
     setInstanceName,
+    profileData,
+    setProfileData,
+    isDeleting,
+    setIsDeleting,
     resetState,
     handleNewConnection,
     handleImageError,

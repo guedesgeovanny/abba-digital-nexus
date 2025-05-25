@@ -1,14 +1,15 @@
 
 import { useToast } from "@/hooks/use-toast"
-import { WhatsAppResponse } from "@/utils/whatsappUtils"
+import { WhatsAppResponse, ProfileData } from "@/utils/whatsappUtils"
 import { useQRCodeTimer } from "./useQRCodeTimer"
 import { useConnectionState } from "./useConnectionState"
-import { sendInstanceData } from "@/services/webhookService"
+import { useProfilePolling } from "./useProfilePolling"
+import { sendInstanceData, deleteInstanceConnection } from "@/services/webhookService"
 import { processQRCodeResponse } from "@/utils/qrCodeProcessor"
 
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
-  instanceName: string // Adicionar o instanceName como prop
+  instanceName: string
 }
 
 export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppConnectionProps) => {
@@ -24,6 +25,10 @@ export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppCo
     imageError,
     instanceName: storedInstanceName,
     setInstanceName,
+    profileData,
+    setProfileData,
+    isDeleting,
+    setIsDeleting,
     resetState,
     handleNewConnection,
     handleImageError,
@@ -31,7 +36,7 @@ export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppCo
     retryQrCode
   } = useConnectionState()
 
-  // Timer simples para o QR Code (60 segundos)
+  // Timer para o QR Code (60 segundos)
   const {
     timeLeft,
     isExpired,
@@ -47,7 +52,23 @@ export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppCo
         variant: "destructive",
       })
     },
-    isActive: !!qrCodeData && !connectionResult
+    isActive: !!qrCodeData && !connectionResult && !profileData
+  })
+
+  // Polling para buscar dados do perfil
+  const { isPolling } = useProfilePolling({
+    instanceName: storedInstanceName,
+    isActive: !!qrCodeData && !connectionResult && !profileData && !isExpired,
+    onProfileReceived: (receivedProfileData: ProfileData) => {
+      console.log('✅ Perfil recebido via polling:', receivedProfileData)
+      setProfileData(receivedProfileData)
+      setConnectionResult("WhatsApp conectado com sucesso!")
+      
+      toast({
+        title: "WhatsApp Conectado!",
+        description: `Conectado como ${receivedProfileData.profileName}`,
+      })
+    }
   })
 
   const handleConnect = async () => {
@@ -73,7 +94,7 @@ export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppCo
         
         toast({
           title: "QR Code gerado!",
-          description: "Escaneie o QR Code com seu WhatsApp para conectar.",
+          description: "Escaneie o QR Code com seu WhatsApp. Aguardando conexão...",
         })
       } else if (processedResponse.message) {
         setConnectionResult(processedResponse.message)
@@ -96,17 +117,55 @@ export const useWhatsAppConnection = ({ onConnect, instanceName }: UseWhatsAppCo
     }
   }
 
+  const handleDeleteConnection = async () => {
+    if (!storedInstanceName) return
+
+    setIsDeleting(true)
+    
+    try {
+      console.log('🗑️ Deletando conexão:', storedInstanceName)
+      const success = await deleteInstanceConnection(storedInstanceName)
+      
+      if (success) {
+        resetState()
+        toast({
+          title: "Conexão removida",
+          description: "A conexão WhatsApp foi removida com sucesso.",
+        })
+      } else {
+        toast({
+          title: "Erro ao remover conexão",
+          description: "Não foi possível remover a conexão. Tente novamente.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('❌ Erro ao deletar conexão:', error)
+      toast({
+        title: "Erro ao remover conexão",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return {
     isConnecting,
     qrCodeData,
     connectionResult,
     imageError,
     instanceName: storedInstanceName,
+    profileData,
+    isDeleting,
+    isPolling,
     timeLeft,
     isExpired,
     formattedTime,
     handleConnect,
     handleNewConnection,
+    handleDeleteConnection,
     handleImageError,
     handleImageLoad,
     retryQrCode

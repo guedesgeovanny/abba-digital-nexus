@@ -1,5 +1,5 @@
 
-import { WhatsAppResponse } from "@/utils/whatsappUtils"
+import { WhatsAppResponse, ProfileData } from "@/utils/whatsappUtils"
 
 export const processQRCodeResponse = (response: WhatsAppResponse, originalInstanceName: string) => {
   console.log('=== RESPOSTA COMPLETA DA API ===')
@@ -41,4 +41,27 @@ export const processQRCodeResponse = (response: WhatsAppResponse, originalInstan
   
   console.error('Resposta inesperada da API:', response)
   throw new Error('A API retornou dados inesperados. Verifique o console.')
+}
+
+export const processProfileData = (response: any): ProfileData | null => {
+  console.log('=== PROCESSANDO DADOS DO PERFIL ===')
+  console.log('Dados recebidos:', response)
+  
+  const { profilename, contato, fotodoperfil } = response
+  
+  // Validar se todos os campos obrigatórios estão preenchidos
+  if (!profilename || !contato || !fotodoperfil) {
+    console.log('⚠️ Dados do perfil incompletos:')
+    console.log('profilename:', profilename)
+    console.log('contato:', contato)
+    console.log('fotodoperfil:', fotodoperfil)
+    return null
+  }
+  
+  console.log('✅ Dados do perfil válidos!')
+  return {
+    profileName: profilename,
+    contact: contato,
+    profilePictureUrl: fotodoperfil
+  }
 }

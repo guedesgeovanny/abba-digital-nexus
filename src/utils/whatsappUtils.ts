@@ -12,6 +12,12 @@ export interface QRCodeData {
   base64: string
 }
 
+export interface ProfileData {
+  profileName: string
+  contact: string
+  profilePictureUrl: string
+}
+
 export interface WhatsAppResponse {
   instanceId?: string
   "Nome da instância"?: string | any
@@ -20,5 +26,8 @@ export interface WhatsAppResponse {
   message?: string
   instanceName?: string
   "instance-Name"?: string
+  profilename?: string
+  contato?: string
+  fotodoperfil?: string
   [key: string]: any // Permite campos adicionais
 }

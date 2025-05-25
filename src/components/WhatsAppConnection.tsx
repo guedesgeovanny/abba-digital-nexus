@@ -9,7 +9,7 @@ import { WhatsAppResponse } from "@/utils/whatsappUtils"
 
 interface WhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
-  instanceName: string // Adicionar instanceName como prop obrigatória
+  instanceName: string
 }
 
 export const WhatsAppConnection = ({ onConnect, instanceName }: WhatsAppConnectionProps) => {
@@ -19,11 +19,15 @@ export const WhatsAppConnection = ({ onConnect, instanceName }: WhatsAppConnecti
     connectionResult,
     imageError,
     instanceName: currentInstanceName,
+    profileData,
+    isDeleting,
+    isPolling,
     timeLeft,
     isExpired,
     formattedTime,
     handleConnect,
     handleNewConnection,
+    handleDeleteConnection,
     handleImageError,
     handleImageLoad,
     retryQrCode
@@ -46,10 +50,11 @@ export const WhatsAppConnection = ({ onConnect, instanceName }: WhatsAppConnecti
             isConnecting={isConnecting}
             qrCodeData={qrCodeData}
             connectionResult={connectionResult}
+            profileData={profileData}
             onConnect={handleConnect}
           />
 
-          {qrCodeData && (
+          {qrCodeData && !profileData && (
             <WhatsAppQRCode
               qrCodeData={qrCodeData}
               imageError={imageError}
@@ -57,6 +62,7 @@ export const WhatsAppConnection = ({ onConnect, instanceName }: WhatsAppConnecti
               timeLeft={timeLeft}
               formattedTime={formattedTime}
               instanceName={currentInstanceName}
+              isPolling={isPolling}
               onImageError={handleImageError}
               onImageLoad={handleImageLoad}
               onRetryQrCode={retryQrCode}
@@ -64,10 +70,13 @@ export const WhatsAppConnection = ({ onConnect, instanceName }: WhatsAppConnecti
             />
           )}
 
-          {connectionResult && (
+          {(connectionResult || profileData) && (
             <WhatsAppConnectionResult
-              connectionResult={connectionResult}
+              connectionResult={connectionResult || ""}
+              profileData={profileData}
               onNewConnection={handleNewConnection}
+              onDeleteConnection={handleDeleteConnection}
+              isDeleting={isDeleting}
             />
           )}
         </div>
