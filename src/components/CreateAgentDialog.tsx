@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { WhatsAppConnection } from "@/components/WhatsAppConnection"
 import { Tables } from "@/integrations/supabase/types"
 
 type AgentType = Tables<'agents'>['type']
 type AgentStatus = Tables<'agents'>['status']
+type AgentChannel = Tables<'agents'>['channel']
 
 interface CreateAgentDialogProps {
   isOpen: boolean
@@ -18,6 +20,8 @@ interface CreateAgentDialogProps {
     type: AgentType
     status: AgentStatus
     description?: string
+    channel?: AgentChannel
+    configuration?: any
   }) => void
   isCreating?: boolean
 }
@@ -33,24 +37,93 @@ export const CreateAgentDialog = ({
     type: "" as AgentType,
     status: "inactive" as AgentStatus,
     description: "",
+    channel: "" as AgentChannel,
+  })
+
+  const [whatsappConfig, setWhatsappConfig] = useState({
+    instanceName: "",
+    apiKey: "",
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.name && formData.type) {
+      const configuration = formData.channel === 'whatsapp' ? {
+        evolution_instance_name: whatsappConfig.instanceName,
+        evolution_api_key: whatsappConfig.apiKey,
+        connection_status: 'disconnected'
+      } : undefined
+
       onCreateAgent({
         name: formData.name,
         type: formData.type,
         status: formData.status,
         description: formData.description || undefined,
+        channel: formData.channel || undefined,
+        configuration,
       })
+      
+      // Reset form
       setFormData({
         name: "",
         type: "" as AgentType,
         status: "inactive",
         description: "",
+        channel: "" as AgentChannel,
+      })
+      setWhatsappConfig({
+        instanceName: "",
+        apiKey: "",
       })
       onClose()
+    }
+  }
+
+  const handleWhatsAppConnect = async () => {
+    try {
+      const response = await fetch('https://webhook.abbadigital.com.br/webhook/nova-instancia', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agentName: formData.name,
+          agentType: formData.type,
+          channel: 'whatsapp',
+          instanceName: whatsappConfig.instanceName,
+          apiKey: whatsappConfig.apiKey,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro na requisição')
+      }
+
+      // A resposta será mostrada pelo componente WhatsAppConnection
+    } catch (error) {
+      console.error('Erro ao conectar WhatsApp:', error)
+      throw error
+    }
+  }
+
+  // Auto-fill instance name when agent name changes
+  const handleNameChange = (value: string) => {
+    setFormData({ ...formData, name: value })
+    if (formData.channel === 'whatsapp') {
+      setWhatsappConfig({ 
+        ...whatsappConfig, 
+        instanceName: value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      })
+    }
+  }
+
+  const handleChannelChange = (value: AgentChannel) => {
+    setFormData({ ...formData, channel: value })
+    if (value === 'whatsapp' && formData.name) {
+      setWhatsappConfig({ 
+        ...whatsappConfig, 
+        instanceName: formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      })
     }
   }
 
@@ -74,9 +147,18 @@ export const CreateAgentDialog = ({
     }
   }
 
+  const getChannelLabel = (channel: string) => {
+    switch (channel) {
+      case "whatsapp": return "WhatsApp"
+      case "instagram": return "Instagram"
+      case "messenger": return "Messenger"
+      default: return channel
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-abba-black border-abba-gray max-w-md">
+      <DialogContent className="bg-abba-black border-abba-gray max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-abba-text">Criar Novo Agente</DialogTitle>
           <DialogDescription className="text-gray-400">
@@ -91,7 +173,7 @@ export const CreateAgentDialog = ({
             </label>
             <Input
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => handleNameChange(e.target.value)}
               placeholder="Ex: Agente Vendas Pro"
               className="bg-abba-gray border-abba-gray text-abba-text"
               required
@@ -116,6 +198,25 @@ export const CreateAgentDialog = ({
                 <SelectItem value="marketing">{getTypeLabel("marketing")}</SelectItem>
                 <SelectItem value="rh">{getTypeLabel("rh")}</SelectItem>
                 <SelectItem value="personalizado">{getTypeLabel("personalizado")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-abba-text mb-2 block">
+              Canal de Comunicação
+            </label>
+            <Select 
+              value={formData.channel || ""} 
+              onValueChange={handleChannelChange}
+            >
+              <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text">
+                <SelectValue placeholder="Selecione o canal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="whatsapp">{getChannelLabel("whatsapp")}</SelectItem>
+                <SelectItem value="instagram">{getChannelLabel("instagram")}</SelectItem>
+                <SelectItem value="messenger">{getChannelLabel("messenger")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -151,6 +252,16 @@ export const CreateAgentDialog = ({
               rows={3}
             />
           </div>
+
+          {formData.channel === 'whatsapp' && (
+            <WhatsAppConnection
+              instanceName={whatsappConfig.instanceName}
+              onInstanceNameChange={(value) => setWhatsappConfig({ ...whatsappConfig, instanceName: value })}
+              apiKey={whatsappConfig.apiKey}
+              onApiKeyChange={(value) => setWhatsappConfig({ ...whatsappConfig, apiKey: value })}
+              onConnect={handleWhatsAppConnect}
+            />
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

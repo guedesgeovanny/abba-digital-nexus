@@ -21,7 +21,8 @@ const Agents = () => {
     isLoading, 
     createAgent, 
     deleteAgent, 
-    isCreating 
+    isCreating,
+    isDeleting
   } = useAgents()
 
   const filteredAgents = agents.filter(agent =>
@@ -55,24 +56,22 @@ const Agents = () => {
   }
 
   const handleDeleteAgent = (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este agente?")) {
-      deleteAgent(id, {
-        onSuccess: () => {
-          toast({
-            title: "Agente excluído",
-            description: "O agente foi excluído com sucesso.",
-          })
-        },
-        onError: (error) => {
-          toast({
-            title: "Erro ao excluir agente",
-            description: "Ocorreu um erro ao excluir o agente. Tente novamente.",
-            variant: "destructive",
-          })
-          console.error("Error deleting agent:", error)
-        }
-      })
-    }
+    deleteAgent(id, {
+      onSuccess: () => {
+        toast({
+          title: "Agente excluído",
+          description: "O agente foi excluído com sucesso.",
+        })
+      },
+      onError: (error) => {
+        toast({
+          title: "Erro ao excluir agente",
+          description: "Ocorreu um erro ao excluir o agente. Tente novamente.",
+          variant: "destructive",
+        })
+        console.error("Error deleting agent:", error)
+      }
+    })
   }
 
   const openCreateDialog = () => setIsCreateDialogOpen(true)
@@ -116,6 +115,7 @@ const Agents = () => {
           agents={filteredAgents}
           onEdit={handleEditAgent}
           onDelete={handleDeleteAgent}
+          isDeleting={isDeleting}
         />
       )}
 

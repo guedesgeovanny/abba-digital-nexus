@@ -46,6 +46,7 @@ export type Database = {
       }
       agents: {
         Row: {
+          channel: Database["public"]["Enums"]["agent_channel"] | null
           configuration: Json | null
           created_at: string
           description: string | null
@@ -57,6 +58,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          channel?: Database["public"]["Enums"]["agent_channel"] | null
           configuration?: Json | null
           created_at?: string
           description?: string | null
@@ -68,6 +70,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          channel?: Database["public"]["Enums"]["agent_channel"] | null
           configuration?: Json | null
           created_at?: string
           description?: string | null
@@ -273,6 +276,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      agent_channel: "whatsapp" | "instagram" | "messenger"
       agent_status: "active" | "inactive" | "training"
       agent_type:
         | "vendas"
@@ -409,6 +413,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_channel: ["whatsapp", "instagram", "messenger"],
       agent_status: ["active", "inactive", "training"],
       agent_type: ["vendas", "atendimento", "marketing", "rh", "personalizado"],
       contact_channel: [
