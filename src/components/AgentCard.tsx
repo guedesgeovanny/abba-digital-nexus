@@ -146,7 +146,6 @@ export const AgentCard = ({
           </div>
           
           <div className="flex items-center space-x-2">
-            {/* Avatar com foto do perfil WhatsApp */}
             <Avatar className="h-8 w-8">
               <AvatarImage 
                 src={getProfilePicture() || undefined} 
@@ -241,7 +240,6 @@ export const AgentCard = ({
               </div>
             </div>
 
-            {/* Toggle Liga/Desliga */}
             <div className="pt-3 border-t border-abba-gray">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-400">Status do Agente</span>
