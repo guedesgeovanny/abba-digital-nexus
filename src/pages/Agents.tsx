@@ -36,7 +36,15 @@ const Agents = () => {
   const handleCreateAgent = (agentData: Parameters<typeof createAgent>[0]) => {
     createAgent(agentData, {
       onSuccess: (newAgent) => {
+        console.log('✅ Agente criado com ID:', newAgent.id)
         setCreatedAgentId(newAgent.id)
+        
+        // Se não for WhatsApp, fechar o dialog
+        if (agentData.channel !== 'whatsapp') {
+          setIsCreateDialogOpen(false)
+          setCreatedAgentId(null)
+        }
+        
         toast({
           title: "Agente criado com sucesso!",
           description: `O agente ${agentData.name} foi criado e está pronto para uso.`,
@@ -54,7 +62,6 @@ const Agents = () => {
   }
 
   const handleEditAgent = (agent: Agent) => {
-    // TODO: Implementar edição de agente
     console.log("Edit agent:", agent)
   }
 

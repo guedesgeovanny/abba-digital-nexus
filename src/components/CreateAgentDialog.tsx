@@ -49,7 +49,7 @@ export const CreateAgentDialog = ({
         connection_status: 'disconnected'
       } : undefined
 
-      // Criar agente e capturar o ID
+      // Criar agente
       const agentData = {
         name: formData.name,
         type: formData.type,
@@ -59,22 +59,34 @@ export const CreateAgentDialog = ({
         configuration,
       }
 
-      // Simular callback para capturar o ID do agente criado
+      // Usar uma Promise para capturar o resultado
+      const createAgentPromise = new Promise((resolve) => {
+        const originalOnCreateAgent = onCreateAgent
+        onCreateAgent = (data) => {
+          originalOnCreateAgent(data)
+          // Simular que temos acesso ao agente criado - na prática isso virá do callback de sucesso
+          // Por enquanto, vamos usar um setTimeout para simular a criação
+          setTimeout(() => {
+            // Este ID seria fornecido pelo callback de sucesso real
+            const mockAgentId = 'temp-' + Date.now()
+            setCreatedAgentId(mockAgentId)
+            resolve(mockAgentId)
+          }, 100)
+        }
+      })
+
       onCreateAgent(agentData)
       
-      // Reset form mas manter dialog aberto se for WhatsApp para permitir conexão
+      // Se não for WhatsApp, fechar imediatamente
       if (formData.channel !== 'whatsapp') {
-        setFormData({
-          name: "",
-          type: "" as AgentType,
-          status: "inactive",
-          description: "",
-          channel: "" as AgentChannel,
-        })
-        setCreatedAgentId(null)
-        onClose()
+        handleClose()
       }
     }
+  }
+
+  // Função para receber o ID do agente criado do componente pai
+  const handleAgentCreated = (agentId: string) => {
+    setCreatedAgentId(agentId)
   }
 
   const handleWhatsAppConnect = async () => {
@@ -105,21 +117,14 @@ export const CreateAgentDialog = ({
       const data = await response.json()
       console.log('=== RESPOSTA COMPLETA DA API ===')
       console.log('Estrutura da resposta:', JSON.stringify(data, null, 2))
-      console.log('Tipo da resposta:', typeof data)
-      console.log('Keys da resposta:', Object.keys(data || {}))
       
       // Verificar se os dados estão diretamente no root (nova estrutura)
       if (data.code && data.base64) {
         console.log('✅ Dados encontrados no root da resposta')
-        console.log('Code:', data.code)
-        console.log('Base64 length:', data.base64.length)
-        console.log('Base64 prefix:', data.base64.substring(0, 30))
         
-        // Verificar se o base64 já tem o prefixo data:image
         let cleanBase64 = data.base64
         if (data.base64.startsWith('data:image/')) {
           cleanBase64 = data.base64.split(',')[1]
-          console.log('✅ Removido prefixo data:image do base64')
         }
         
         return {
@@ -136,7 +141,6 @@ export const CreateAgentDialog = ({
         let cleanBase64 = data.qrcode.base64
         if (data.qrcode.base64.startsWith('data:image/')) {
           cleanBase64 = data.qrcode.base64.split(',')[1]
-          console.log('✅ Removido prefixo data:image do base64')
         }
         
         return {
@@ -146,24 +150,17 @@ export const CreateAgentDialog = ({
         }
       }
       
-      // Se há uma mensagem mas não QR code
       if (data.message) {
-        console.log('📝 Mensagem de conexão:', data.message)
         return {
           message: data.message,
           instanceId: data.instanceId
         }
       }
       
-      // Se chegou até aqui, a estrutura está inesperada
-      console.error('❌ Estrutura de resposta inesperada:', data)
-      console.error('Campos disponíveis:', Object.keys(data))
       throw new Error('Dados do QR Code não encontrados na resposta da API')
       
     } catch (error) {
-      console.error("=== ERRO AO CONECTAR WHATSAPP ===")
-      console.error("Tipo do erro:", typeof error)
-      console.error("Erro completo:", error)
+      console.error("=== ERRO AO CONECTAR WHATSAPP ===", error)
       throw error
     }
   }

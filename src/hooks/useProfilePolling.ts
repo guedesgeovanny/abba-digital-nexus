@@ -41,23 +41,28 @@ export const useProfilePolling = ({
         const formattedProfileData: ProfileData = {
           profileName: profileData.profilename,
           contact: profileData.contato,
-          profilePictureUrl: profilePictureData // Usar a imagem baixada em base64
+          profilePictureUrl: profilePictureData
         }
         
         // Salvar no banco se temos o agentId
-        if (agentId) {
-          console.log('💾 Salvando dados do perfil no banco...')
+        if (agentId && agentId !== 'temp-' + agentId) {
+          console.log('💾 Salvando dados do perfil no banco para agente:', agentId)
           
-          // Usar a função do hook useAgents para salvar no banco
-          updateAgentWhatsAppProfile({
-            agentId,
-            profileName: profileData.profilename,
-            contact: profileData.contato,
-            profilePictureUrl: profileData.fotodoperfil,
-            profilePictureData: profilePictureData
-          })
+          try {
+            await updateAgentWhatsAppProfile({
+              agentId,
+              profileName: profileData.profilename,
+              contact: profileData.contato,
+              profilePictureUrl: profileData.fotodoperfil,
+              profilePictureData: profilePictureData
+            })
 
-          console.log('✅ Dados do perfil salvos no banco com sucesso')
+            console.log('✅ Dados do perfil salvos no banco com sucesso')
+          } catch (error) {
+            console.error('❌ Erro ao salvar perfil no banco:', error)
+          }
+        } else {
+          console.log('⚠️ AgentId não disponível ainda, perfil não salvo no banco')
         }
         
         setIsPolling(false)
@@ -78,6 +83,7 @@ export const useProfilePolling = ({
 
     setIsPolling(true)
     console.log(`🔄 Iniciando polling do perfil a cada 3 segundos para: ${instanceName}`)
+    console.log('🔍 AgentId para salvar no banco:', agentId)
 
     // Fazer primeira chamada imediatamente
     pollProfile()
@@ -90,7 +96,7 @@ export const useProfilePolling = ({
       setIsPolling(false)
       clearInterval(interval)
     }
-  }, [isActive, instanceName, pollProfile])
+  }, [isActive, instanceName, agentId, pollProfile])
 
   return {
     isPolling
