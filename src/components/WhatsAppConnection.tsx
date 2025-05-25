@@ -22,6 +22,7 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
     isExpired,
     formattedTime,
     connectionStatus,
+    profileData,
     handleConnect,
     handleNewConnection,
     handleImageError,
@@ -58,6 +59,7 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
               formattedTime={formattedTime}
               connectionStatus={connectionStatus}
               instanceName={instanceName}
+              profileData={profileData}
               onImageError={handleImageError}
               onImageLoad={handleImageLoad}
               onRetryQrCode={retryQrCode}
@@ -65,7 +67,7 @@ export const WhatsAppConnection = ({ onConnect }: WhatsAppConnectionProps) => {
             />
           )}
 
-          {connectionResult && connectionStatus !== 'connected' && (
+          {connectionResult && connectionStatus !== 'connected' && !profileData && (
             <WhatsAppConnectionResult
               connectionResult={connectionResult}
               onNewConnection={handleNewConnection}

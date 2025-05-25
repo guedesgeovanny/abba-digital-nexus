@@ -2,9 +2,14 @@
 import { Button } from "@/components/ui/button"
 import { AlertCircle } from "lucide-react"
 import { QRCodeData } from "@/utils/whatsappUtils"
-import { isValidBase64 } from "@/utils/whatsappUtils"
 import { WhatsAppQRCodeTimer } from "./WhatsAppQRCodeTimer"
-import { WhatsAppConnectionSuccess } from "./WhatsAppConnectionSuccess"
+import { WhatsAppProfileDisplay } from "./WhatsAppProfileDisplay"
+
+interface ProfileData {
+  profilePictureUrl: string
+  owner: string
+  profileName: string
+}
 
 interface WhatsAppQRCodeProps {
   qrCodeData: QRCodeData
@@ -14,6 +19,7 @@ interface WhatsAppQRCodeProps {
   formattedTime: string
   connectionStatus: 'checking' | 'connected' | 'disconnected'
   instanceName?: string
+  profileData?: ProfileData | null
   onImageError: () => void
   onImageLoad: () => void
   onRetryQrCode: () => void
@@ -28,25 +34,17 @@ export const WhatsAppQRCode = ({
   formattedTime,
   connectionStatus,
   instanceName,
+  profileData,
   onImageError,
   onImageLoad,
   onRetryQrCode,
   onNewConnection
 }: WhatsAppQRCodeProps) => {
-  // Se conectado, mostrar animação de sucesso
-  if (connectionStatus === 'connected') {
+  // Se conectado e tem dados do perfil, mostrar perfil
+  if (connectionStatus === 'connected' && profileData) {
     return (
-      <div className="w-full flex flex-col items-center space-y-3">
-        <WhatsAppConnectionSuccess instanceName={instanceName} />
-        
-        <div className="text-center">
-          <p className="text-sm text-green-400 font-medium">
-            WhatsApp Conectado!
-          </p>
-          <p className="text-xs text-gray-400">
-            Conexão estabelecida com sucesso
-          </p>
-        </div>
+      <div className="w-full flex flex-col items-center space-y-4">
+        <WhatsAppProfileDisplay profileData={profileData} />
         
         <Button
           onClick={onNewConnection}
@@ -112,16 +110,6 @@ export const WhatsAppQRCode = ({
           isExpired={isExpired}
           formattedTime={formattedTime}
         />
-        
-        {/* Status de validação do base64 - removido conforme solicitado */}
-        {/* <div className="flex items-center justify-center gap-1">
-          <span className="text-xs text-gray-500">Status:</span>
-          {isValidBase64(qrCodeData.base64) ? (
-            <span className="text-xs text-green-400">✅ Válido</span>
-          ) : (
-            <span className="text-xs text-red-400">❌ Inválido</span>
-          )}
-        </div> */}
       </div>
       
       <Button

@@ -5,6 +5,12 @@ import { isValidBase64, QRCodeData, WhatsAppResponse } from "@/utils/whatsappUti
 import { useQRCodeTimer } from "./useQRCodeTimer"
 import { useConnectionStatus } from "./useConnectionStatus"
 
+interface ProfileData {
+  profilePictureUrl: string
+  owner: string
+  profileName: string
+}
+
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
 }
@@ -15,6 +21,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
   const [connectionResult, setConnectionResult] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   const [instanceName, setInstanceName] = useState<string | null>(null)
+  const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const { toast } = useToast()
 
   // Timer para o QR Code
@@ -33,14 +40,15 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
         variant: "destructive",
       })
     },
-    isActive: !!qrCodeData && !connectionResult
+    isActive: !!qrCodeData && !connectionResult && !profileData
   })
 
   // Verificação de status da conexão
   const { connectionStatus, resetStatus } = useConnectionStatus({
     instanceName,
-    isActive: !!qrCodeData && !isExpired && !connectionResult,
-    onConnected: () => {
+    isActive: !!qrCodeData && !isExpired && !connectionResult && !profileData,
+    onConnected: (profile) => {
+      setProfileData(profile)
       setConnectionResult("WhatsApp conectado com sucesso!")
       setQrCodeData(null)
     }
@@ -52,6 +60,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setQrCodeData(null)
     setImageError(false)
     setInstanceName(null)
+    setProfileData(null)
     resetStatus()
 
     try {
@@ -117,6 +126,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     setConnectionResult(null)
     setImageError(false)
     setInstanceName(null)
+    setProfileData(null)
     resetStatus()
     resetTimer()
   }
@@ -150,6 +160,7 @@ export const useWhatsAppConnection = ({ onConnect }: UseWhatsAppConnectionProps)
     isExpired,
     formattedTime,
     connectionStatus,
+    profileData,
     handleConnect,
     handleNewConnection,
     handleImageError,

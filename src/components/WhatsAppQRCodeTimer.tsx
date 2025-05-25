@@ -27,15 +27,6 @@ export const WhatsAppQRCodeTimer = ({
       <span className="text-xs">
         Expira em {formattedTime}
       </span>
-      <div 
-        className="w-12 h-1 bg-gray-600 rounded-full overflow-hidden"
-        title={`${timeLeft} segundos restantes`}
-      >
-        <div 
-          className="h-full bg-green-500 transition-all duration-1000 ease-linear"
-          style={{ width: `${(timeLeft / 60) * 100}%` }}
-        />
-      </div>
     </div>
   )
 }
