@@ -35,7 +35,7 @@ export const WhatsAppQRCode = ({
         {!imageError && !isExpired ? (
           <img 
             id="qr-code-img"
-            src={`data:image/png;base64,${qrCodeData.base64}`}
+            src={qrCodeData.base64}
             alt="QR Code WhatsApp"
             className={`w-40 h-40 object-contain ${isExpired ? 'opacity-50 grayscale' : ''}`}
             onError={onImageError}
