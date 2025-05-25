@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -146,7 +147,7 @@ export const AgentCard = ({
   }
 
   const getWhatsAppProfileName = () => {
-    return agent.whatsapp_profile_name || "Perfil não definido"
+    return agent.whatsapp_profile_name || null
   }
 
   const isWhatsAppConnected = () => {
@@ -223,7 +224,9 @@ export const AgentCard = ({
                   </Badge>
                 </div>
                 <div className="text-xs text-green-300">
-                  <div><strong>Nome:</strong> {getWhatsAppProfileName()}</div>
+                  {getWhatsAppProfileName() && (
+                    <div><strong>Nome:</strong> {getWhatsAppProfileName()}</div>
+                  )}
                   <div><strong>Contato:</strong> {getWhatsAppContact()}</div>
                 </div>
               </div>
@@ -286,7 +289,7 @@ export const AgentCard = ({
                     checked={agent.status === 'active'}
                     onCheckedChange={handleToggleStatus}
                     disabled={isUpdating}
-                    className="data-[state=checked]:bg-abba-green"
+                    className="data-[state=checked]:bg-abba-green border-2 border-white"
                   />
                 </div>
               </div>
