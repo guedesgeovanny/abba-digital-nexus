@@ -267,7 +267,6 @@ export const CreateAgentDialog = ({
       description: "",
       channel: "" as AgentChannel,
     })
-    setCreatedAgentId(null)
     setWhatsAppState({
       hasQRCode: false,
       isConnected: false,
