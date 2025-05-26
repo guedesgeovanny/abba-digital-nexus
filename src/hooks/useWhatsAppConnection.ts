@@ -11,9 +11,15 @@ interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
   instanceName: string
   agentId?: string
+  onConnectionSuccess?: () => void
 }
 
-export const useWhatsAppConnection = ({ onConnect, instanceName, agentId }: UseWhatsAppConnectionProps) => {
+export const useWhatsAppConnection = ({ 
+  onConnect, 
+  instanceName, 
+  agentId,
+  onConnectionSuccess 
+}: UseWhatsAppConnectionProps) => {
   const { toast } = useToast()
   
   const {
@@ -66,6 +72,9 @@ export const useWhatsAppConnection = ({ onConnect, instanceName, agentId }: UseW
       setProfileData(receivedProfileData)
       setConnectionResult("WhatsApp conectado com sucesso!")
       
+      // Chamar callback de sucesso
+      onConnectionSuccess?.()
+      
       toast({
         title: "WhatsApp Conectado!",
         description: `Conectado como ${receivedProfileData.profileName}`,
@@ -81,14 +90,12 @@ export const useWhatsAppConnection = ({ onConnect, instanceName, agentId }: UseW
       console.log('🔄 Conectando com instanceName:', instanceName)
       const response = await onConnect()
       
-      // Passar o instanceName original para o processador
       const processedResponse = processQRCodeResponse(response, instanceName)
       
       if (processedResponse.qrCodeData) {
         setQrCodeData(processedResponse.qrCodeData)
         setInstanceName(processedResponse.instanceName)
         
-        // Enviar dados da instância para o webhook com o nome correto
         console.log('📤 Enviando instanceName para webhook:', processedResponse.instanceName)
         await sendInstanceData(processedResponse.instanceName)
         
@@ -101,6 +108,10 @@ export const useWhatsAppConnection = ({ onConnect, instanceName, agentId }: UseW
       } else if (processedResponse.message) {
         setConnectionResult(processedResponse.message)
         setInstanceName(processedResponse.instanceName)
+        
+        // Chamar callback de sucesso se conectou automaticamente
+        onConnectionSuccess?.()
+        
         toast({
           title: "Conexão realizada!",
           description: "WhatsApp conectado com sucesso.",

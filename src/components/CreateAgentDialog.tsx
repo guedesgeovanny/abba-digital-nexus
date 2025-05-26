@@ -2,8 +2,19 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { AgentForm } from "@/components/AgentForm"
 import { Tables } from "@/integrations/supabase/types"
+import { useToast } from "@/hooks/use-toast"
 
 type AgentType = Tables<'agents'>['type']
 type AgentStatus = Tables<'agents'>['status']
@@ -37,6 +48,18 @@ export const CreateAgentDialog = ({
     channel: "" as AgentChannel,
   })
   const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
+  const [whatsAppState, setWhatsAppState] = useState<{
+    hasQRCode: boolean
+    isConnected: boolean
+    instanceName: string | null
+  }>({
+    hasQRCode: false,
+    isConnected: false,
+    instanceName: null
+  })
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [isCanceling, setIsCanceling] = useState(false)
+  const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,7 +72,6 @@ export const CreateAgentDialog = ({
         connection_status: 'disconnected'
       } : undefined
 
-      // Criar agente
       const agentData = {
         name: formData.name,
         type: formData.type,
@@ -59,39 +81,33 @@ export const CreateAgentDialog = ({
         configuration,
       }
 
-      // Usar uma Promise para capturar o resultado
-      const createAgentPromise = new Promise((resolve) => {
-        const originalOnCreateAgent = onCreateAgent
-        onCreateAgent = (data) => {
-          originalOnCreateAgent(data)
-          // Simular que temos acesso ao agente criado - na prática isso virá do callback de sucesso
-          // Por enquanto, vamos usar um setTimeout para simular a criação
-          setTimeout(() => {
-            // Este ID seria fornecido pelo callback de sucesso real
-            const mockAgentId = 'temp-' + Date.now()
-            setCreatedAgentId(mockAgentId)
-            resolve(mockAgentId)
-          }, 100)
-        }
-      })
+      const originalOnCreateAgent = onCreateAgent
+      onCreateAgent = (data) => {
+        originalOnCreateAgent(data)
+        setTimeout(() => {
+          const mockAgentId = 'temp-' + Date.now()
+          setCreatedAgentId(mockAgentId)
+        }, 100)
+      }
 
       onCreateAgent(agentData)
       
-      // Se não for WhatsApp, fechar imediatamente
       if (formData.channel !== 'whatsapp') {
         handleClose()
       }
     }
   }
 
-  // Função para receber o ID do agente criado do componente pai
-  const handleAgentCreated = (agentId: string) => {
-    setCreatedAgentId(agentId)
-  }
-
   const handleWhatsAppConnect = async () => {
     try {
       const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      
+      // Atualizar estado para indicar que QR code foi gerado
+      setWhatsAppState(prev => ({
+        ...prev,
+        hasQRCode: true,
+        instanceName: instanceName
+      }))
       
       console.log('=== ENVIANDO REQUISIÇÃO PARA API ===')
       console.log('Instance Name:', instanceName)
@@ -118,7 +134,6 @@ export const CreateAgentDialog = ({
       console.log('=== RESPOSTA COMPLETA DA API ===')
       console.log('Estrutura da resposta:', JSON.stringify(data, null, 2))
       
-      // Verificar se os dados estão diretamente no root (nova estrutura)
       if (data.code && data.base64) {
         console.log('✅ Dados encontrados no root da resposta')
         
@@ -134,7 +149,6 @@ export const CreateAgentDialog = ({
         }
       }
       
-      // Verificar estrutura aninhada (compatibilidade)
       if (data.qrcode && data.qrcode.code && data.qrcode.base64) {
         console.log('✅ Dados encontrados em data.qrcode')
         
@@ -151,6 +165,12 @@ export const CreateAgentDialog = ({
       }
       
       if (data.message) {
+        // Se conectou automaticamente, atualizar estado
+        setWhatsAppState(prev => ({
+          ...prev,
+          isConnected: true
+        }))
+        
         return {
           message: data.message,
           instanceId: data.instanceId
@@ -165,6 +185,84 @@ export const CreateAgentDialog = ({
     }
   }
 
+  const handleWhatsAppConnectionSuccess = () => {
+    // Chamado quando o WhatsApp é conectado com sucesso
+    setWhatsAppState(prev => ({
+      ...prev,
+      isConnected: true
+    }))
+  }
+
+  const handleCancelWithConfirmation = () => {
+    // Verificar se precisa de confirmação
+    const needsConfirmation = whatsAppState.hasQRCode || whatsAppState.isConnected
+    
+    if (needsConfirmation) {
+      setShowCancelConfirm(true)
+    } else {
+      handleClose()
+    }
+  }
+
+  const handleConfirmedCancel = async () => {
+    setIsCanceling(true)
+    
+    try {
+      if (whatsAppState.instanceName) {
+        if (whatsAppState.isConnected) {
+          // Se estiver conectado, desconectar contato
+          console.log('🗑️ Desconectando contato:', whatsAppState.instanceName)
+          
+          const response = await fetch('https://webhook.abbadigital.com.br/webhook/desconecta-contato', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              instanceName: whatsAppState.instanceName,
+              contato: "pending" // Como ainda não temos o contato específico, usar um valor padrão
+            }),
+          })
+          
+          console.log('📡 Resposta desconectar contato:', response.status, response.statusText)
+          
+        } else if (whatsAppState.hasQRCode) {
+          // Se apenas gerou QR code, excluir instância
+          console.log('🗑️ Excluindo instância:', whatsAppState.instanceName)
+          
+          const response = await fetch('https://webhook.abbadigital.com.br/webhook/exclui-instancia', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              instanceName: whatsAppState.instanceName
+            }),
+          })
+          
+          console.log('📡 Resposta excluir instância:', response.status, response.statusText)
+        }
+      }
+      
+      toast({
+        title: "Criação cancelada",
+        description: "A criação do agente foi cancelada e as conexões foram removidas.",
+      })
+      
+    } catch (error) {
+      console.error('❌ Erro ao cancelar:', error)
+      toast({
+        title: "Erro ao cancelar",
+        description: "Ocorreu um erro ao cancelar. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsCanceling(false)
+      setShowCancelConfirm(false)
+      handleClose()
+    }
+  }
+
   const handleClose = () => {
     setFormData({
       name: "",
@@ -174,41 +272,84 @@ export const CreateAgentDialog = ({
       channel: "" as AgentChannel,
     })
     setCreatedAgentId(null)
+    setWhatsAppState({
+      hasQRCode: false,
+      isConnected: false,
+      instanceName: null
+    })
+    setShowCancelConfirm(false)
     onClose()
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-abba-black border-abba-gray max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-abba-text">Criar Novo Agente</DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Configure as informações básicas do seu novo agente digital
-          </DialogDescription>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <AgentForm
-            formData={formData}
-            setFormData={setFormData}
-            onWhatsAppConnect={handleWhatsAppConnect}
-            agentId={createdAgentId}
-          />
+    <>
+      <Dialog open={isOpen} onOpenChange={() => {}}>
+        <DialogContent className="bg-abba-black border-abba-gray max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-abba-text">Criar Novo Agente</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Configure as informações básicas do seu novo agente digital
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <AgentForm
+              formData={formData}
+              setFormData={setFormData}
+              onWhatsAppConnect={handleWhatsAppConnect}
+              agentId={createdAgentId}
+              onWhatsAppConnectionSuccess={handleWhatsAppConnectionSuccess}
+            />
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-abba-green text-abba-black hover:bg-abba-green-light"
-              disabled={isCreating || !formData.name || !formData.type}
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleCancelWithConfirmation}
+                disabled={isCanceling}
+              >
+                {isCanceling ? "Cancelando..." : "Cancelar"}
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-abba-green text-abba-black hover:bg-abba-green-light"
+                disabled={isCreating || !formData.name || !formData.type}
+              >
+                {isCreating ? "Criando..." : "Criar Agente"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar criação do agente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar a criação do agente? 
+              {whatsAppState.isConnected 
+                ? " A conexão WhatsApp atual será desconectada e perdida."
+                : whatsAppState.hasQRCode 
+                ? " O processo de conexão WhatsApp será perdido."
+                : ""
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCanceling}>
+              Continuar criando
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmedCancel}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isCanceling}
             >
-              {isCreating ? "Criando..." : "Criar Agente"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              {isCanceling ? "Cancelando..." : "Sim, cancelar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

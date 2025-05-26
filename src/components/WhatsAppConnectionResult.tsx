@@ -33,7 +33,6 @@ export const WhatsAppConnectionResult = ({
 
   return (
     <WhatsAppConnectionSuccess 
-      message={connectionResult}
       onNewConnection={onNewConnection}
     />
   )

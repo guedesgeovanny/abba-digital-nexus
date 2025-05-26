@@ -11,9 +11,15 @@ interface WhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
   instanceName: string
   agentId?: string
+  onConnectionSuccess?: () => void
 }
 
-export const WhatsAppConnection = ({ onConnect, instanceName, agentId }: WhatsAppConnectionProps) => {
+export const WhatsAppConnection = ({ 
+  onConnect, 
+  instanceName, 
+  agentId,
+  onConnectionSuccess 
+}: WhatsAppConnectionProps) => {
   const {
     isConnecting,
     qrCodeData,
@@ -32,7 +38,12 @@ export const WhatsAppConnection = ({ onConnect, instanceName, agentId }: WhatsAp
     handleImageError,
     handleImageLoad,
     retryQrCode
-  } = useWhatsAppConnection({ onConnect, instanceName, agentId })
+  } = useWhatsAppConnection({ 
+    onConnect, 
+    instanceName, 
+    agentId,
+    onConnectionSuccess 
+  })
 
   return (
     <Card className="bg-abba-gray border-abba-gray">

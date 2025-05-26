@@ -22,10 +22,16 @@ interface AgentFormProps {
   setFormData: (data: AgentFormData) => void
   onWhatsAppConnect: () => Promise<{ code?: string; base64?: string; message?: string }>
   agentId?: string | null
+  onWhatsAppConnectionSuccess?: () => void
 }
 
-export const AgentForm = ({ formData, setFormData, onWhatsAppConnect, agentId }: AgentFormProps) => {
-  // Gerar o instanceName da mesma forma que no CreateAgentDialog
+export const AgentForm = ({ 
+  formData, 
+  setFormData, 
+  onWhatsAppConnect, 
+  agentId,
+  onWhatsAppConnectionSuccess 
+}: AgentFormProps) => {
   const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 
   return (
@@ -80,6 +86,7 @@ export const AgentForm = ({ formData, setFormData, onWhatsAppConnect, agentId }:
           onConnect={onWhatsAppConnect} 
           instanceName={instanceName}
           agentId={agentId}
+          onConnectionSuccess={onWhatsAppConnectionSuccess}
         />
       )}
     </div>
