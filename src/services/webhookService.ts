@@ -42,17 +42,37 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     }
 
     const data = await response.json()
-    console.log('📋 Dados recebidos do perfil:', data)
+    console.log('📋 Dados brutos recebidos do perfil:', data)
 
     // Validar se todos os campos obrigatórios estão preenchidos e não vazios
     const { profilename, contato, fotodoperfil } = data
     
-    if (!profilename || !contato || !fotodoperfil || 
-        profilename.trim() === '' || contato.trim() === '' || fotodoperfil.trim() === '') {
-      console.log('⚠️ Dados do perfil incompletos ou vazios, continuando polling...')
-      console.log('profilename:', profilename)
-      console.log('contato:', contato) 
-      console.log('fotodoperfil:', fotodoperfil)
+    // Verificar se os dados existem e não são strings vazias ou "null"
+    const isValidProfilename = profilename && 
+                              typeof profilename === 'string' && 
+                              profilename.trim() !== '' && 
+                              profilename !== 'null' &&
+                              profilename !== 'undefined'
+    
+    const isValidContato = contato && 
+                          typeof contato === 'string' && 
+                          contato.trim() !== '' && 
+                          contato !== 'null' &&
+                          contato !== 'undefined'
+    
+    const isValidFoto = fotodoperfil && 
+                       typeof fotodoperfil === 'string' && 
+                       fotodoperfil.trim() !== '' && 
+                       fotodoperfil !== 'null' &&
+                       fotodoperfil !== 'undefined'
+    
+    if (!isValidProfilename || !isValidContato || !isValidFoto) {
+      console.log('⚠️ Dados do perfil incompletos ou inválidos, continuando polling...')
+      console.log('📋 Validação detalhada:', {
+        profilename: { value: profilename, valid: isValidProfilename },
+        contato: { value: contato, valid: isValidContato },
+        fotodoperfil: { value: fotodoperfil, valid: isValidFoto }
+      })
       return null
     }
 

@@ -27,9 +27,18 @@ export const useProfilePolling = ({
       console.log(`🔄 Fazendo polling para instância: ${instanceName}`)
       const profileData = await getInstanceProfile(instanceName)
       
-      if (profileData && profileData.profilename && profileData.contato && profileData.fotodoperfil) {
-        console.log('✅ Dados do perfil recebidos via polling!')
-        console.log('📋 Dados recebidos:', {
+      console.log('📋 Dados recebidos do polling:', profileData)
+      
+      if (profileData && 
+          profileData.profilename && 
+          profileData.contato && 
+          profileData.fotodoperfil &&
+          profileData.profilename.trim() !== '' &&
+          profileData.contato.trim() !== '' &&
+          profileData.fotodoperfil.trim() !== '') {
+        
+        console.log('✅ Dados do perfil válidos recebidos via polling!')
+        console.log('📋 Dados validados:', {
           profilename: profileData.profilename,
           contato: profileData.contato,
           fotodoperfil: profileData.fotodoperfil
@@ -50,7 +59,7 @@ export const useProfilePolling = ({
         }
         
         // Salvar no banco se temos o agentId real (não temporário)
-        if (agentId && !agentId.startsWith('temp-')) {
+        if (agentId && !agentId.startsWith('temp-') && !agentId.startsWith('agent_')) {
           console.log('💾 Salvando dados do perfil no banco para agente:', agentId)
           console.log('💾 Dados a serem salvos:', {
             whatsapp_profile_name: profileData.profilename,
@@ -72,7 +81,7 @@ export const useProfilePolling = ({
             console.error('❌ Erro ao salvar perfil no banco:', error)
           }
         } else {
-          console.log('⚠️ AgentId não disponível ainda ou é temporário, perfil não salvo no banco')
+          console.log('⚠️ AgentId não disponível ainda ou é temporário/mock, perfil não salvo no banco. AgentId:', agentId)
         }
         
         setIsPolling(false)

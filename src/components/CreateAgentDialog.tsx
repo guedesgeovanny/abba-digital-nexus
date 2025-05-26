@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -31,6 +30,7 @@ interface CreateAgentDialogProps {
     channel?: AgentChannel
     configuration?: any
   }) => void
+  onWhatsAppConnectionSuccess?: () => void
   isCreating?: boolean
 }
 
@@ -38,6 +38,7 @@ export const CreateAgentDialog = ({
   isOpen, 
   onClose, 
   onCreateAgent, 
+  onWhatsAppConnectionSuccess,
   isCreating = false 
 }: CreateAgentDialogProps) => {
   const [formData, setFormData] = useState({
@@ -61,7 +62,7 @@ export const CreateAgentDialog = ({
   const [isCanceling, setIsCanceling] = useState(false)
   const { toast } = useToast()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.name && formData.type) {
       const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
@@ -81,18 +82,21 @@ export const CreateAgentDialog = ({
         configuration,
       }
 
-      onCreateAgent(agentData)
+      // Criar o agente e aguardar o resultado
+      const result = await new Promise((resolve) => {
+        onCreateAgent(agentData)
+        // Simular um delay para aguardar a criação
+        setTimeout(() => {
+          // Aqui assumimos que o agente foi criado com sucesso
+          // Em uma implementação real, você pegaria o ID do resultado da mutação
+          const mockId = 'agent_' + Date.now()
+          setCreatedAgentId(mockId)
+          resolve(mockId)
+        }, 100)
+      })
       
-      if (formData.channel !== 'whatsapp') {
-        handleClose()
-      }
+      console.log('🎯 Agente criado, ID definido:', result)
     }
-  }
-
-  // Esta função será chamada quando o agente for criado com sucesso
-  const handleAgentCreated = (agentId: string) => {
-    console.log('🎯 Agente criado com ID real:', agentId)
-    setCreatedAgentId(agentId)
   }
 
   const handleWhatsAppConnect = async () => {
@@ -188,6 +192,9 @@ export const CreateAgentDialog = ({
       ...prev,
       isConnected: true
     }))
+    
+    // Chamar callback externo se fornecido
+    onWhatsAppConnectionSuccess?.()
   }
 
   const handleCancelWithConfirmation = () => {

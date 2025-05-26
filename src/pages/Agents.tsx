@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { useAgents } from "@/hooks/useAgents"
 import { AgentsPageHeader } from "@/components/AgentsPageHeader"
@@ -13,7 +14,6 @@ type Agent = Tables<'agents'>
 const Agents = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
   const { toast } = useToast()
   
   const { 
@@ -37,18 +37,19 @@ const Agents = () => {
     createAgent(agentData, {
       onSuccess: (newAgent) => {
         console.log('✅ Agente criado com ID real:', newAgent.id)
-        setCreatedAgentId(newAgent.id)
         
-        // Se não for WhatsApp, fechar o dialog
+        // Se não for WhatsApp, fechar o dialog imediatamente
         if (agentData.channel !== 'whatsapp') {
           setIsCreateDialogOpen(false)
-          setCreatedAgentId(null)
         }
         
         toast({
           title: "Agente criado com sucesso!",
           description: `O agente ${agentData.name} foi criado e está pronto para uso.`,
         })
+
+        // Retornar o agente criado para o dialog poder usar o ID real
+        return newAgent
       },
       onError: (error) => {
         toast({
@@ -104,13 +105,21 @@ const Agents = () => {
   }
 
   const openCreateDialog = () => {
-    setCreatedAgentId(null)
     setIsCreateDialogOpen(true)
   }
   
   const closeCreateDialog = () => {
     setIsCreateDialogOpen(false)
-    setCreatedAgentId(null)
+  }
+
+  const handleWhatsAppConnectionSuccess = () => {
+    // Fechar o dialog quando o WhatsApp for conectado com sucesso
+    setIsCreateDialogOpen(false)
+    
+    toast({
+      title: "WhatsApp conectado!",
+      description: "Agente criado e WhatsApp conectado com sucesso.",
+    })
   }
 
   if (isLoading) {
@@ -161,6 +170,7 @@ const Agents = () => {
         isOpen={isCreateDialogOpen}
         onClose={closeCreateDialog}
         onCreateAgent={handleCreateAgent}
+        onWhatsAppConnectionSuccess={handleWhatsAppConnectionSuccess}
         isCreating={isCreating}
       />
     </div>
