@@ -93,7 +93,7 @@ export const AgentForm = ({
           onConnect={onWhatsAppConnect} 
           instanceName={instanceName}
           agentId={agentId}
-          onConnectionSuccess={onWhatsAppConnectionSuccess}
+          onConnectionSuccess={onWhatsAppConnectionSuccess || (() => {})}
         />
       )}
     </div>

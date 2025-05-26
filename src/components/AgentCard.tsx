@@ -117,12 +117,13 @@ export const AgentCard = ({
   }
 
   const getProfilePicture = () => {
-    // Primeiro tenta usar a foto do WhatsApp salva no banco
-    if (agent.whatsapp_profile_picture_data) {
-      return `data:image/jpeg;base64,${agent.whatsapp_profile_picture_data}`
-    }
+    // Priorizar a URL do WhatsApp salva no banco
     if (agent.whatsapp_profile_picture_url) {
       return agent.whatsapp_profile_picture_url
+    }
+    // Segundo, tentar usar os dados base64 do WhatsApp
+    if (agent.whatsapp_profile_picture_data) {
+      return `data:image/jpeg;base64,${agent.whatsapp_profile_picture_data}`
     }
     // Fallback para configuração antiga
     return configuration?.profile_picture_data || null
