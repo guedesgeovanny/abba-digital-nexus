@@ -8,7 +8,7 @@ interface UseProfilePollingProps {
   instanceName: string | null
   agentId?: string | null
   isActive: boolean
-  onProfileReceived: (profileData: ProfileData) => void
+  onProfileReceived: (profileData: ProfileData & { profilePictureData?: string }) => void
 }
 
 export const useProfilePolling = ({ 
@@ -52,10 +52,11 @@ export const useProfilePolling = ({
           return
         }
         
-        const formattedProfileData: ProfileData = {
+        const formattedProfileData: ProfileData & { profilePictureData: string } = {
           profileName: profileData.profilename,
           contact: profileData.contato,
-          profilePictureUrl: profilePictureData
+          profilePictureUrl: profileData.fotodoperfil,
+          profilePictureData: profilePictureData
         }
         
         // Salvar no banco se temos o agentId real

@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast"
 import { WhatsAppResponse, ProfileData } from "@/utils/whatsappUtils"
 import { useQRCodeTimer } from "./useQRCodeTimer"
@@ -11,7 +10,12 @@ interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
   instanceName: string
   agentId?: string
-  onConnectionSuccess?: () => void
+  onConnectionSuccess?: (profileData: {
+    profileName: string
+    contact: string
+    profilePictureUrl: string
+    profilePictureData?: string
+  }) => void
 }
 
 export const useWhatsAppConnection = ({ 
@@ -67,13 +71,18 @@ export const useWhatsAppConnection = ({
     instanceName: storedInstanceName,
     agentId,
     isActive: !!qrCodeData && !connectionResult && !profileData && !isExpired,
-    onProfileReceived: (receivedProfileData: ProfileData) => {
+    onProfileReceived: (receivedProfileData: ProfileData & { profilePictureData?: string }) => {
       console.log('✅ Perfil recebido via polling:', receivedProfileData)
       setProfileData(receivedProfileData)
       setConnectionResult("WhatsApp conectado com sucesso!")
       
-      // Chamar callback de sucesso
-      onConnectionSuccess?.()
+      // Chamar callback de sucesso com dados completos do perfil
+      onConnectionSuccess?.({
+        profileName: receivedProfileData.profileName,
+        contact: receivedProfileData.contact,
+        profilePictureUrl: receivedProfileData.profilePictureUrl,
+        profilePictureData: receivedProfileData.profilePictureData
+      })
       
       toast({
         title: "WhatsApp Conectado!",
@@ -110,7 +119,12 @@ export const useWhatsAppConnection = ({
         setInstanceName(processedResponse.instanceName)
         
         // Chamar callback de sucesso se conectou automaticamente
-        onConnectionSuccess?.()
+        onConnectionSuccess?.({
+          profileName: '',
+          contact: '',
+          profilePictureUrl: '',
+          profilePictureData: ''
+        })
         
         toast({
           title: "Conexão realizada!",

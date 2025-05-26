@@ -22,7 +22,12 @@ interface AgentFormProps {
   setFormData: (data: AgentFormData) => void
   onWhatsAppConnect: () => Promise<{ code?: string; base64?: string; message?: string }>
   agentId?: string | null
-  onWhatsAppConnectionSuccess?: () => void
+  onWhatsAppConnectionSuccess?: (profileData: {
+    profileName: string
+    contact: string
+    profilePictureUrl: string
+    profilePictureData?: string
+  }) => void
 }
 
 export const AgentForm = ({ 

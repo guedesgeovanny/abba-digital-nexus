@@ -29,6 +29,10 @@ interface CreateAgentDialogProps {
     description?: string
     channel?: AgentChannel
     configuration?: any
+    whatsapp_profile_name?: string
+    whatsapp_contact?: string
+    whatsapp_profile_picture_url?: string
+    whatsapp_profile_picture_data?: string
   }) => void
   onWhatsAppConnectionSuccess?: () => void
   isCreating?: boolean
@@ -54,10 +58,17 @@ export const CreateAgentDialog = ({
     hasQRCode: boolean
     isConnected: boolean
     instanceName: string | null
+    profileData: {
+      profileName: string
+      contact: string
+      profilePictureUrl: string
+      profilePictureData: string
+    } | null
   }>({
     hasQRCode: false,
     isConnected: false,
-    instanceName: null
+    instanceName: null,
+    profileData: null
   })
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isCanceling, setIsCanceling] = useState(false)
@@ -73,7 +84,7 @@ export const CreateAgentDialog = ({
       const configuration = formData.channel === 'whatsapp' ? {
         evolution_instance_name: instanceName,
         evolution_api_key: "673dc3960df85e704b3db2f1362f0e99",
-        connection_status: 'disconnected'
+        connection_status: whatsAppState.isConnected ? 'connected' : 'disconnected'
       } : undefined
 
       const agentData = {
@@ -83,8 +94,14 @@ export const CreateAgentDialog = ({
         description: formData.description || undefined,
         channel: formData.channel || undefined,
         configuration,
+        // Incluir dados do WhatsApp se disponíveis
+        whatsapp_profile_name: whatsAppState.profileData?.profileName,
+        whatsapp_contact: whatsAppState.profileData?.contact,
+        whatsapp_profile_picture_url: whatsAppState.profileData?.profilePictureUrl,
+        whatsapp_profile_picture_data: whatsAppState.profileData?.profilePictureData,
       }
 
+      console.log('📤 Enviando dados do agente incluindo WhatsApp:', agentData)
       onCreateAgent(agentData)
     }
   }
@@ -176,16 +193,29 @@ export const CreateAgentDialog = ({
     }
   }
 
-  const handleWhatsAppConnectionSuccess = () => {
-    // Chamado quando o WhatsApp é conectado com sucesso
+  const handleWhatsAppConnectionSuccess = (profileData: {
+    profileName: string
+    contact: string
+    profilePictureUrl: string
+    profilePictureData?: string
+  }) => {
+    console.log('✅ WhatsApp conectado com sucesso! Salvando dados do perfil:', profileData)
+    
+    // Atualizar estado com os dados do perfil
     setWhatsAppState(prev => ({
       ...prev,
-      isConnected: true
+      isConnected: true,
+      profileData: {
+        profileName: profileData.profileName,
+        contact: profileData.contact,
+        profilePictureUrl: profileData.profilePictureUrl,
+        profilePictureData: profileData.profilePictureData || ''
+      }
     }))
     
     toast({
       title: "WhatsApp Conectado!",
-      description: "WhatsApp conectado com sucesso. Agora você pode criar o agente.",
+      description: `Conectado como ${profileData.profileName}. Agora você pode criar o agente com os dados do WhatsApp.`,
     })
   }
 
@@ -216,7 +246,7 @@ export const CreateAgentDialog = ({
             },
             body: JSON.stringify({
               instanceName: whatsAppState.instanceName,
-              contato: "pending" // Como ainda não temos o contato específico, usar um valor padrão
+              contato: whatsAppState.profileData?.contact || "pending"
             }),
           })
           
@@ -270,7 +300,8 @@ export const CreateAgentDialog = ({
     setWhatsAppState({
       hasQRCode: false,
       isConnected: false,
-      instanceName: null
+      instanceName: null,
+      profileData: null
     })
     setShowCancelConfirm(false)
     onClose()

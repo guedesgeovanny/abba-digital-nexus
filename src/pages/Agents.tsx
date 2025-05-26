@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { useAgents } from "@/hooks/useAgents"
 import { AgentsPageHeader } from "@/components/AgentsPageHeader"
@@ -34,18 +33,25 @@ const Agents = () => {
     (agent.description && agent.description.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  const handleCreateAgent = (agentData: Parameters<typeof createAgent>[0]) => {
+  const handleCreateAgent = (agentData: Parameters<typeof createAgent>[0] & {
+    whatsapp_profile_name?: string
+    whatsapp_contact?: string
+    whatsapp_profile_picture_url?: string
+    whatsapp_profile_picture_data?: string
+  }) => {
+    console.log('📤 Criando agente com dados do WhatsApp:', agentData)
+    
     createAgent(agentData, {
       onSuccess: (newAgent) => {
         console.log('✅ Agente criado com ID real:', newAgent.id)
         setCreatedAgentId(newAgent.id)
         
         // Só fechar o dialog se não for WhatsApp ou se o WhatsApp já estiver conectado
-        if (agentData.channel !== 'whatsapp') {
+        if (agentData.channel !== 'whatsapp' || agentData.whatsapp_contact) {
           setIsCreateDialogOpen(false)
           toast({
             title: "Agente criado com sucesso!",
-            description: `O agente ${agentData.name} foi criado e está pronto para uso.`,
+            description: `O agente ${agentData.name} foi criado${agentData.whatsapp_contact ? ' e o WhatsApp foi conectado' : ''}.`,
           })
         }
 
