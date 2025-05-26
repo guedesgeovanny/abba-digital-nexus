@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -82,20 +83,7 @@ export const CreateAgentDialog = ({
         configuration,
       }
 
-      // Criar o agente e aguardar o resultado
-      const result = await new Promise((resolve) => {
-        onCreateAgent(agentData)
-        // Simular um delay para aguardar a criação
-        setTimeout(() => {
-          // Aqui assumimos que o agente foi criado com sucesso
-          // Em uma implementação real, você pegaria o ID do resultado da mutação
-          const mockId = 'agent_' + Date.now()
-          setCreatedAgentId(mockId)
-          resolve(mockId)
-        }, 100)
-      })
-      
-      console.log('🎯 Agente criado, ID definido:', result)
+      onCreateAgent(agentData)
     }
   }
 
@@ -193,8 +181,13 @@ export const CreateAgentDialog = ({
       isConnected: true
     }))
     
-    // Chamar callback externo se fornecido
-    onWhatsAppConnectionSuccess?.()
+    // NÃO chamar onWhatsAppConnectionSuccess que fecharia o dialog
+    // O dialog deve ficar aberto para o usuário clicar em "Criar Agente"
+    
+    toast({
+      title: "WhatsApp Conectado!",
+      description: "WhatsApp conectado com sucesso. Agora você pode criar o agente.",
+    })
   }
 
   const handleCancelWithConfirmation = () => {
@@ -285,6 +278,11 @@ export const CreateAgentDialog = ({
     onClose()
   }
 
+  const handleCreateAgent = () => {
+    // Chamar o callback original que fecha o dialog
+    onWhatsAppConnectionSuccess?.()
+  }
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -318,6 +316,7 @@ export const CreateAgentDialog = ({
                 type="submit" 
                 className="bg-abba-green text-abba-black hover:bg-abba-green-light"
                 disabled={isCreating || !formData.name || !formData.type}
+                onClick={handleCreateAgent}
               >
                 {isCreating ? "Criando..." : "Criar Agente"}
               </Button>

@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { useAgents } from "@/hooks/useAgents"
 import { AgentsPageHeader } from "@/components/AgentsPageHeader"
@@ -38,10 +37,8 @@ const Agents = () => {
       onSuccess: (newAgent) => {
         console.log('✅ Agente criado com ID real:', newAgent.id)
         
-        // Se não for WhatsApp, fechar o dialog imediatamente
-        if (agentData.channel !== 'whatsapp') {
-          setIsCreateDialogOpen(false)
-        }
+        // Fechar o dialog quando o agente for criado com sucesso
+        setIsCreateDialogOpen(false)
         
         toast({
           title: "Agente criado com sucesso!",
@@ -113,12 +110,12 @@ const Agents = () => {
   }
 
   const handleWhatsAppConnectionSuccess = () => {
-    // Fechar o dialog quando o WhatsApp for conectado com sucesso
+    // Fechar o dialog quando o botão "Criar Agente" for clicado
     setIsCreateDialogOpen(false)
     
     toast({
-      title: "WhatsApp conectado!",
-      description: "Agente criado e WhatsApp conectado com sucesso.",
+      title: "Agente criado com sucesso!",
+      description: "Agente criado e configurado com sucesso.",
     })
   }
 
