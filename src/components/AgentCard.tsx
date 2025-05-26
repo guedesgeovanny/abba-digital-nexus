@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Bot, MoreVertical, Activity, MessageSquare, TrendingUp, Smartphone } from "lucide-react"
+import { Bot, MoreVertical, Smartphone } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +43,6 @@ export const AgentCard = ({
   isUpdating = false 
 }: AgentCardProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const metrics = agent.agent_metrics?.[0]
   const configuration = agent.configuration as AgentConfiguration
 
   const getStatusColor = (status: Agent["status"]) => {
@@ -97,19 +96,6 @@ export const AgentCard = ({
       default:
         return "Não definido"
     }
-  }
-
-  const formatLastActivity = (lastActivity: string | null) => {
-    if (!lastActivity) return "Nunca"
-    
-    const now = new Date()
-    const activity = new Date(lastActivity)
-    const diffInMinutes = Math.floor((now.getTime() - activity.getTime()) / (1000 * 60))
-    
-    if (diffInMinutes < 1) return "Agora"
-    if (diffInMinutes < 60) return `${diffInMinutes} min atrás`
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} h atrás`
-    return `${Math.floor(diffInMinutes / 1440)} dias atrás`
   }
 
   const handleDeleteClick = () => {
@@ -268,38 +254,6 @@ export const AgentCard = ({
               <Badge variant="outline" className="border-blue-500 text-blue-400">
                 {getChannelText(agent.channel)}
               </Badge>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-1 text-gray-400">
-                  <MessageSquare className="h-3 w-3" />
-                  Conversas
-                </div>
-                <span className="text-abba-green font-semibold">
-                  {metrics?.conversations_count || 0}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-1 text-gray-400">
-                  <TrendingUp className="h-3 w-3" />
-                  Taxa de Sucesso
-                </div>
-                <span className="text-abba-green font-semibold">
-                  {metrics?.success_rate || 0}%
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-1 text-gray-400">
-                  <Activity className="h-3 w-3" />
-                  Última Atividade
-                </div>
-                <span className="text-gray-300">
-                  {formatLastActivity(metrics?.last_activity)}
-                </span>
-              </div>
             </div>
 
             <div className="pt-3 border-t border-abba-gray">
