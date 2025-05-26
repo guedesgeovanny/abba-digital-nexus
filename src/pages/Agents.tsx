@@ -36,7 +36,7 @@ const Agents = () => {
   const handleCreateAgent = (agentData: Parameters<typeof createAgent>[0]) => {
     createAgent(agentData, {
       onSuccess: (newAgent) => {
-        console.log('✅ Agente criado com ID:', newAgent.id)
+        console.log('✅ Agente criado com ID real:', newAgent.id)
         setCreatedAgentId(newAgent.id)
         
         // Se não for WhatsApp, fechar o dialog

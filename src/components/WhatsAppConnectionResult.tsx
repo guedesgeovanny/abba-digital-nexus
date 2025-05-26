@@ -32,8 +32,6 @@ export const WhatsAppConnectionResult = ({
   }
 
   return (
-    <WhatsAppConnectionSuccess 
-      onNewConnection={onNewConnection}
-    />
+    <WhatsAppConnectionSuccess />
   )
 }

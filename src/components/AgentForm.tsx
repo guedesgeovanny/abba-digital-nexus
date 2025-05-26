@@ -34,6 +34,8 @@ export const AgentForm = ({
 }: AgentFormProps) => {
   const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 
+  console.log('🔍 AgentForm recebeu agentId:', agentId)
+
   return (
     <div className="space-y-4">
       <AgentFormField

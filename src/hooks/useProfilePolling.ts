@@ -27,8 +27,13 @@ export const useProfilePolling = ({
       console.log(`🔄 Fazendo polling para instância: ${instanceName}`)
       const profileData = await getInstanceProfile(instanceName)
       
-      if (profileData) {
+      if (profileData && profileData.profilename && profileData.contato && profileData.fotodoperfil) {
         console.log('✅ Dados do perfil recebidos via polling!')
+        console.log('📋 Dados recebidos:', {
+          profilename: profileData.profilename,
+          contato: profileData.contato,
+          fotodoperfil: profileData.fotodoperfil
+        })
         
         // Baixar a imagem do perfil
         const profilePictureData = await downloadProfileImage(profileData.fotodoperfil)
@@ -44,9 +49,14 @@ export const useProfilePolling = ({
           profilePictureUrl: profilePictureData
         }
         
-        // Salvar no banco se temos o agentId
-        if (agentId && agentId !== 'temp-' + agentId) {
+        // Salvar no banco se temos o agentId real (não temporário)
+        if (agentId && !agentId.startsWith('temp-')) {
           console.log('💾 Salvando dados do perfil no banco para agente:', agentId)
+          console.log('💾 Dados a serem salvos:', {
+            whatsapp_profile_name: profileData.profilename,
+            whatsapp_contact: profileData.contato,
+            whatsapp_profile_picture_url: profileData.fotodoperfil
+          })
           
           try {
             await updateAgentWhatsAppProfile({
@@ -62,13 +72,20 @@ export const useProfilePolling = ({
             console.error('❌ Erro ao salvar perfil no banco:', error)
           }
         } else {
-          console.log('⚠️ AgentId não disponível ainda, perfil não salvo no banco')
+          console.log('⚠️ AgentId não disponível ainda ou é temporário, perfil não salvo no banco')
         }
         
         setIsPolling(false)
         onProfileReceived(formattedProfileData)
       } else {
-        console.log('⏳ Dados ainda não disponíveis, continuando polling...')
+        console.log('⏳ Dados ainda não disponíveis ou incompletos, continuando polling...')
+        if (profileData) {
+          console.log('📋 Dados parciais recebidos:', {
+            profilename: profileData.profilename || 'não disponível',
+            contato: profileData.contato || 'não disponível',
+            fotodoperfil: profileData.fotodoperfil || 'não disponível'
+          })
+        }
       }
     } catch (error) {
       console.error('❌ Erro no polling do perfil:', error)

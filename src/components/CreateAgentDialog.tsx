@@ -81,21 +81,18 @@ export const CreateAgentDialog = ({
         configuration,
       }
 
-      const originalOnCreateAgent = onCreateAgent
-      onCreateAgent = (data) => {
-        originalOnCreateAgent(data)
-        setTimeout(() => {
-          const mockAgentId = 'temp-' + Date.now()
-          setCreatedAgentId(mockAgentId)
-        }, 100)
-      }
-
       onCreateAgent(agentData)
       
       if (formData.channel !== 'whatsapp') {
         handleClose()
       }
     }
+  }
+
+  // Esta função será chamada quando o agente for criado com sucesso
+  const handleAgentCreated = (agentId: string) => {
+    console.log('🎯 Agente criado com ID real:', agentId)
+    setCreatedAgentId(agentId)
   }
 
   const handleWhatsAppConnect = async () => {
