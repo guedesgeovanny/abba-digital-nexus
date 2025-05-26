@@ -78,6 +78,7 @@ export const WhatsAppConnection = ({ onConnect, instanceName, agentId }: WhatsAp
               onNewConnection={handleNewConnection}
               onDeleteConnection={handleDeleteConnection}
               isDeleting={isDeleting}
+              instanceName={currentInstanceName}
             />
           )}
         </div>

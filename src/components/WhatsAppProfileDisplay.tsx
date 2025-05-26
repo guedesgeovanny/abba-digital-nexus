@@ -24,13 +24,56 @@ interface WhatsAppProfileDisplayProps {
   profileData: ProfileData
   onDeleteConnection: () => void
   isDeleting?: boolean
+  instanceName?: string
 }
 
 export const WhatsAppProfileDisplay = ({ 
   profileData, 
   onDeleteConnection,
-  isDeleting = false 
+  isDeleting = false,
+  instanceName 
 }: WhatsAppProfileDisplayProps) => {
+  
+  const handleDeleteConnection = async () => {
+    if (!instanceName) {
+      console.error('❌ Nome da instância não disponível')
+      onDeleteConnection()
+      return
+    }
+
+    try {
+      console.log('🗑️ Enviando requisição para desconectar contato:', instanceName, profileData.contact)
+      
+      const response = await fetch('https://webhook.abbadigital.com.br/webhook/desconecta-contato', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instanceName: instanceName,
+          contato: profileData.contact
+        }),
+      })
+
+      console.log('📡 Resposta da requisição:', response.status, response.statusText)
+
+      if (!response.ok) {
+        console.error('❌ Erro ao desconectar contato:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('❌ Detalhes do erro:', errorText)
+      } else {
+        const responseData = await response.json()
+        console.log('✅ Resposta do servidor:', responseData)
+        console.log('✅ Contato desconectado com sucesso')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar requisição de desconexão:', error)
+    } finally {
+      // Chama a função original para limpar o estado
+      onDeleteConnection()
+    }
+  }
+
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-6 text-center space-y-4 relative">
@@ -58,7 +101,7 @@ export const WhatsAppProfileDisplay = ({
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={onDeleteConnection}
+                  onClick={handleDeleteConnection}
                   className="bg-red-600 hover:bg-red-700"
                   disabled={isDeleting}
                 >

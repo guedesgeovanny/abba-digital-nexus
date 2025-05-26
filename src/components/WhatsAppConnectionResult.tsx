@@ -1,62 +1,40 @@
 
-import { Button } from "@/components/ui/button"
-import { CheckCircle } from "lucide-react"
-import { ProfileData } from "@/utils/whatsappUtils"
 import { WhatsAppProfileDisplay } from "./WhatsAppProfileDisplay"
+import { WhatsAppConnectionSuccess } from "./WhatsAppConnectionSuccess"
+import { ProfileData } from "@/utils/whatsappUtils"
 
 interface WhatsAppConnectionResultProps {
   connectionResult: string
-  profileData?: ProfileData | null
+  profileData: ProfileData | null
   onNewConnection: () => void
-  onDeleteConnection?: () => void
+  onDeleteConnection: () => void
   isDeleting?: boolean
+  instanceName?: string
 }
 
-export const WhatsAppConnectionResult = ({
-  connectionResult,
-  profileData,
-  onNewConnection,
+export const WhatsAppConnectionResult = ({ 
+  connectionResult, 
+  profileData, 
+  onNewConnection, 
   onDeleteConnection,
-  isDeleting = false
+  isDeleting = false,
+  instanceName 
 }: WhatsAppConnectionResultProps) => {
-  // Se temos dados do perfil, mostrar o display do perfil
-  if (profileData && onDeleteConnection) {
+  if (profileData) {
     return (
-      <div className="w-full space-y-3">
-        <WhatsAppProfileDisplay 
-          profileData={profileData}
-          onDeleteConnection={onDeleteConnection}
-          isDeleting={isDeleting}
-        />
-        
-        <Button
-          onClick={onNewConnection}
-          variant="outline"
-          className="w-full text-sm"
-        >
-          Conectar Novo WhatsApp
-        </Button>
-      </div>
+      <WhatsAppProfileDisplay 
+        profileData={profileData} 
+        onDeleteConnection={onDeleteConnection}
+        isDeleting={isDeleting}
+        instanceName={instanceName}
+      />
     )
   }
 
-  // Fallback para resultado simples de conexão
   return (
-    <div className="w-full space-y-3">
-      <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-md text-center">
-        <CheckCircle className="h-6 w-6 text-green-400 mx-auto mb-2" />
-        <p className="text-green-400 text-sm font-medium">
-          {connectionResult}
-        </p>
-      </div>
-      
-      <Button
-        onClick={onNewConnection}
-        variant="outline"
-        className="w-full text-sm"
-      >
-        Conectar Novo WhatsApp
-      </Button>
-    </div>
+    <WhatsAppConnectionSuccess 
+      message={connectionResult}
+      onNewConnection={onNewConnection}
+    />
   )
 }
