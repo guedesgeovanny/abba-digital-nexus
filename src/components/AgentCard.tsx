@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Bot, MoreVertical, Smartphone } from "lucide-react"
+import { Bot, MoreVertical, Smartphone, User } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -132,10 +132,6 @@ export const AgentCard = ({
     return agent.whatsapp_contact || null
   }
 
-  const getWhatsAppProfileName = () => {
-    return agent.whatsapp_profile_name || null
-  }
-
   const isWhatsAppConnected = () => {
     return !!(agent.whatsapp_contact)
   }
@@ -206,10 +202,10 @@ export const AgentCard = ({
               </CardDescription>
             </div>
 
-            {/* Seção do WhatsApp com estado conectado/desconectado */}
-            <div className={`${isWhatsAppConnected() ? 'bg-green-900/20 border-green-500/30' : 'bg-gray-900/20 border-gray-500/30'} border rounded-lg p-3 space-y-2`}>
-              <div className="flex items-center justify-between text-xs">
-                <span className={`${isWhatsAppConnected() ? 'text-green-400' : 'text-gray-400'} font-medium`}>
+            {/* Seção do WhatsApp melhorada */}
+            <div className={`${isWhatsAppConnected() ? 'bg-green-900/20 border-green-500/30' : 'bg-gray-900/20 border-gray-500/30'} border rounded-lg p-4 space-y-3`}>
+              <div className="flex items-center justify-between">
+                <span className={`${isWhatsAppConnected() ? 'text-green-400' : 'text-gray-400'} font-medium text-sm`}>
                   WhatsApp {isWhatsAppConnected() ? 'Conectado' : 'Desconectado'}
                 </span>
                 <Badge variant="outline" className={`${isWhatsAppConnected() ? 'border-green-400 text-green-400' : 'border-gray-400 text-gray-400'} text-xs`}>
@@ -218,12 +214,27 @@ export const AgentCard = ({
               </div>
               
               {isWhatsAppConnected() ? (
-                <div className="text-xs text-green-300">
-                  {getWhatsAppProfileName() && (
-                    <div><strong>Nome:</strong> {getWhatsAppProfileName()}</div>
-                  )}
+                <div className="space-y-3">
+                  {/* Foto do perfil do WhatsApp */}
+                  <div className="flex justify-center">
+                    <Avatar className="h-12 w-12 border-2 border-green-400">
+                      <AvatarImage 
+                        src={getProfilePicture() || undefined} 
+                        alt="WhatsApp Profile" 
+                      />
+                      <AvatarFallback className="bg-green-100 text-green-800">
+                        <User className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  
+                  {/* Contato em destaque */}
                   {getWhatsAppContact() && (
-                    <div><strong>Contato:</strong> {getWhatsAppContact()}</div>
+                    <div className="text-center">
+                      <div className="text-green-300 font-semibold text-base">
+                        {getWhatsAppContact()}
+                      </div>
+                    </div>
                   )}
                 </div>
               ) : (
