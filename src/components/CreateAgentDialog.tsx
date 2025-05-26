@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -33,6 +32,7 @@ interface CreateAgentDialogProps {
   }) => void
   onWhatsAppConnectionSuccess?: () => void
   isCreating?: boolean
+  createdAgentId?: string | null
 }
 
 export const CreateAgentDialog = ({ 
@@ -40,7 +40,8 @@ export const CreateAgentDialog = ({
   onClose, 
   onCreateAgent, 
   onWhatsAppConnectionSuccess,
-  isCreating = false 
+  isCreating = false,
+  createdAgentId 
 }: CreateAgentDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -49,7 +50,6 @@ export const CreateAgentDialog = ({
     description: "",
     channel: "" as AgentChannel,
   })
-  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
   const [whatsAppState, setWhatsAppState] = useState<{
     hasQRCode: boolean
     isConnected: boolean
@@ -62,6 +62,8 @@ export const CreateAgentDialog = ({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isCanceling, setIsCanceling] = useState(false)
   const { toast } = useToast()
+
+  console.log('🔍 CreateAgentDialog recebeu createdAgentId:', createdAgentId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -180,9 +182,6 @@ export const CreateAgentDialog = ({
       ...prev,
       isConnected: true
     }))
-    
-    // NÃO chamar onWhatsAppConnectionSuccess que fecharia o dialog
-    // O dialog deve ficar aberto para o usuário clicar em "Criar Agente"
     
     toast({
       title: "WhatsApp Conectado!",

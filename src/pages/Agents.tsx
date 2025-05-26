@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { useAgents } from "@/hooks/useAgents"
 import { AgentsPageHeader } from "@/components/AgentsPageHeader"
@@ -13,6 +14,7 @@ type Agent = Tables<'agents'>
 const Agents = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
   const { toast } = useToast()
   
   const { 
@@ -36,16 +38,17 @@ const Agents = () => {
     createAgent(agentData, {
       onSuccess: (newAgent) => {
         console.log('✅ Agente criado com ID real:', newAgent.id)
+        setCreatedAgentId(newAgent.id)
         
-        // Fechar o dialog quando o agente for criado com sucesso
-        setIsCreateDialogOpen(false)
-        
-        toast({
-          title: "Agente criado com sucesso!",
-          description: `O agente ${agentData.name} foi criado e está pronto para uso.`,
-        })
+        // Só fechar o dialog se não for WhatsApp ou se o WhatsApp já estiver conectado
+        if (agentData.channel !== 'whatsapp') {
+          setIsCreateDialogOpen(false)
+          toast({
+            title: "Agente criado com sucesso!",
+            description: `O agente ${agentData.name} foi criado e está pronto para uso.`,
+          })
+        }
 
-        // Retornar o agente criado para o dialog poder usar o ID real
         return newAgent
       },
       onError: (error) => {
@@ -103,10 +106,12 @@ const Agents = () => {
 
   const openCreateDialog = () => {
     setIsCreateDialogOpen(true)
+    setCreatedAgentId(null)
   }
   
   const closeCreateDialog = () => {
     setIsCreateDialogOpen(false)
+    setCreatedAgentId(null)
   }
 
   const handleWhatsAppConnectionSuccess = () => {
@@ -169,6 +174,7 @@ const Agents = () => {
         onCreateAgent={handleCreateAgent}
         onWhatsAppConnectionSuccess={handleWhatsAppConnectionSuccess}
         isCreating={isCreating}
+        createdAgentId={createdAgentId}
       />
     </div>
   )

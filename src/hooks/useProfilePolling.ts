@@ -58,8 +58,8 @@ export const useProfilePolling = ({
           profilePictureUrl: profilePictureData
         }
         
-        // Salvar no banco se temos o agentId real (não temporário)
-        if (agentId && !agentId.startsWith('temp-') && !agentId.startsWith('agent_')) {
+        // Salvar no banco se temos o agentId real
+        if (agentId && agentId.length > 10) { // ID real tem mais de 10 caracteres
           console.log('💾 Salvando dados do perfil no banco para agente:', agentId)
           console.log('💾 Dados a serem salvos:', {
             whatsapp_profile_name: profileData.profilename,
@@ -81,7 +81,7 @@ export const useProfilePolling = ({
             console.error('❌ Erro ao salvar perfil no banco:', error)
           }
         } else {
-          console.log('⚠️ AgentId não disponível ainda ou é temporário/mock, perfil não salvo no banco. AgentId:', agentId)
+          console.log('⚠️ AgentId não disponível ainda ou é temporário. AgentId:', agentId)
         }
         
         setIsPolling(false)
