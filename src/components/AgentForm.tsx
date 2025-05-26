@@ -41,6 +41,17 @@ export const AgentForm = ({
 
   console.log('🔍 AgentForm recebeu agentId:', agentId)
 
+  const handleWhatsAppConnectionSuccess = (profileData: {
+    profileName: string
+    contact: string
+    profilePictureUrl: string
+    profilePictureData?: string
+  }) => {
+    if (onWhatsAppConnectionSuccess) {
+      onWhatsAppConnectionSuccess(profileData)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <AgentFormField
@@ -93,7 +104,7 @@ export const AgentForm = ({
           onConnect={onWhatsAppConnect} 
           instanceName={instanceName}
           agentId={agentId}
-          onConnectionSuccess={onWhatsAppConnectionSuccess || (() => {})}
+          onConnectionSuccess={handleWhatsAppConnectionSuccess}
         />
       )}
     </div>

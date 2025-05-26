@@ -155,16 +155,6 @@ export const AgentCard = ({
           </div>
           
           <div className="flex items-center space-x-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage 
-                src={getProfilePicture() || undefined} 
-                alt="Profile picture" 
-              />
-              <AvatarFallback className="bg-abba-gray">
-                <Bot className="h-4 w-4 text-abba-green" />
-              </AvatarFallback>
-            </Avatar>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-abba-green">
