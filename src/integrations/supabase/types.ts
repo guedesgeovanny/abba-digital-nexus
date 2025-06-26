@@ -330,7 +330,7 @@ export type Database = {
           content: string
           conversation_id: number
           created_at: string
-          direction: Database["public"]["Enums"]["message_direction"]
+          direction: string
           message_type: string
           read_at: string | null
           sender_name: string | null
@@ -339,7 +339,7 @@ export type Database = {
           content: string
           conversation_id: number
           created_at?: string
-          direction: Database["public"]["Enums"]["message_direction"]
+          direction: string
           message_type: string
           read_at?: string | null
           sender_name?: string | null
@@ -348,7 +348,7 @@ export type Database = {
           content?: string
           conversation_id?: number
           created_at?: string
-          direction?: Database["public"]["Enums"]["message_direction"]
+          direction?: string
           message_type?: string
           read_at?: string | null
           sender_name?: string | null

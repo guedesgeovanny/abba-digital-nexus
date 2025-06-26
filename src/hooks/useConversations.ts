@@ -44,19 +44,97 @@ export const useConversations = () => {
       setIsLoading(true)
       setError(null)
       
-      console.log('Fazendo query no Supabase...')
-      const { data, error } = await supabase
+      console.log('Fazendo query no Supabase para conversas...')
+      
+      // Buscar todas as conversas do usuário
+      const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
         .select('*')
-        .order('last_message_at', { ascending: false, nullsFirst: false })
+        .order('updated_at', { ascending: false })
       
-      if (error) {
-        console.error('Erro na query:', error)
-        throw error
+      if (conversationsError) {
+        console.error('Erro na query de conversas:', conversationsError)
+        throw conversationsError
       }
       
-      console.log('Conversas retornadas:', data)
-      setConversations(data || [])
+      console.log('Conversas retornadas:', conversationsData)
+      
+      if (!conversationsData || conversationsData.length === 0) {
+        setConversations([])
+        return
+      }
+
+      // Para cada conversa, buscar a mensagem mais recente
+      const conversationsWithMessages = await Promise.all(
+        conversationsData.map(async (conversation) => {
+          try {
+            // Obter o número da conversa
+            const { data: conversationNumber, error: numberError } = await supabase
+              .rpc('get_conversation_number', { conversation_uuid: conversation.id })
+            
+            if (numberError) {
+              console.error('Erro ao obter número da conversa:', numberError)
+              return {
+                ...conversation,
+                last_message: conversation.last_message,
+                last_message_at: conversation.last_message_at,
+                unread_count: 0
+              }
+            }
+
+            // Buscar a mensagem mais recente desta conversa
+            const { data: lastMessage, error: messageError } = await supabase
+              .from('messages')
+              .select('content, created_at, direction')
+              .eq('conversation_id', conversationNumber)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+
+            if (messageError) {
+              console.error('Erro ao buscar última mensagem:', messageError)
+            }
+
+            // Contar mensagens não lidas (recebidas)
+            const { count: unreadCount, error: countError } = await supabase
+              .from('messages')
+              .select('*', { count: 'exact', head: true })
+              .eq('conversation_id', conversationNumber)
+              .eq('direction', 'received')
+              .is('read_at', null)
+
+            if (countError) {
+              console.error('Erro ao contar mensagens não lidas:', countError)
+            }
+
+            return {
+              ...conversation,
+              last_message: lastMessage?.content || conversation.last_message,
+              last_message_at: lastMessage?.created_at || conversation.last_message_at,
+              unread_count: unreadCount || 0
+            }
+          } catch (error) {
+            console.error('Erro ao processar conversa:', error)
+            return {
+              ...conversation,
+              last_message: conversation.last_message,
+              last_message_at: conversation.last_message_at,
+              unread_count: 0
+            }
+          }
+        })
+      )
+
+      // Ordenar por última mensagem (mais recente primeiro)
+      const sortedConversations = conversationsWithMessages.sort((a, b) => {
+        const dateA = new Date(a.last_message_at || a.updated_at)
+        const dateB = new Date(b.last_message_at || b.updated_at)
+        return dateB.getTime() - dateA.getTime()
+      })
+
+      setConversations(sortedConversations)
+      console.log('Conversas processadas com mensagens:', sortedConversations)
+      
     } catch (error) {
       console.error('Erro ao carregar conversas:', error)
       setError(error as Error)
@@ -69,15 +147,39 @@ export const useConversations = () => {
     try {
       setIsDeleting(true)
       
-      const { error } = await supabase
+      // Primeiro obter o número da conversa
+      const { data: conversationNumber, error: numberError } = await supabase
+        .rpc('get_conversation_number', { conversation_uuid: conversationId })
+      
+      if (numberError) {
+        console.error('Erro ao obter número da conversa:', numberError)
+        throw numberError
+      }
+
+      // Deletar todas as mensagens da conversa primeiro
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .eq('conversation_id', conversationNumber)
+      
+      if (messagesError) {
+        console.error('Erro ao deletar mensagens:', messagesError)
+        throw messagesError
+      }
+
+      // Depois deletar a conversa
+      const { error: conversationError } = await supabase
         .from('conversations')
         .delete()
         .eq('id', conversationId)
       
-      if (error) throw error
+      if (conversationError) {
+        console.error('Erro ao deletar conversa:', conversationError)
+        throw conversationError
+      }
       
       setConversations(prev => prev.filter(conv => conv.id !== conversationId))
-      console.log(`Conversa ${conversationId} excluída`)
+      console.log(`Conversa ${conversationId} e suas mensagens excluídas`)
     } catch (error) {
       console.error('Erro ao excluir conversa:', error)
       setError(error as Error)
