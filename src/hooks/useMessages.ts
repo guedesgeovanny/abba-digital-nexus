@@ -65,10 +65,11 @@ export const useMessages = (conversationId: string | null) => {
       
       console.log('Mensagens retornadas:', data)
       
-      // Garantir que message_type seja do tipo correto
+      // Garantir que os tipos sejam corretos
       const typedMessages: Message[] = (data || []).map(msg => ({
         ...msg,
-        message_type: (msg.message_type as Message['message_type']) || 'text'
+        direction: msg.direction as 'sent' | 'received',
+        message_type: msg.message_type as Message['message_type']
       }))
       
       setMessages(typedMessages)
@@ -138,6 +139,7 @@ export const useMessages = (conversationId: string | null) => {
       // Garantir tipagem correta ao adicionar mensagem
       const typedMessage: Message = {
         ...newMessage,
+        direction: newMessage.direction as 'sent' | 'received',
         message_type: messageType
       }
       
