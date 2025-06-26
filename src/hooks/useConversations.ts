@@ -1,6 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/integrations/supabase/client'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export interface Conversation {
@@ -20,77 +19,159 @@ export interface Conversation {
   updated_at: string
 }
 
+// Dados mock para demonstração
+const mockConversations: Conversation[] = [
+  {
+    id: '1',
+    user_id: '00000000-0000-0000-0000-000000000000',
+    agent_id: null,
+    contact_name: 'Maryjane Guedes | Modelo Plus Size',
+    contact_username: 'marypguedes',
+    contact_phone: '(11) 99999-9999',
+    contact_avatar: '/lovable-uploads/570c9d08-209d-4434-84a8-b9937859bc5e.png',
+    status: 'aberta',
+    channel: 'whatsapp',
+    last_message: 'Maryjane enviou um anexo',
+    last_message_at: new Date().toISOString(),
+    unread_count: 2,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    user_id: '00000000-0000-0000-0000-000000000000',
+    agent_id: null,
+    contact_name: 'Eduardo Martins',
+    contact_username: 'eduardo.martins',
+    contact_phone: '(11) 88888-8888',
+    contact_avatar: '/placeholder.svg',
+    status: 'aberta',
+    channel: 'whatsapp',
+    last_message: 'Obrigado pelo atendimento!',
+    last_message_at: new Date(Date.now() - 300000).toISOString(), // 5 min ago
+    unread_count: 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '3',
+    user_id: '00000000-0000-0000-0000-000000000000',
+    agent_id: null,
+    contact_name: 'Antonio Neto',
+    contact_username: 'antonio.neto',
+    contact_phone: '(11) 77777-7777',
+    contact_avatar: '/placeholder.svg',
+    status: 'aberta',
+    channel: 'whatsapp',
+    last_message: 'Quando posso agendar?',
+    last_message_at: new Date(Date.now() - 600000).toISOString(), // 10 min ago
+    unread_count: 3,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '4',
+    user_id: '00000000-0000-0000-0000-000000000000',
+    agent_id: null,
+    contact_name: 'Marcelo Maia',
+    contact_username: 'marcelo.maia',
+    contact_phone: '(11) 66666-6666',
+    contact_avatar: '/placeholder.svg',
+    status: 'fechada',
+    channel: 'whatsapp',
+    last_message: 'Você: 😄😄',
+    last_message_at: new Date(Date.now() - 1800000).toISOString(), // 30 min ago
+    unread_count: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '5',
+    user_id: '00000000-0000-0000-0000-000000000000',
+    agent_id: null,
+    contact_name: 'Thays Campos',
+    contact_username: 'thays.campos',
+    contact_phone: '(11) 55555-5555',
+    contact_avatar: '/placeholder.svg',
+    status: 'aberta',
+    channel: 'whatsapp',
+    last_message: 'Perfeito, obrigada!',
+    last_message_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+    unread_count: 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '6',
+    user_id: '00000000-0000-0000-0000-000000000000',
+    agent_id: null,
+    contact_name: 'Carlos Silva',
+    contact_username: 'carlos.silva',
+    contact_phone: '(11) 44444-4444',
+    contact_avatar: '/placeholder.svg',
+    status: 'aberta',
+    channel: 'instagram',
+    last_message: 'Gostei muito do produto!',
+    last_message_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+    unread_count: 2,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '7',
+    user_id: '00000000-0000-0000-0000-000000000000',
+    agent_id: null,
+    contact_name: 'Ana Costa',
+    contact_username: 'ana.costa',
+    contact_phone: '(11) 33333-3333',
+    contact_avatar: '/placeholder.svg',
+    status: 'fechada',
+    channel: 'messenger',
+    last_message: 'Problema resolvido, obrigada!',
+    last_message_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    unread_count: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+]
+
 export const useConversations = () => {
   const { user } = useAuth()
-  const queryClient = useQueryClient()
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
-  const {
-    data: conversations = [],
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: ['conversations', user?.id],
-    queryFn: async () => {
-      if (!user) return []
-      
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('last_message_at', { ascending: false })
-
-      if (error) {
-        console.error('Erro ao buscar conversas:', error)
-        throw error
-      }
-
-      return data as Conversation[]
-    },
-    enabled: !!user
-  })
-
-  const deleteConversationMutation = useMutation({
-    mutationFn: async (conversationId: string) => {
-      const { error } = await supabase
-        .from('conversations')
-        .delete()
-        .eq('id', conversationId)
-        .eq('user_id', user?.id)
-
-      if (error) {
-        console.error('Erro ao excluir conversa:', error)
-        throw error
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] })
+  useEffect(() => {
+    if (user) {
+      // Simular carregamento
+      setTimeout(() => {
+        setConversations(mockConversations)
+        setIsLoading(false)
+      }, 500)
+    } else {
+      setConversations([])
+      setIsLoading(false)
     }
-  })
+  }, [user])
 
-  const updateConversationStatusMutation = useMutation({
-    mutationFn: async ({ conversationId, status }: { conversationId: string, status: 'aberta' | 'fechada' }) => {
-      const { error } = await supabase
-        .from('conversations')
-        .update({ status })
-        .eq('id', conversationId)
-        .eq('user_id', user?.id)
+  const deleteConversation = (conversationId: string) => {
+    setConversations(prev => prev.filter(conv => conv.id !== conversationId))
+    console.log(`Conversa ${conversationId} excluída`)
+  }
 
-      if (error) {
-        console.error('Erro ao atualizar status da conversa:', error)
-        throw error
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] })
-    }
-  })
+  const updateConversationStatus = (conversationId: string, status: 'aberta' | 'fechada') => {
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversationId ? { ...conv, status } : conv
+    ))
+    console.log(`Status da conversa ${conversationId} alterado para ${status}`)
+  }
 
   return {
     conversations,
     isLoading,
     error,
-    deleteConversation: deleteConversationMutation.mutate,
-    updateConversationStatus: updateConversationStatusMutation.mutate,
-    isDeleting: deleteConversationMutation.isPending
+    deleteConversation,
+    updateConversationStatus,
+    isDeleting: false
   }
 }
