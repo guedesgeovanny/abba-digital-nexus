@@ -18,7 +18,6 @@ const mockConversations = [
     avatar: "/lovable-uploads/570c9d08-209d-4434-84a8-b9937859bc5e.png",
     status: "geral",
     unread: false,
-    isOnline: false,
     isActive: true
   },
   {
@@ -30,7 +29,6 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "aberto",
     unread: true,
-    isOnline: true,
     isActive: false
   },
   {
@@ -42,7 +40,6 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "aberto",
     unread: false,
-    isOnline: false,
     isActive: false
   },
   {
@@ -54,7 +51,6 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "fechado",
     unread: false,
-    isOnline: false,
     isActive: false
   },
   {
@@ -66,7 +62,6 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "aberto",
     unread: true,
-    isOnline: true,
     isActive: false
   },
   {
@@ -78,7 +73,6 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "aberto",
     unread: false,
-    isOnline: true,
     isActive: false
   },
   {
@@ -90,7 +84,6 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "geral",
     unread: false,
-    isOnline: false,
     isActive: false
   },
   {
@@ -102,7 +95,6 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "fechado",
     unread: false,
-    isOnline: false,
     isActive: false
   }
 ]

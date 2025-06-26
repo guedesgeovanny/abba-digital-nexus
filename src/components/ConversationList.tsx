@@ -12,7 +12,6 @@ interface Conversation {
   avatar: string
   status: string
   unread: boolean
-  isOnline: boolean
   isActive: boolean
 }
 
@@ -45,9 +44,6 @@ export const ConversationList = ({
                 <User className="h-6 w-6 text-abba-green" />
               </AvatarFallback>
             </Avatar>
-            {conversation.isOnline && (
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-abba-black"></div>
-            )}
           </div>
 
           <div className="ml-3 flex-1 min-w-0">
