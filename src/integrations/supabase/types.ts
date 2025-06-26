@@ -261,6 +261,7 @@ export type Database = {
           agent_id: string | null
           channel: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar: string | null
+          contact_id: string | null
           contact_name: string
           contact_phone: string | null
           contact_username: string | null
@@ -277,6 +278,7 @@ export type Database = {
           agent_id?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar?: string | null
+          contact_id?: string | null
           contact_name: string
           contact_phone?: string | null
           contact_username?: string | null
@@ -293,6 +295,7 @@ export type Database = {
           agent_id?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar?: string | null
+          contact_id?: string | null
           contact_name?: string
           contact_phone?: string | null
           contact_username?: string | null
@@ -313,6 +316,13 @@ export type Database = {
             referencedRelation: "agents"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       messages: {
@@ -322,7 +332,7 @@ export type Database = {
           created_at: string
           direction: Database["public"]["Enums"]["message_direction"]
           id: string
-          message_type: Database["public"]["Enums"]["message_type"]
+          message_type: string
           read_at: string | null
           sender_name: string | null
         }
@@ -332,7 +342,7 @@ export type Database = {
           created_at?: string
           direction: Database["public"]["Enums"]["message_direction"]
           id?: string
-          message_type?: Database["public"]["Enums"]["message_type"]
+          message_type: string
           read_at?: string | null
           sender_name?: string | null
         }
@@ -342,7 +352,7 @@ export type Database = {
           created_at?: string
           direction?: Database["public"]["Enums"]["message_direction"]
           id?: string
-          message_type?: Database["public"]["Enums"]["message_type"]
+          message_type?: string
           read_at?: string | null
           sender_name?: string | null
         }

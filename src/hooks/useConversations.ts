@@ -7,6 +7,7 @@ export interface Conversation {
   id: string
   user_id: string
   agent_id: string | null
+  contact_id: string | null
   contact_name: string
   contact_phone: string | null
   contact_username: string | null
@@ -97,12 +98,52 @@ export const useConversations = () => {
     }
   }
 
+  const createConversation = async (conversationData: {
+    contact_id?: string
+    contact_name: string
+    contact_phone?: string
+    contact_username?: string
+    contact_avatar?: string
+    channel?: 'whatsapp' | 'instagram' | 'messenger'
+    last_message?: string
+  }) => {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user?.id,
+          contact_id: conversationData.contact_id || null,
+          contact_name: conversationData.contact_name,
+          contact_phone: conversationData.contact_phone || null,
+          contact_username: conversationData.contact_username || null,
+          contact_avatar: conversationData.contact_avatar || null,
+          channel: conversationData.channel || null,
+          last_message: conversationData.last_message || null,
+          last_message_at: new Date().toISOString(),
+          status: 'aberta'
+        })
+        .select()
+        .single()
+      
+      if (error) throw error
+      
+      setConversations(prev => [data, ...prev])
+      console.log('Nova conversa criada:', data.id)
+      return data
+    } catch (error) {
+      console.error('Erro ao criar conversa:', error)
+      setError(error as Error)
+      throw error
+    }
+  }
+
   return {
     conversations,
     isLoading,
     error,
     deleteConversation,
     updateConversationStatus,
+    createConversation,
     isDeleting,
     refetch: fetchConversations
   }
