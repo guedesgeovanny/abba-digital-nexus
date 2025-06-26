@@ -328,43 +328,32 @@ export type Database = {
       messages: {
         Row: {
           content: string
-          conversation_id: string
+          conversation_id: number
           created_at: string
           direction: Database["public"]["Enums"]["message_direction"]
-          id: string
           message_type: string
           read_at: string | null
           sender_name: string | null
         }
         Insert: {
           content: string
-          conversation_id: string
+          conversation_id: number
           created_at?: string
           direction: Database["public"]["Enums"]["message_direction"]
-          id?: string
           message_type: string
           read_at?: string | null
           sender_name?: string | null
         }
         Update: {
           content?: string
-          conversation_id?: string
+          conversation_id?: number
           created_at?: string
           direction?: Database["public"]["Enums"]["message_direction"]
-          id?: string
           message_type?: string
           read_at?: string | null
           sender_name?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -401,6 +390,10 @@ export type Database = {
       create_sample_conversations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_conversation_number: {
+        Args: { conversation_uuid: string }
+        Returns: number
       }
     }
     Enums: {

@@ -4,8 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
 
 export interface Message {
-  id: string
-  conversation_id: string
+  conversation_id: number
   content: string
   direction: 'sent' | 'received'
   message_type: 'text' | 'image' | 'audio' | 'document' | 'file'
@@ -40,10 +39,23 @@ export const useMessages = (conversationId: string | null) => {
       setError(null)
       
       console.log('Fazendo query de mensagens...')
+      
+      // Primeiro, obter o número da conversa usando a função do banco
+      const { data: conversationNumber, error: numberError } = await supabase
+        .rpc('get_conversation_number', { conversation_uuid: conversationId })
+      
+      if (numberError) {
+        console.error('Erro ao obter número da conversa:', numberError)
+        throw numberError
+      }
+      
+      console.log('Número da conversa:', conversationNumber)
+      
+      // Agora buscar as mensagens usando o número da conversa
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('conversation_id', conversationId)
+        .eq('conversation_id', conversationNumber)
         .order('created_at', { ascending: true })
       
       if (error) {
@@ -78,11 +90,20 @@ export const useMessages = (conversationId: string | null) => {
       setIsSending(true)
       console.log('Enviando mensagem:', { content, messageType, conversationId })
       
-      // Inserir a nova mensagem
+      // Primeiro, obter o número da conversa
+      const { data: conversationNumber, error: numberError } = await supabase
+        .rpc('get_conversation_number', { conversation_uuid: conversationId })
+      
+      if (numberError) {
+        console.error('Erro ao obter número da conversa:', numberError)
+        throw numberError
+      }
+      
+      // Inserir a nova mensagem usando o número da conversa
       const { data: newMessage, error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId,
+          conversation_id: conversationNumber,
           content,
           direction: 'sent' as const,
           message_type: messageType,
