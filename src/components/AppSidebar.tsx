@@ -1,5 +1,5 @@
 
-import { Home, Bot, BarChart3, Settings, Users, Contact, Trello, LogOut } from "lucide-react"
+import { Home, Bot, BarChart3, Settings, Users, Contact, Trello, LogOut, MessageSquare } from "lucide-react"
 import { useLocation } from "react-router-dom"
 import {
   Sidebar,
@@ -36,6 +36,11 @@ const items = [
     title: "CRM",
     url: "/crm",
     icon: Trello,
+  },
+  {
+    title: "Chat",
+    url: "/chat",
+    icon: MessageSquare,
   },
   {
     title: "Analytics",

@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import Contacts from "./pages/Contacts";
 import CRM from "./pages/CRM";
+import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
@@ -94,6 +95,16 @@ const App = () => {
                   <ProtectedRoute>
                     <AuthenticatedLayout>
                       <CRM />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/chat" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Chat />
                     </AuthenticatedLayout>
                   </ProtectedRoute>
                 } 
