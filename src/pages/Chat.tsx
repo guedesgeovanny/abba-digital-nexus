@@ -18,6 +18,7 @@ const mockConversations = [
     avatar: "/lovable-uploads/570c9d08-209d-4434-84a8-b9937859bc5e.png",
     status: "geral",
     unread: false,
+    isOnline: false,
     isActive: true
   },
   {
@@ -41,6 +42,7 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "aberto",
     unread: false,
+    isOnline: false,
     isActive: false
   },
   {
@@ -52,6 +54,7 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "fechado",
     unread: false,
+    isOnline: false,
     isActive: false
   },
   {
@@ -87,6 +90,7 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "geral",
     unread: false,
+    isOnline: false,
     isActive: false
   },
   {
@@ -98,6 +102,7 @@ const mockConversations = [
     avatar: "/placeholder.svg",
     status: "fechado",
     unread: false,
+    isOnline: false,
     isActive: false
   }
 ]
@@ -117,6 +122,10 @@ const Chat = () => {
     
     return matchesSearch
   })
+
+  const handleSelectConversation = (conversation: any) => {
+    setSelectedConversation(conversation)
+  }
 
   return (
     <div className="h-full bg-abba-black text-abba-text">
@@ -170,7 +179,7 @@ const Chat = () => {
             <ConversationList 
               conversations={filteredConversations}
               selectedConversation={selectedConversation}
-              onSelectConversation={setSelectedConversation}
+              onSelectConversation={handleSelectConversation}
             />
           </div>
         </div>

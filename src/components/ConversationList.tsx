@@ -12,7 +12,7 @@ interface Conversation {
   avatar: string
   status: string
   unread: boolean
-  isOnline?: boolean
+  isOnline: boolean
   isActive: boolean
 }
 
