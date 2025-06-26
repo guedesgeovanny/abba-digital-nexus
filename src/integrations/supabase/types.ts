@@ -388,7 +388,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_sample_conversations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       agent_channel: "whatsapp" | "instagram" | "messenger"
