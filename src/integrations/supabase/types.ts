@@ -256,6 +256,106 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          agent_id: string | null
+          channel: Database["public"]["Enums"]["communication_channel"] | null
+          contact_avatar: string | null
+          contact_name: string
+          contact_phone: string | null
+          contact_username: string | null
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string | null
+          status: Database["public"]["Enums"]["conversation_status"]
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          channel?: Database["public"]["Enums"]["communication_channel"] | null
+          contact_avatar?: string | null
+          contact_name: string
+          contact_phone?: string | null
+          contact_username?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          status?: Database["public"]["Enums"]["conversation_status"]
+          unread_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          channel?: Database["public"]["Enums"]["communication_channel"] | null
+          contact_avatar?: string | null
+          contact_name?: string
+          contact_phone?: string | null
+          contact_username?: string | null
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          status?: Database["public"]["Enums"]["conversation_status"]
+          unread_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          direction: Database["public"]["Enums"]["message_direction"]
+          id: string
+          message_type: Database["public"]["Enums"]["message_type"]
+          read_at: string | null
+          sender_name: string | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          direction: Database["public"]["Enums"]["message_direction"]
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          read_at?: string | null
+          sender_name?: string | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          direction?: Database["public"]["Enums"]["message_direction"]
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          read_at?: string | null
+          sender_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -299,6 +399,7 @@ export type Database = {
         | "marketing"
         | "rh"
         | "personalizado"
+      communication_channel: "whatsapp" | "instagram" | "messenger"
       contact_channel:
         | "instagram"
         | "whatsapp"
@@ -313,6 +414,9 @@ export type Database = {
         | "qualificado"
         | "convertido"
         | "perdido"
+      conversation_status: "aberta" | "fechada"
+      message_direction: "sent" | "received"
+      message_type: "text" | "image" | "audio" | "document" | "file"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -431,6 +535,7 @@ export const Constants = {
       agent_channel: ["whatsapp", "instagram", "messenger"],
       agent_status: ["active", "inactive", "training"],
       agent_type: ["vendas", "atendimento", "marketing", "rh", "personalizado"],
+      communication_channel: ["whatsapp", "instagram", "messenger"],
       contact_channel: [
         "instagram",
         "whatsapp",
@@ -447,6 +552,9 @@ export const Constants = {
         "convertido",
         "perdido",
       ],
+      conversation_status: ["aberta", "fechada"],
+      message_direction: ["sent", "received"],
+      message_type: ["text", "image", "audio", "document", "file"],
     },
   },
 } as const
