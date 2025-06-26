@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client'
 export interface Conversation {
   id: string
   user_id: string
-  agent_id: string | null
   contact_id: string | null
   contact_name: string
   contact_phone: string | null
