@@ -116,7 +116,7 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
         ) : (
           messages.map((message, index) => (
             <div
-              key={`${message.conversation_id}-${message.created_at}-${index}`}
+              key={`${message.id}-${index}`}
               className={`flex ${message.direction === 'sent' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`

@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
 
 export interface Message {
-  conversation_id: number
+  id: string
+  conversation_id: string
   content: string
   direction: 'sent' | 'received'
   message_type: 'text' | 'image' | 'audio' | 'document' | 'file'
@@ -40,22 +41,11 @@ export const useMessages = (conversationId: string | null) => {
       
       console.log('Fazendo query de mensagens...')
       
-      // Primeiro, obter o número da conversa usando a função do banco
-      const { data: conversationNumber, error: numberError } = await supabase
-        .rpc('get_conversation_number', { conversation_uuid: conversationId })
-      
-      if (numberError) {
-        console.error('Erro ao obter número da conversa:', numberError)
-        throw numberError
-      }
-      
-      console.log('Número da conversa:', conversationNumber)
-      
-      // Agora buscar as mensagens usando o número da conversa
+      // Buscar mensagens diretamente usando o UUID da conversa
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('conversation_id', conversationNumber)
+        .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
       
       if (error) {
@@ -91,20 +81,11 @@ export const useMessages = (conversationId: string | null) => {
       setIsSending(true)
       console.log('Enviando mensagem:', { content, messageType, conversationId })
       
-      // Primeiro, obter o número da conversa
-      const { data: conversationNumber, error: numberError } = await supabase
-        .rpc('get_conversation_number', { conversation_uuid: conversationId })
-      
-      if (numberError) {
-        console.error('Erro ao obter número da conversa:', numberError)
-        throw numberError
-      }
-      
-      // Inserir a nova mensagem usando o número da conversa
+      // Inserir a nova mensagem usando o UUID da conversa diretamente
       const { data: newMessage, error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationNumber,
+          conversation_id: conversationId,
           content,
           direction: 'sent' as const,
           message_type: messageType,

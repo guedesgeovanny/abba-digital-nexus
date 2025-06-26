@@ -64,29 +64,15 @@ export const useConversations = () => {
         return
       }
 
-      // Para cada conversa, buscar a mensagem mais recente
+      // Para cada conversa, buscar a mensagem mais recente e contar não lidas
       const conversationsWithMessages = await Promise.all(
         conversationsData.map(async (conversation) => {
           try {
-            // Obter o número da conversa
-            const { data: conversationNumber, error: numberError } = await supabase
-              .rpc('get_conversation_number', { conversation_uuid: conversation.id })
-            
-            if (numberError) {
-              console.error('Erro ao obter número da conversa:', numberError)
-              return {
-                ...conversation,
-                last_message: conversation.last_message,
-                last_message_at: conversation.last_message_at,
-                unread_count: 0
-              }
-            }
-
             // Buscar a mensagem mais recente desta conversa
             const { data: lastMessage, error: messageError } = await supabase
               .from('messages')
               .select('content, created_at, direction')
-              .eq('conversation_id', conversationNumber)
+              .eq('conversation_id', conversation.id)
               .order('created_at', { ascending: false })
               .limit(1)
               .maybeSingle()
@@ -99,7 +85,7 @@ export const useConversations = () => {
             const { count: unreadCount, error: countError } = await supabase
               .from('messages')
               .select('*', { count: 'exact', head: true })
-              .eq('conversation_id', conversationNumber)
+              .eq('conversation_id', conversation.id)
               .eq('direction', 'received')
               .is('read_at', null)
 
@@ -146,21 +132,12 @@ export const useConversations = () => {
   const deleteConversation = async (conversationId: string) => {
     try {
       setIsDeleting(true)
-      
-      // Primeiro obter o número da conversa
-      const { data: conversationNumber, error: numberError } = await supabase
-        .rpc('get_conversation_number', { conversation_uuid: conversationId })
-      
-      if (numberError) {
-        console.error('Erro ao obter número da conversa:', numberError)
-        throw numberError
-      }
 
-      // Deletar todas as mensagens da conversa primeiro
+      // Deletar todas as mensagens da conversa primeiro (cascade deve fazer isso automaticamente)
       const { error: messagesError } = await supabase
         .from('messages')
         .delete()
-        .eq('conversation_id', conversationNumber)
+        .eq('conversation_id', conversationId)
       
       if (messagesError) {
         console.error('Erro ao deletar mensagens:', messagesError)

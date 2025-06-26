@@ -258,7 +258,6 @@ export type Database = {
       }
       conversations: {
         Row: {
-          agent_id: string | null
           channel: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar: string | null
           contact_id: string | null
@@ -275,7 +274,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          agent_id?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar?: string | null
           contact_id?: string | null
@@ -292,7 +290,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          agent_id?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar?: string | null
           contact_id?: string | null
@@ -310,13 +307,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "conversations_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "conversations_contact_id_fkey"
             columns: ["contact_id"]
             isOneToOne: false
@@ -328,32 +318,43 @@ export type Database = {
       messages: {
         Row: {
           content: string
-          conversation_id: number
+          conversation_id: string
           created_at: string
           direction: string
+          id: string
           message_type: string
           read_at: string | null
           sender_name: string | null
         }
         Insert: {
           content: string
-          conversation_id: number
+          conversation_id: string
           created_at?: string
           direction: string
+          id?: string
           message_type: string
           read_at?: string | null
           sender_name?: string | null
         }
         Update: {
           content?: string
-          conversation_id?: number
+          conversation_id?: string
           created_at?: string
           direction?: string
+          id?: string
           message_type?: string
           read_at?: string | null
           sender_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
