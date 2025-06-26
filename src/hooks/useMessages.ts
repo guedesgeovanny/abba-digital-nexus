@@ -45,7 +45,13 @@ export const useMessages = (conversationId: string | null) => {
       
       if (error) throw error
       
-      setMessages(data || [])
+      // Garantir que message_type seja do tipo correto
+      const typedMessages: Message[] = (data || []).map(msg => ({
+        ...msg,
+        message_type: (msg.message_type as Message['message_type']) || 'text'
+      }))
+      
+      setMessages(typedMessages)
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error)
       setError(error as Error)
@@ -86,8 +92,13 @@ export const useMessages = (conversationId: string | null) => {
       
       if (conversationError) throw conversationError
       
-      // Adicionar a mensagem ao estado local
-      setMessages(prev => [...prev, newMessage])
+      // Garantir tipagem correta ao adicionar mensagem
+      const typedMessage: Message = {
+        ...newMessage,
+        message_type: messageType
+      }
+      
+      setMessages(prev => [...prev, typedMessage])
       
       console.log('Mensagem enviada:', content)
     } catch (error) {
