@@ -11,7 +11,12 @@ interface WhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
   instanceName: string
   agentId?: string
-  onConnectionSuccess?: () => void
+  onConnectionSuccess?: (profileData: {
+    profileName: string
+    contact: string
+    profilePictureUrl: string
+    profilePictureData?: string
+  }) => void
 }
 
 export const WhatsAppConnection = ({ 
