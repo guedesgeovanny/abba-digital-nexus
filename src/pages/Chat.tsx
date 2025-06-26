@@ -2,18 +2,23 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Search, RefreshCw } from "lucide-react"
 import { ConversationList } from "@/components/ConversationList"
 import { ChatArea } from "@/components/ChatArea"
 import { useConversations, Conversation } from "@/hooks/useConversations"
 import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 const Chat = () => {
   const [activeTab, setActiveTab] = useState("geral")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const { conversations, isLoading, deleteConversation, isDeleting } = useConversations()
+  const [isCreatingSample, setIsCreatingSample] = useState(false)
+  const { conversations, isLoading, deleteConversation, isDeleting, refetch } = useConversations()
   const { user } = useAuth()
+  const { toast } = useToast()
 
   const filteredConversations = conversations.filter(conversation => {
     const matchesSearch = conversation.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -42,6 +47,43 @@ const Chat = () => {
     console.log(`Conversa ${conversationId} excluída com sucesso`)
   }
 
+  const createSampleConversations = async () => {
+    try {
+      setIsCreatingSample(true)
+      console.log('Criando conversas de exemplo...')
+      
+      const { error } = await supabase.rpc('create_sample_conversations')
+      
+      if (error) {
+        console.error('Erro ao criar conversas de exemplo:', error)
+        toast({
+          title: "Erro",
+          description: "Erro ao criar conversas de exemplo: " + error.message,
+          variant: "destructive"
+        })
+        return
+      }
+      
+      console.log('Conversas de exemplo criadas com sucesso')
+      toast({
+        title: "Sucesso",
+        description: "Conversas de exemplo criadas com sucesso!",
+      })
+      
+      // Recarregar conversas
+      refetch()
+    } catch (error) {
+      console.error('Erro:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao criar conversas de exemplo",
+        variant: "destructive"
+      })
+    } finally {
+      setIsCreatingSample(false)
+    }
+  }
+
   // Selecionar automaticamente a primeira conversa se nenhuma estiver selecionada
   if (!selectedConversation && conversations.length > 0 && !isLoading) {
     setSelectedConversation(conversations[0])
@@ -64,6 +106,20 @@ const Chat = () => {
           <div className="p-4 border-b border-abba-gray">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-abba-text">Chat</h2>
+              {conversations.length === 0 && !isLoading && (
+                <Button
+                  onClick={createSampleConversations}
+                  disabled={isCreatingSample}
+                  size="sm"
+                  className="bg-abba-green text-abba-black hover:bg-abba-green/90"
+                >
+                  {isCreatingSample ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Criar Exemplos"
+                  )}
+                </Button>
+              )}
             </div>
             
             {/* Campo de busca */}
