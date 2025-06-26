@@ -5,13 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 const data = [
-  { name: 'Jan', tokens: 4000 },
-  { name: 'Fev', tokens: 3000 },
-  { name: 'Mar', tokens: 2000 },
-  { name: 'Abr', tokens: 2780 },
-  { name: 'Mai', tokens: 1890 },
-  { name: 'Jun', tokens: 2390 },
-  { name: 'Jul', tokens: 3490 },
+  { name: 'Jan', tokens: 0 },
+  { name: 'Fev', tokens: 0 },
+  { name: 'Mar', tokens: 0 },
+  { name: 'Abr', tokens: 0 },
+  { name: 'Mai', tokens: 0 },
+  { name: 'Jun', tokens: 0 },
+  { name: 'Jul', tokens: 0 },
 ]
 
 const Dashboard = () => {
@@ -39,23 +39,23 @@ const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <KPICard
           title="Agentes Ativos"
-          value="45"
+          value="0"
           icon={Bot}
-          trend={{ value: 12, isPositive: true }}
+          trend={{ value: 0, isPositive: true }}
           description="Total de agentes em operação"
         />
         <KPICard
           title="Conversas Hoje"
-          value="1,234"
+          value="0"
           icon={MessageSquare}
-          trend={{ value: 8, isPositive: true }}
+          trend={{ value: 0, isPositive: true }}
           description="Interações realizadas"
         />
         <KPICard
           title="Taxa de Sucesso"
-          value="94.5%"
+          value="0%"
           icon={TrendingUp}
-          trend={{ value: 2, isPositive: true }}
+          trend={{ value: 0, isPositive: true }}
           description="Resoluções efetivas"
         />
       </div>
@@ -110,24 +110,8 @@ const Dashboard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {[
-              { agent: "Agente Vendas", action: "Conversão realizada", time: "2 min atrás", status: "success" },
-              { agent: "Agente Suporte", action: "Ticket resolvido", time: "5 min atrás", status: "success" },
-              { agent: "Agente Marketing", action: "Lead qualificado", time: "8 min atrás", status: "info" },
-              { agent: "Agente Vendas", action: "Follow-up enviado", time: "12 min atrás", status: "info" },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${activity.status === 'success' ? 'bg-abba-green' : 'bg-blue-400'}`} />
-                  <div>
-                    <p className="text-sm font-medium text-abba-text">{activity.agent}</p>
-                    <p className="text-xs text-gray-400">{activity.action}</p>
-                  </div>
-                </div>
-                <span className="text-xs text-gray-400">{activity.time}</span>
-              </div>
-            ))}
+          <div className="flex items-center justify-center p-8">
+            <div className="text-gray-400">Nenhuma atividade recente</div>
           </div>
         </CardContent>
       </Card>
