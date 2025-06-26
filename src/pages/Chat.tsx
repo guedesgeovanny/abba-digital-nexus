@@ -103,8 +103,9 @@ const Chat = () => {
   const [activeTab, setActiveTab] = useState("geral")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedConversation, setSelectedConversation] = useState(mockConversations[0])
+  const [conversations, setConversations] = useState(mockConversations)
 
-  const filteredConversations = mockConversations.filter(conversation => {
+  const filteredConversations = conversations.filter(conversation => {
     const matchesSearch = conversation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          conversation.username.toLowerCase().includes(searchTerm.toLowerCase())
     
@@ -117,6 +118,32 @@ const Chat = () => {
 
   const handleSelectConversation = (conversation: any) => {
     setSelectedConversation(conversation)
+  }
+
+  const handleDeleteConversation = (conversationId: number) => {
+    // Remove a conversa da lista
+    const updatedConversations = conversations.filter(conv => conv.id !== conversationId)
+    setConversations(updatedConversations)
+    
+    // Se a conversa excluída era a selecionada, seleciona a primeira disponível
+    if (selectedConversation.id === conversationId && updatedConversations.length > 0) {
+      setSelectedConversation(updatedConversations[0])
+    } else if (updatedConversations.length === 0) {
+      // Se não há mais conversas, define como null ou uma conversa vazia
+      setSelectedConversation({
+        id: 0,
+        name: "Nenhuma conversa selecionada",
+        username: "",
+        lastMessage: "",
+        time: "",
+        avatar: "",
+        status: "",
+        unread: false,
+        isActive: false
+      })
+    }
+    
+    console.log(`Conversa ${conversationId} excluída com sucesso`)
   }
 
   return (
@@ -178,7 +205,16 @@ const Chat = () => {
 
         {/* Área do chat */}
         <div className="flex-1 flex flex-col">
-          <ChatArea conversation={selectedConversation} />
+          {selectedConversation.id !== 0 ? (
+            <ChatArea 
+              conversation={selectedConversation} 
+              onDeleteConversation={handleDeleteConversation}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center bg-abba-black">
+              <p className="text-gray-400">Nenhuma conversa disponível</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

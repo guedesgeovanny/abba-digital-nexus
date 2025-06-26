@@ -2,7 +2,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Phone, Video, MoreVertical, Send, Paperclip, Smile, Mic, User } from "lucide-react"
+import { Send, Paperclip, Smile, Mic, User, Bot, Trash2 } from "lucide-react"
+import { useState } from "react"
 
 interface Conversation {
   id: number
@@ -18,6 +19,7 @@ interface Conversation {
 
 interface ChatAreaProps {
   conversation: Conversation
+  onDeleteConversation?: (conversationId: number) => void
 }
 
 // Mensagens mockadas para demonstração
@@ -59,7 +61,21 @@ const mockMessages = [
   }
 ]
 
-export const ChatArea = ({ conversation }: ChatAreaProps) => {
+export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) => {
+  const [isAiAgentActive, setIsAiAgentActive] = useState(false)
+
+  const handleToggleAiAgent = () => {
+    setIsAiAgentActive(!isAiAgentActive)
+    console.log(`AI Agent ${!isAiAgentActive ? 'ativado' : 'desativado'} para a conversa ${conversation.id}`)
+  }
+
+  const handleDeleteConversation = () => {
+    if (onDeleteConversation) {
+      onDeleteConversation(conversation.id)
+    }
+    console.log(`Excluindo conversa ${conversation.id}`)
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header do chat */}
@@ -82,14 +98,26 @@ export const ChatArea = ({ conversation }: ChatAreaProps) => {
         </div>
         
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="text-gray-400 hover:text-abba-green">
-            <Phone className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleToggleAiAgent}
+            className={`${isAiAgentActive 
+              ? 'text-abba-green hover:text-abba-green/80' 
+              : 'text-gray-400 hover:text-abba-green'
+            }`}
+            title={isAiAgentActive ? 'Desativar Agente IA' : 'Ativar Agente IA'}
+          >
+            <Bot className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-gray-400 hover:text-abba-green">
-            <Video className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="text-gray-400 hover:text-abba-green">
-            <MoreVertical className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleDeleteConversation}
+            className="text-gray-400 hover:text-red-500"
+            title="Excluir Conversa"
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
