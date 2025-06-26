@@ -1,149 +1,58 @@
 
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search } from "lucide-react"
 import { ConversationList } from "@/components/ConversationList"
 import { ChatArea } from "@/components/ChatArea"
-
-// Dados ilustrativos para as conversas
-const mockConversations = [
-  {
-    id: 1,
-    name: "Maryjane Guedes | Modelo Plus Size",
-    username: "marypguedes",
-    lastMessage: "Maryjane enviou um anexo",
-    time: "13 h",
-    avatar: "/lovable-uploads/570c9d08-209d-4434-84a8-b9937859bc5e.png",
-    status: "geral",
-    unread: false,
-    isActive: true
-  },
-  {
-    id: 2,
-    name: "Eduardo Martins",
-    username: "eduardo.martins",
-    lastMessage: "Obrigado pelo atendimento!",
-    time: "agora",
-    avatar: "/placeholder.svg",
-    status: "aberto",
-    unread: true,
-    isActive: false
-  },
-  {
-    id: 3,
-    name: "Antonio Neto",
-    username: "antonio.neto",
-    lastMessage: "Quando posso agendar?",
-    time: "há 18 min",
-    avatar: "/placeholder.svg",
-    status: "aberto",
-    unread: false,
-    isActive: false
-  },
-  {
-    id: 4,
-    name: "Marcelo Maia",
-    username: "marcelo.maia",
-    lastMessage: "Você: 😄😄",
-    time: "1 d",
-    avatar: "/placeholder.svg",
-    status: "fechado",
-    unread: false,
-    isActive: false
-  },
-  {
-    id: 5,
-    name: "Thays Campos",
-    username: "thays.campos",
-    lastMessage: "Perfeito, obrigada!",
-    time: "há 1 min",
-    avatar: "/placeholder.svg",
-    status: "aberto",
-    unread: true,
-    isActive: false
-  },
-  {
-    id: 6,
-    name: "Caio Alves",
-    username: "caio.alves",
-    lastMessage: "Preciso de mais informações",
-    time: "há 1 min",
-    avatar: "/placeholder.svg",
-    status: "aberto",
-    unread: false,
-    isActive: false
-  },
-  {
-    id: 7,
-    name: "Rubenvaldo Guedes Guedes",
-    username: "rubenvaldo.guedes",
-    lastMessage: "Vou pensar sobre a proposta",
-    time: "há 3 h",
-    avatar: "/placeholder.svg",
-    status: "geral",
-    unread: false,
-    isActive: false
-  },
-  {
-    id: 8,
-    name: "Thiago Nascimento",
-    username: "thiago.nascimento",
-    lastMessage: "não acho por nada",
-    time: "6 d",
-    avatar: "/placeholder.svg",
-    status: "fechado",
-    unread: false,
-    isActive: false
-  }
-]
+import { useConversations, Conversation } from "@/hooks/useConversations"
+import { useAuth } from "@/contexts/AuthContext"
 
 const Chat = () => {
   const [activeTab, setActiveTab] = useState("geral")
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedConversation, setSelectedConversation] = useState(mockConversations[0])
-  const [conversations, setConversations] = useState(mockConversations)
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+  const { conversations, isLoading, deleteConversation, isDeleting } = useConversations()
+  const { user } = useAuth()
 
   const filteredConversations = conversations.filter(conversation => {
-    const matchesSearch = conversation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         conversation.username.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = conversation.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (conversation.contact_username && conversation.contact_username.toLowerCase().includes(searchTerm.toLowerCase()))
     
     if (activeTab === "geral") return matchesSearch
-    if (activeTab === "aberto") return matchesSearch && conversation.status === "aberto"
-    if (activeTab === "fechado") return matchesSearch && conversation.status === "fechado"
+    if (activeTab === "aberto") return matchesSearch && conversation.status === "aberta"
+    if (activeTab === "fechado") return matchesSearch && conversation.status === "fechada"
     
     return matchesSearch
   })
 
-  const handleSelectConversation = (conversation: any) => {
+  const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation)
   }
 
-  const handleDeleteConversation = (conversationId: number) => {
-    // Remove a conversa da lista
-    const updatedConversations = conversations.filter(conv => conv.id !== conversationId)
-    setConversations(updatedConversations)
+  const handleDeleteConversation = (conversationId: string) => {
+    deleteConversation(conversationId)
     
     // Se a conversa excluída era a selecionada, seleciona a primeira disponível
-    if (selectedConversation.id === conversationId && updatedConversations.length > 0) {
-      setSelectedConversation(updatedConversations[0])
-    } else if (updatedConversations.length === 0) {
-      // Se não há mais conversas, define como null ou uma conversa vazia
-      setSelectedConversation({
-        id: 0,
-        name: "Nenhuma conversa selecionada",
-        username: "",
-        lastMessage: "",
-        time: "",
-        avatar: "",
-        status: "",
-        unread: false,
-        isActive: false
-      })
+    if (selectedConversation?.id === conversationId) {
+      const remainingConversations = conversations.filter(conv => conv.id !== conversationId)
+      setSelectedConversation(remainingConversations.length > 0 ? remainingConversations[0] : null)
     }
     
     console.log(`Conversa ${conversationId} excluída com sucesso`)
+  }
+
+  // Selecionar automaticamente a primeira conversa se nenhuma estiver selecionada
+  if (!selectedConversation && conversations.length > 0 && !isLoading) {
+    setSelectedConversation(conversations[0])
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full bg-abba-black">
+        <p className="text-gray-400">Você precisa estar logado para ver as conversas</p>
+      </div>
+    )
   }
 
   return (
@@ -199,20 +108,23 @@ const Chat = () => {
               conversations={filteredConversations}
               selectedConversation={selectedConversation}
               onSelectConversation={handleSelectConversation}
+              isLoading={isLoading}
             />
           </div>
         </div>
 
         {/* Área do chat */}
         <div className="flex-1 flex flex-col">
-          {selectedConversation.id !== 0 ? (
+          {selectedConversation ? (
             <ChatArea 
               conversation={selectedConversation} 
               onDeleteConversation={handleDeleteConversation}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-abba-black">
-              <p className="text-gray-400">Nenhuma conversa disponível</p>
+              <p className="text-gray-400">
+                {isLoading ? 'Carregando conversas...' : 'Selecione uma conversa para começar'}
+              </p>
             </div>
           )}
         </div>
