@@ -23,8 +23,10 @@ export const useMessages = (conversationId: string | null) => {
 
   useEffect(() => {
     if (conversationId && user) {
+      console.log('Carregando mensagens para conversa:', conversationId)
       fetchMessages()
     } else {
+      console.log('Sem conversa selecionada ou usuário não logado')
       setMessages([])
       setIsLoading(false)
     }
@@ -37,13 +39,19 @@ export const useMessages = (conversationId: string | null) => {
       setIsLoading(true)
       setError(null)
       
+      console.log('Fazendo query de mensagens...')
       const { data, error } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
       
-      if (error) throw error
+      if (error) {
+        console.error('Erro na query de mensagens:', error)
+        throw error
+      }
+      
+      console.log('Mensagens retornadas:', data)
       
       // Garantir que message_type seja do tipo correto
       const typedMessages: Message[] = (data || []).map(msg => ({
@@ -61,10 +69,14 @@ export const useMessages = (conversationId: string | null) => {
   }
 
   const sendMessage = async ({ content, messageType = 'text' }: { content: string, messageType?: Message['message_type'] }) => {
-    if (!conversationId || !user) return
+    if (!conversationId || !user) {
+      console.error('Conversa ou usuário não disponível')
+      return
+    }
 
     try {
       setIsSending(true)
+      console.log('Enviando mensagem:', { content, messageType, conversationId })
       
       // Inserir a nova mensagem
       const { data: newMessage, error: messageError } = await supabase
@@ -79,7 +91,12 @@ export const useMessages = (conversationId: string | null) => {
         .select()
         .single()
       
-      if (messageError) throw messageError
+      if (messageError) {
+        console.error('Erro ao inserir mensagem:', messageError)
+        throw messageError
+      }
+      
+      console.log('Mensagem inserida:', newMessage)
       
       // Atualizar a última mensagem da conversa
       const { error: conversationError } = await supabase
@@ -90,7 +107,12 @@ export const useMessages = (conversationId: string | null) => {
         })
         .eq('id', conversationId)
       
-      if (conversationError) throw conversationError
+      if (conversationError) {
+        console.error('Erro ao atualizar conversa:', conversationError)
+        throw conversationError
+      }
+      
+      console.log('Conversa atualizada')
       
       // Garantir tipagem correta ao adicionar mensagem
       const typedMessage: Message = {
@@ -100,7 +122,7 @@ export const useMessages = (conversationId: string | null) => {
       
       setMessages(prev => [...prev, typedMessage])
       
-      console.log('Mensagem enviada:', content)
+      console.log('Mensagem enviada com sucesso:', content)
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       setError(error as Error)

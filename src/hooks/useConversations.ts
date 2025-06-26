@@ -30,8 +30,10 @@ export const useConversations = () => {
 
   useEffect(() => {
     if (user) {
+      console.log('Usuário logado, carregando conversas...')
       fetchConversations()
     } else {
+      console.log('Usuário não logado')
       setConversations([])
       setIsLoading(false)
     }
@@ -42,13 +44,18 @@ export const useConversations = () => {
       setIsLoading(true)
       setError(null)
       
+      console.log('Fazendo query no Supabase...')
       const { data, error } = await supabase
         .from('conversations')
         .select('*')
         .order('last_message_at', { ascending: false, nullsFirst: false })
       
-      if (error) throw error
+      if (error) {
+        console.error('Erro na query:', error)
+        throw error
+      }
       
+      console.log('Conversas retornadas:', data)
       setConversations(data || [])
     } catch (error) {
       console.error('Erro ao carregar conversas:', error)
@@ -108,6 +115,9 @@ export const useConversations = () => {
     last_message?: string
   }) => {
     try {
+      console.log('Criando nova conversa:', conversationData)
+      console.log('User ID:', user?.id)
+      
       const { data, error } = await supabase
         .from('conversations')
         .insert({
@@ -125,10 +135,13 @@ export const useConversations = () => {
         .select()
         .single()
       
-      if (error) throw error
+      if (error) {
+        console.error('Erro ao inserir conversa:', error)
+        throw error
+      }
       
+      console.log('Conversa criada com sucesso:', data)
       setConversations(prev => [data, ...prev])
-      console.log('Nova conversa criada:', data.id)
       return data
     } catch (error) {
       console.error('Erro ao criar conversa:', error)
