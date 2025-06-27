@@ -317,39 +317,39 @@ export type Database = {
       }
       messages: {
         Row: {
-          content: string
-          conversation_id: string
+          conversa_id: string
           created_at: string
-          direction: string
-          id: string
-          message_type: string
-          read_at: string | null
-          sender_name: string | null
+          data_hora: string | null
+          direcao: string
+          mensagem: string
+          nome_contato: string | null
+          numero: number
+          updated_at: string | null
         }
         Insert: {
-          content: string
-          conversation_id: string
+          conversa_id: string
           created_at?: string
-          direction: string
-          id?: string
-          message_type: string
-          read_at?: string | null
-          sender_name?: string | null
+          data_hora?: string | null
+          direcao: string
+          mensagem: string
+          nome_contato?: string | null
+          numero?: number
+          updated_at?: string | null
         }
         Update: {
-          content?: string
-          conversation_id?: string
+          conversa_id?: string
           created_at?: string
-          direction?: string
-          id?: string
-          message_type?: string
-          read_at?: string | null
-          sender_name?: string | null
+          data_hora?: string | null
+          direcao?: string
+          mensagem?: string
+          nome_contato?: string | null
+          numero?: number
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
+            foreignKeyName: "messages_conversa_id_fkey"
+            columns: ["conversa_id"]
             isOneToOne: false
             referencedRelation: "conversations"
             referencedColumns: ["id"]

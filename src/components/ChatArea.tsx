@@ -6,8 +6,6 @@ import { Send, Paperclip, Smile, Mic, User, Bot, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { Conversation } from "@/hooks/useConversations"
 import { useMessages } from "@/hooks/useMessages"
-import { formatDistanceToNow } from "date-fns"
-import { ptBR } from "date-fns/locale"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -116,30 +114,22 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
         ) : (
           messages.map((message, index) => (
             <div
-              key={`${message.id}-${index}`}
-              className={`flex ${message.direction === 'sent' ? 'justify-end' : 'justify-start'}`}
+              key={`${message.numero}-${index}`}
+              className={`flex ${message.direcao === 'sent' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`
                 max-w-xs lg:max-w-md px-4 py-2 rounded-lg
-                ${message.direction === 'sent' 
+                ${message.direcao === 'sent' 
                   ? 'bg-abba-green text-abba-black' 
                   : 'bg-abba-gray text-abba-text'
                 }
               `}>
-                {message.message_type === 'image' ? (
-                  <img 
-                    src={message.content} 
-                    alt="Shared image" 
-                    className="rounded-lg max-w-full h-auto"
-                  />
-                ) : (
-                  <p className="text-sm">{message.content}</p>
-                )}
+                <p className="text-sm">{message.mensagem}</p>
                 <div className={`
                   text-xs mt-1 
-                  ${message.direction === 'sent' ? 'text-abba-black/70' : 'text-gray-400'}
+                  ${message.direcao === 'sent' ? 'text-abba-black/70' : 'text-gray-400'}
                 `}>
-                  {formatMessageTime(message.created_at)}
+                  {formatMessageTime(message.data_hora || message.created_at)}
                 </div>
               </div>
             </div>

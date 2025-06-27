@@ -4,14 +4,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
 
 export interface Message {
-  id: string
-  conversation_id: string
-  content: string
-  direction: 'sent' | 'received'
-  message_type: 'text' | 'image' | 'audio' | 'document' | 'file'
-  sender_name: string | null
-  read_at: string | null
+  numero: number
+  conversa_id: string
+  mensagem: string
+  direcao: 'sent' | 'received'
+  nome_contato: string | null
+  data_hora: string | null
   created_at: string
+  updated_at: string | null
 }
 
 export const useMessages = (conversationId: string | null) => {
@@ -41,12 +41,12 @@ export const useMessages = (conversationId: string | null) => {
       
       console.log('Fazendo query de mensagens...')
       
-      // Buscar mensagens diretamente usando o UUID da conversa
+      // Buscar mensagens usando os novos nomes das colunas
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
+        .eq('conversa_id', conversationId)
+        .order('data_hora', { ascending: true })
       
       if (error) {
         console.error('Erro na query de mensagens:', error)
@@ -58,8 +58,7 @@ export const useMessages = (conversationId: string | null) => {
       // Garantir que os tipos sejam corretos
       const typedMessages: Message[] = (data || []).map(msg => ({
         ...msg,
-        direction: msg.direction as 'sent' | 'received',
-        message_type: msg.message_type as Message['message_type']
+        direcao: msg.direcao as 'sent' | 'received'
       }))
       
       setMessages(typedMessages)
@@ -71,7 +70,7 @@ export const useMessages = (conversationId: string | null) => {
     }
   }
 
-  const sendMessage = async ({ content, messageType = 'text' }: { content: string, messageType?: Message['message_type'] }) => {
+  const sendMessage = async ({ content }: { content: string }) => {
     if (!conversationId || !user) {
       console.error('Conversa ou usuário não disponível')
       return
@@ -79,17 +78,17 @@ export const useMessages = (conversationId: string | null) => {
 
     try {
       setIsSending(true)
-      console.log('Enviando mensagem:', { content, messageType, conversationId })
+      console.log('Enviando mensagem:', { content, conversationId })
       
-      // Inserir a nova mensagem usando o UUID da conversa diretamente
+      // Inserir a nova mensagem usando os novos nomes das colunas
       const { data: newMessage, error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId,
-          content,
-          direction: 'sent' as const,
-          message_type: messageType,
-          sender_name: 'Você'
+          conversa_id: conversationId,
+          mensagem: content,
+          direcao: 'sent' as const,
+          nome_contato: 'Você',
+          data_hora: new Date().toISOString()
         })
         .select()
         .single()
@@ -120,8 +119,7 @@ export const useMessages = (conversationId: string | null) => {
       // Garantir tipagem correta ao adicionar mensagem
       const typedMessage: Message = {
         ...newMessage,
-        direction: newMessage.direction as 'sent' | 'received',
-        message_type: messageType
+        direcao: newMessage.direcao as 'sent' | 'received'
       }
       
       setMessages(prev => [...prev, typedMessage])

@@ -67,12 +67,12 @@ export const useConversations = () => {
       const conversationsWithMessages = await Promise.all(
         conversationsData.map(async (conversation) => {
           try {
-            // Buscar a mensagem mais recente desta conversa
+            // Buscar a mensagem mais recente desta conversa usando os novos nomes das colunas
             const { data: lastMessage, error: messageError } = await supabase
               .from('messages')
-              .select('content, created_at, direction')
-              .eq('conversation_id', conversation.id)
-              .order('created_at', { ascending: false })
+              .select('mensagem, data_hora, direcao')
+              .eq('conversa_id', conversation.id)
+              .order('data_hora', { ascending: false })
               .limit(1)
               .maybeSingle()
 
@@ -84,9 +84,8 @@ export const useConversations = () => {
             const { count: unreadCount, error: countError } = await supabase
               .from('messages')
               .select('*', { count: 'exact', head: true })
-              .eq('conversation_id', conversation.id)
-              .eq('direction', 'received')
-              .is('read_at', null)
+              .eq('conversa_id', conversation.id)
+              .eq('direcao', 'received')
 
             if (countError) {
               console.error('Erro ao contar mensagens não lidas:', countError)
@@ -94,8 +93,8 @@ export const useConversations = () => {
 
             return {
               ...conversation,
-              last_message: lastMessage?.content || conversation.last_message,
-              last_message_at: lastMessage?.created_at || conversation.last_message_at,
+              last_message: lastMessage?.mensagem || conversation.last_message,
+              last_message_at: lastMessage?.data_hora || conversation.last_message_at,
               unread_count: unreadCount || 0
             }
           } catch (error) {
@@ -132,11 +131,11 @@ export const useConversations = () => {
     try {
       setIsDeleting(true)
 
-      // Deletar todas as mensagens da conversa primeiro (cascade deve fazer isso automaticamente)
+      // Deletar todas as mensagens da conversa primeiro usando o novo nome da coluna
       const { error: messagesError } = await supabase
         .from('messages')
         .delete()
-        .eq('conversation_id', conversationId)
+        .eq('conversa_id', conversationId)
       
       if (messagesError) {
         console.error('Erro ao deletar mensagens:', messagesError)
