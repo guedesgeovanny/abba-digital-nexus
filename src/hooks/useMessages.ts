@@ -39,10 +39,7 @@ export const useMessages = (conversationId: string | null) => {
           },
           (payload) => {
             console.log('Nova mensagem recebida via realtime:', payload.new)
-            const newMessage: Message = {
-              ...payload.new,
-              direcao: payload.new.direcao as 'sent' | 'received'
-            }
+            const newMessage: Message = payload.new as Message
             setMessages(prev => [...prev, newMessage])
           }
         )
