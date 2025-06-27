@@ -25,6 +25,32 @@ export const useMessages = (conversationId: string | null) => {
     if (conversationId && user) {
       console.log('Carregando mensagens para conversa:', conversationId)
       fetchMessages()
+      
+      // Configurar listener para realtime
+      const channel = supabase
+        .channel('messages-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `conversa_id=eq.${conversationId}`
+          },
+          (payload) => {
+            console.log('Nova mensagem recebida via realtime:', payload.new)
+            const newMessage: Message = {
+              ...payload.new,
+              direcao: payload.new.direcao as 'sent' | 'received'
+            }
+            setMessages(prev => [...prev, newMessage])
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
     } else {
       console.log('Sem conversa selecionada ou usuário não logado')
       setMessages([])
@@ -70,6 +96,29 @@ export const useMessages = (conversationId: string | null) => {
     }
   }
 
+  const sendToWebhook = async (messageData: any) => {
+    try {
+      console.log('Enviando mensagem para webhook:', messageData)
+      
+      const response = await fetch('https://webhook.abbadigital.com.br/webhook/envia-mensagem', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Webhook responded with status: ${response.status}`)
+      }
+
+      console.log('Mensagem enviada para webhook com sucesso')
+    } catch (error) {
+      console.error('Erro ao enviar mensagem para webhook:', error)
+      // Não bloquear o envio da mensagem se o webhook falhar
+    }
+  }
+
   const sendMessage = async ({ content }: { content: string }) => {
     if (!conversationId || !user) {
       console.error('Conversa ou usuário não disponível')
@@ -79,6 +128,17 @@ export const useMessages = (conversationId: string | null) => {
     try {
       setIsSending(true)
       console.log('Enviando mensagem:', { content, conversationId })
+      
+      // Buscar dados da conversa para o webhook
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .single()
+
+      if (convError) {
+        console.error('Erro ao buscar conversa:', convError)
+      }
       
       // Inserir a nova mensagem usando os novos nomes das colunas
       const { data: newMessage, error: messageError } = await supabase
@@ -116,13 +176,26 @@ export const useMessages = (conversationId: string | null) => {
       
       console.log('Conversa atualizada')
       
-      // Garantir tipagem correta ao adicionar mensagem
-      const typedMessage: Message = {
-        ...newMessage,
-        direcao: newMessage.direcao as 'sent' | 'received'
+      // Enviar dados para o webhook
+      if (conversation) {
+        const webhookData = {
+          messageId: newMessage.numero,
+          conversationId: conversationId,
+          content: content,
+          direction: 'sent',
+          timestamp: new Date().toISOString(),
+          contact: {
+            name: conversation.contact_name,
+            phone: conversation.contact_phone,
+            username: conversation.contact_username
+          },
+          channel: conversation.channel,
+          userId: user.id
+        }
+        
+        // Enviar para webhook sem bloquear a UI
+        sendToWebhook(webhookData)
       }
-      
-      setMessages(prev => [...prev, typedMessage])
       
       console.log('Mensagem enviada com sucesso:', content)
     } catch (error) {

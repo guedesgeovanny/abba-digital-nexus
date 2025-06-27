@@ -271,7 +271,7 @@ export type Database = {
           status: Database["public"]["Enums"]["conversation_status"]
           unread_count: number
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           channel?: Database["public"]["Enums"]["communication_channel"] | null
@@ -287,7 +287,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["conversation_status"]
           unread_count?: number
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           channel?: Database["public"]["Enums"]["communication_channel"] | null
@@ -303,7 +303,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["conversation_status"]
           unread_count?: number
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

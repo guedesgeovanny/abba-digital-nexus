@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
@@ -31,6 +30,88 @@ export const useConversations = () => {
     if (user) {
       console.log('Usuário logado, carregando conversas...')
       fetchConversations()
+      
+      // Configurar listener para realtime nas conversas
+      const conversationsChannel = supabase
+        .channel('conversations-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'conversations',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Nova conversa recebida via realtime:', payload.new)
+            setConversations(prev => [payload.new as Conversation, ...prev])
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'conversations',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Conversa atualizada via realtime:', payload.new)
+            setConversations(prev => 
+              prev.map(conv => 
+                conv.id === payload.new.id ? payload.new as Conversation : conv
+              ).sort((a, b) => {
+                const dateA = new Date(a.last_message_at || a.updated_at)
+                const dateB = new Date(b.last_message_at || b.updated_at)
+                return dateB.getTime() - dateA.getTime()
+              })
+            )
+          }
+        )
+        .subscribe()
+
+      // Configurar listener para realtime nas mensagens (para atualizar contadores)
+      const messagesChannel = supabase
+        .channel('messages-conversations-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages'
+          },
+          async (payload) => {
+            console.log('Nova mensagem detectada para atualizar conversas:', payload.new)
+            
+            // Atualizar a conversa correspondente
+            const message = payload.new
+            if (message.direcao === 'received') {
+              setConversations(prev => 
+                prev.map(conv => {
+                  if (conv.id === message.conversa_id) {
+                    return {
+                      ...conv,
+                      last_message: message.mensagem,
+                      last_message_at: message.data_hora || message.created_at,
+                      unread_count: conv.unread_count + 1
+                    }
+                  }
+                  return conv
+                }).sort((a, b) => {
+                  const dateA = new Date(a.last_message_at || a.updated_at)
+                  const dateB = new Date(b.last_message_at || b.updated_at)
+                  return dateB.getTime() - dateA.getTime()
+                })
+              )
+            }
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(conversationsChannel)
+        supabase.removeChannel(messagesChannel)
+      }
     } else {
       console.log('Usuário não logado')
       setConversations([])
@@ -49,6 +130,7 @@ export const useConversations = () => {
       const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
         .select('*')
+        .eq('user_id', user?.id)
         .order('updated_at', { ascending: false })
       
       if (conversationsError) {
