@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,6 +22,7 @@ interface ConversationListProps {
   selectedConversation: Conversation | null
   onSelectConversation: (conversation: Conversation) => void
   onDeleteConversation?: (conversationId: string) => void
+  onCloseConversation?: (conversationId: string) => void
   isLoading?: boolean
 }
 
@@ -31,8 +31,9 @@ export const ConversationList = ({
   selectedConversation, 
   onSelectConversation,
   onDeleteConversation,
+  onCloseConversation,
   isLoading 
-}: ConversationListProps) => {
+}: ConversationListProps & { onCloseConversation?: (conversationId: string) => void }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -64,6 +65,13 @@ export const ConversationList = ({
     e.stopPropagation()
     if (onDeleteConversation) {
       onDeleteConversation(conversationId)
+    }
+  }
+
+  const handleToggleConversationStatus = (conversation: Conversation, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onCloseConversation) {
+      onCloseConversation(conversation.id)
     }
   }
 
@@ -108,7 +116,53 @@ export const ConversationList = ({
             </div>
           </div>
 
-          <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
+            {/* Botão de Fechar/Abrir Conversa */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500"
+                  title={conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {conversation.status === 'aberta' ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8m-8 0V8a4 4 0 118 0v4m-8 0v4a4 4 0 108 0v-4" />
+                    </svg>
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {conversation.status === 'aberta' 
+                      ? `Tem certeza de que deseja fechar a conversa com ${conversation.contact_name}?`
+                      : `Tem certeza de que deseja reabrir a conversa com ${conversation.contact_name}?`
+                    }
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={(e) => handleToggleConversationStatus(conversation, e)}
+                    className={conversation.status === 'aberta' ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500 hover:bg-green-600"}
+                  >
+                    {conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Botão de Excluir */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button

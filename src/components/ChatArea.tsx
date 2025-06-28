@@ -1,11 +1,15 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Paperclip, Smile, Mic, User, Bot, Trash2, X } from "lucide-react"
-import { useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Send, User, Trash2 } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { useMessages } from "@/hooks/useMessages"
+import { formatDistanceToNow } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,68 +24,90 @@ import {
 
 interface ChatAreaProps {
   conversation: Conversation
-  onDeleteConversation?: (conversationId: string) => void
-  onCloseConversation?: (conversationId: string) => void
+  onDeleteConversation: (conversationId: string) => void
 }
 
-export const ChatArea = ({ conversation, onDeleteConversation, onCloseConversation }: ChatAreaProps) => {
-  const [isAiAgentActive, setIsAiAgentActive] = useState(false)
-  const [messageInput, setMessageInput] = useState("")
+export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) => {
+  const [newMessage, setNewMessage] = useState("")
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
+  const { toast } = useToast()
 
-  const handleToggleAiAgent = () => {
-    setIsAiAgentActive(!isAiAgentActive)
-    console.log(`AI Agent ${!isAiAgentActive ? 'ativado' : 'desativado'} para a conversa ${conversation.id}`)
-  }
-
-  const handleDeleteConversation = () => {
-    if (onDeleteConversation) {
-      onDeleteConversation(conversation.id)
-    }
-    console.log(`Excluindo conversa ${conversation.id}`)
-  }
-
-  const handleCloseConversation = () => {
-    if (onCloseConversation) {
-      onCloseConversation(conversation.id)
-    }
-    console.log(`Fechando conversa ${conversation.id}`)
-  }
-
-  const handleClearMessages = () => {
-    clearMessages()
-    console.log(`Limpando mensagens da conversa ${conversation.id}`)
-  }
-
-  const handleSendMessage = () => {
-    if (messageInput.trim() && !isSending) {
-      sendMessage({ content: messageInput.trim() })
-      setMessageInput("")
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!newMessage.trim() || isSending) return
+    
+    try {
+      await sendMessage({ content: newMessage.trim() })
+      setNewMessage("")
+      
+      toast({
+        title: "Mensagem enviada",
+        description: "Sua mensagem foi enviada com sucesso.",
+      })
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar mensagem. Tente novamente.",
+        variant: "destructive"
+      })
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+  const handleClearMessages = async () => {
+    try {
+      await clearMessages()
+      
+      toast({
+        title: "Mensagens apagadas",
+        description: "Todas as mensagens desta conversa foram apagadas.",
+      })
+    } catch (error) {
+      console.error('Erro ao apagar mensagens:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao apagar mensagens. Tente novamente.",
+        variant: "destructive"
+      })
     }
   }
 
-  const formatMessageTime = (dateString: string) => {
+  const formatMessageTime = (dateString: string | null) => {
+    if (!dateString) return ''
+    
     try {
       const date = new Date(dateString)
-      return date.toLocaleTimeString('pt-BR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
+      return formatDistanceToNow(date, { addSuffix: true, locale: ptBR })
     } catch {
       return ''
     }
   }
 
+  const getChannelIcon = (channel: string | null) => {
+    switch (channel) {
+      case 'whatsapp':
+        return '📱'
+      case 'instagram':
+        return '📷'
+      case 'messenger':
+        return '💬'
+      default:
+        return '💭'
+    }
+  }
+
+  const getStatusBadge = (status: 'aberta' | 'fechada') => {
+    return status === 'aberta' ? (
+      <Badge className="bg-green-500 text-white">Aberta</Badge>
+    ) : (
+      <Badge className="bg-gray-500 text-white">Fechada</Badge>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header do chat */}
+      {/* Header da conversa */}
       <div className="flex items-center justify-between p-4 border-b border-abba-gray bg-abba-black">
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
@@ -90,86 +116,45 @@ export const ChatArea = ({ conversation, onDeleteConversation, onCloseConversati
               <User className="h-5 w-5 text-abba-green" />
             </AvatarFallback>
           </Avatar>
+          
           <div>
-            <h3 className="text-sm font-medium text-abba-text">
-              {conversation.contact_name}
-            </h3>
-            <p className="text-xs text-gray-400">
-              {conversation.contact_username}
-            </p>
+            <h3 className="font-semibold text-abba-text">{conversation.contact_name}</h3>
+            <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <span>{getChannelIcon(conversation.channel)} {conversation.channel || 'Chat'}</span>
+              {getStatusBadge(conversation.status)}
+            </div>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleToggleAiAgent}
-            className={`${isAiAgentActive 
-              ? 'text-abba-green hover:text-abba-green/80' 
-              : 'text-gray-400 hover:text-abba-green'
-            }`}
-            title={isAiAgentActive ? 'Desativar Agente IA' : 'Ativar Agente IA'}
-          >
-            <Bot className="h-4 w-4" />
-          </Button>
-
-          {conversation.status === 'aberta' && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-gray-400 hover:text-yellow-500"
-                  title="Fechar Conversa"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Fechar Conversa</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza de que deseja fechar esta conversa? Você poderá reabri-la a qualquer momento.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleCloseConversation}>
-                    Fechar Conversa
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-
+          {/* Botão para apagar mensagens */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-gray-400 hover:text-orange-500"
-                title="Limpar Mensagens"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-red-500"
                 disabled={isClearing}
+                title="Apagar Mensagens"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Limpar Mensagens</AlertDialogTitle>
+                <AlertDialogTitle>Apagar Mensagens</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Tem certeza de que deseja apagar todas as mensagens desta conversa? 
-                  Esta ação não pode ser desfeita. A conversa permanecerá na lista.
+                  Tem certeza de que deseja apagar todas as mensagens desta conversa com {conversation.contact_name}? 
+                  Esta ação não pode ser desfeita, mas a conversa permanecerá na lista.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction 
                   onClick={handleClearMessages}
-                  className="bg-orange-500 hover:bg-orange-600"
+                  className="bg-red-500 hover:bg-red-600"
                 >
-                  Limpar Mensagens
+                  Apagar Mensagens
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -177,7 +162,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onCloseConversati
         </div>
       </div>
 
-      {/* Área de mensagens */}
+      {/* Área das mensagens */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-abba-black">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -188,67 +173,50 @@ export const ChatArea = ({ conversation, onDeleteConversation, onCloseConversati
             <div className="text-gray-400">Nenhuma mensagem ainda</div>
           </div>
         ) : (
-          messages.map((message, index) => (
+          messages.map((message) => (
             <div
-              key={`${message.numero}-${index}`}
+              key={message.numero}
               className={`flex ${message.direcao === 'sent' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`
-                max-w-xs lg:max-w-md px-4 py-2 rounded-lg
-                ${message.direcao === 'sent' 
-                  ? 'bg-abba-green text-abba-black' 
-                  : 'bg-abba-gray text-abba-text'
-                }
-              `}>
+              <div
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  message.direcao === 'sent'
+                    ? 'bg-abba-green text-abba-black'
+                    : 'bg-abba-gray text-abba-text'
+                }`}
+              >
                 <p className="text-sm">{message.mensagem}</p>
-                <div className={`
-                  text-xs mt-1 
-                  ${message.direcao === 'sent' ? 'text-abba-black/70' : 'text-gray-400'}
-                `}>
-                  {formatMessageTime(message.data_hora || message.created_at)}
-                </div>
+                <p className="text-xs opacity-70 mt-1">
+                  {formatMessageTime(message.data_hora)}
+                </p>
               </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Input de mensagem */}
-      <div className="p-4 border-t border-abba-gray bg-abba-black">
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="text-gray-400 hover:text-abba-green">
-            <Paperclip className="h-4 w-4" />
-          </Button>
-          
-          <div className="flex-1 relative">
-            <Input
-              placeholder="Mensagem..."
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isSending}
-              className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green pr-20"
-            />
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-400 hover:text-abba-green">
-                <Smile className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-gray-400 hover:text-abba-green">
-                <Mic className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
+      {/* Campo de entrada de mensagem */}
+      <form onSubmit={handleSendMessage} className="p-4 border-t border-abba-gray bg-abba-black">
+        <div className="flex space-x-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Digite sua mensagem..."
+            className="flex-1 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+            disabled={isSending || conversation.status === 'fechada'}
+          />
           <Button 
-            size="sm" 
-            onClick={handleSendMessage}
-            disabled={!messageInput.trim() || isSending}
-            className="bg-abba-green text-abba-black hover:bg-abba-green/90 disabled:opacity-50"
+            type="submit" 
+            disabled={!newMessage.trim() || isSending || conversation.status === 'fechada'}
+            className="bg-abba-green text-abba-black hover:bg-abba-green/90"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+        {conversation.status === 'fechada' && (
+          <p className="text-xs text-gray-400 mt-2">Esta conversa está fechada. Reabra-a para enviar mensagens.</p>
+        )}
+      </form>
     </div>
   )
 }

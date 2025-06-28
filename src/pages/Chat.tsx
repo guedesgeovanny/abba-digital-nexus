@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -71,6 +70,35 @@ const Chat = () => {
       toast({
         title: "Erro",
         description: "Erro ao fechar a conversa. Tente novamente.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleToggleConversationStatus = async (conversationId: string) => {
+    const conversation = conversations.find(conv => conv.id === conversationId)
+    if (!conversation) return
+
+    const newStatus = conversation.status === 'aberta' ? 'fechada' : 'aberta'
+    
+    try {
+      await updateConversationStatus(conversationId, newStatus)
+      
+      // Atualizar a conversa selecionada se for a mesma
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(prev => prev ? { ...prev, status: newStatus } : null)
+      }
+      
+      toast({
+        title: newStatus === 'fechada' ? "Conversa fechada" : "Conversa aberta",
+        description: `A conversa foi ${newStatus === 'fechada' ? 'fechada' : 'reaberta'} com sucesso.`,
+      })
+      
+      console.log(`Conversa ${conversationId} ${newStatus === 'fechada' ? 'fechada' : 'reaberta'} com sucesso`)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: `Erro ao ${newStatus === 'fechada' ? 'fechar' : 'reabrir'} a conversa. Tente novamente.`,
         variant: "destructive"
       })
     }
@@ -194,6 +222,7 @@ const Chat = () => {
               selectedConversation={selectedConversation}
               onSelectConversation={handleSelectConversation}
               onDeleteConversation={handleDeleteConversation}
+              onCloseConversation={handleToggleConversationStatus}
               isLoading={isLoading}
             />
           </div>
@@ -205,7 +234,6 @@ const Chat = () => {
             <ChatArea 
               conversation={selectedConversation} 
               onDeleteConversation={handleDeleteConversation}
-              onCloseConversation={handleCloseConversation}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-abba-black">
