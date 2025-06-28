@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
@@ -20,6 +19,7 @@ export const useMessages = (conversationId: string | null) => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [isSending, setIsSending] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
 
   useEffect(() => {
     if (conversationId && user) {
@@ -203,12 +203,59 @@ export const useMessages = (conversationId: string | null) => {
     }
   }
 
+  const clearMessages = async () => {
+    if (!conversationId) {
+      console.error('Conversa não disponível para limpar mensagens')
+      return
+    }
+
+    try {
+      setIsClearing(true)
+      console.log('Limpando mensagens da conversa:', conversationId)
+      
+      // Deletar todas as mensagens da conversa
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('conversa_id', conversationId)
+      
+      if (error) {
+        console.error('Erro ao limpar mensagens:', error)
+        throw error
+      }
+      
+      // Atualizar a conversa para remover a última mensagem
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .update({
+          last_message: null,
+          last_message_at: null
+        })
+        .eq('id', conversationId)
+      
+      if (conversationError) {
+        console.error('Erro ao atualizar conversa:', conversationError)
+        throw conversationError
+      }
+      
+      setMessages([])
+      console.log('Mensagens limpas com sucesso')
+    } catch (error) {
+      console.error('Erro ao limpar mensagens:', error)
+      setError(error as Error)
+    } finally {
+      setIsClearing(false)
+    }
+  }
+
   return {
     messages,
     isLoading,
     error,
     sendMessage,
     isSending,
+    clearMessages,
+    isClearing,
     refetch: fetchMessages
   }
 }

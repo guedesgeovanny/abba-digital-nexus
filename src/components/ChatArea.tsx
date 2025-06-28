@@ -2,20 +2,32 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Paperclip, Smile, Mic, User, Bot, Trash2 } from "lucide-react"
+import { Send, Paperclip, Smile, Mic, User, Bot, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import { Conversation } from "@/hooks/useConversations"
 import { useMessages } from "@/hooks/useMessages"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface ChatAreaProps {
   conversation: Conversation
   onDeleteConversation?: (conversationId: string) => void
+  onCloseConversation?: (conversationId: string) => void
 }
 
-export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) => {
+export const ChatArea = ({ conversation, onDeleteConversation, onCloseConversation }: ChatAreaProps) => {
   const [isAiAgentActive, setIsAiAgentActive] = useState(false)
   const [messageInput, setMessageInput] = useState("")
-  const { messages, isLoading, sendMessage, isSending } = useMessages(conversation.id)
+  const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
 
   const handleToggleAiAgent = () => {
     setIsAiAgentActive(!isAiAgentActive)
@@ -27,6 +39,18 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
       onDeleteConversation(conversation.id)
     }
     console.log(`Excluindo conversa ${conversation.id}`)
+  }
+
+  const handleCloseConversation = () => {
+    if (onCloseConversation) {
+      onCloseConversation(conversation.id)
+    }
+    console.log(`Fechando conversa ${conversation.id}`)
+  }
+
+  const handleClearMessages = () => {
+    clearMessages()
+    console.log(`Limpando mensagens da conversa ${conversation.id}`)
   }
 
   const handleSendMessage = () => {
@@ -89,15 +113,67 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
           >
             <Bot className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleDeleteConversation}
-            className="text-gray-400 hover:text-red-500"
-            title="Excluir Conversa"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+
+          {conversation.status === 'aberta' && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-gray-400 hover:text-yellow-500"
+                  title="Fechar Conversa"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Fechar Conversa</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza de que deseja fechar esta conversa? Você poderá reabri-la a qualquer momento.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleCloseConversation}>
+                    Fechar Conversa
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-400 hover:text-orange-500"
+                title="Limpar Mensagens"
+                disabled={isClearing}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar Mensagens</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza de que deseja apagar todas as mensagens desta conversa? 
+                  Esta ação não pode ser desfeita. A conversa permanecerá na lista.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleClearMessages}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  Limpar Mensagens
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

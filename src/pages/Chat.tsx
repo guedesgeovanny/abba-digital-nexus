@@ -16,7 +16,7 @@ const Chat = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
-  const { conversations, isLoading, deleteConversation, isDeleting, refetch } = useConversations()
+  const { conversations, isLoading, deleteConversation, updateConversationStatus, isDeleting, refetch } = useConversations()
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -44,7 +44,36 @@ const Chat = () => {
       setSelectedConversation(remainingConversations.length > 0 ? remainingConversations[0] : null)
     }
     
+    toast({
+      title: "Conversa excluída",
+      description: "A conversa e todas as suas mensagens foram excluídas com sucesso.",
+    })
+    
     console.log(`Conversa ${conversationId} excluída com sucesso`)
+  }
+
+  const handleCloseConversation = async (conversationId: string) => {
+    try {
+      await updateConversationStatus(conversationId, 'fechada')
+      
+      // Atualizar a conversa selecionada se for a mesma
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(prev => prev ? { ...prev, status: 'fechada' } : null)
+      }
+      
+      toast({
+        title: "Conversa fechada",
+        description: "A conversa foi fechada com sucesso.",
+      })
+      
+      console.log(`Conversa ${conversationId} fechada com sucesso`)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao fechar a conversa. Tente novamente.",
+        variant: "destructive"
+      })
+    }
   }
 
   const createSampleConversations = async () => {
@@ -164,6 +193,7 @@ const Chat = () => {
               conversations={filteredConversations}
               selectedConversation={selectedConversation}
               onSelectConversation={handleSelectConversation}
+              onDeleteConversation={handleDeleteConversation}
               isLoading={isLoading}
             />
           </div>
@@ -175,6 +205,7 @@ const Chat = () => {
             <ChatArea 
               conversation={selectedConversation} 
               onDeleteConversation={handleDeleteConversation}
+              onCloseConversation={handleCloseConversation}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-abba-black">
