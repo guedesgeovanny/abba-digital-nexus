@@ -110,16 +110,6 @@ const App = () => {
                 } 
               />
               <Route 
-                path="/analytics" 
-                element={
-                  <ProtectedRoute>
-                    <AuthenticatedLayout>
-                      <Dashboard />
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
                 path="/settings" 
                 element={
                   <ProtectedRoute>

@@ -43,11 +43,6 @@ const items = [
     icon: MessageSquare,
   },
   {
-    title: "Analytics",
-    url: "/analytics",
-    icon: BarChart3,
-  },
-  {
     title: "Configurações",
     url: "/settings",
     icon: Settings,
