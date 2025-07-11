@@ -11,6 +11,8 @@ import { useMessages } from "@/hooks/useMessages"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
+import { MediaMessage } from "@/components/MediaMessage"
+import { detectFileInMessage } from "@/utils/fileDetection"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -193,7 +195,19 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
                       : 'bg-abba-gray text-abba-text'
                   }`}
                 >
-                  <p className="text-sm">{message.mensagem}</p>
+                  {(() => {
+                    const fileInfo = detectFileInMessage(message.mensagem)
+                    if (fileInfo) {
+                      return (
+                        <MediaMessage
+                          fileInfo={fileInfo}
+                          messageText={message.mensagem}
+                          isOutgoing={message.direcao === 'sent'}
+                        />
+                      )
+                    }
+                    return <p className="text-sm">{message.mensagem}</p>
+                  })()}
                   <p className="text-xs opacity-70 mt-1">
                     {formatMessageTime(message.data_hora)}
                   </p>
