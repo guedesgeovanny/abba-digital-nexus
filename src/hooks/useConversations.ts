@@ -26,6 +26,81 @@ export const useConversations = () => {
   const [error, setError] = useState<Error | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // Função para sincronizar contato baseado nos dados da conversa
+  const syncContactFromConversation = async (conversationData: {
+    contact_name: string
+    contact_phone?: string
+    contact_username?: string
+    contact_avatar?: string
+    channel?: 'whatsapp' | 'instagram' | 'messenger'
+  }) => {
+    try {
+      // Verificar se já existe um contato com o mesmo nome ou telefone
+      let existingContact = null
+      
+      if (conversationData.contact_phone) {
+        const { data } = await supabase
+          .from('contacts')
+          .select('*')
+          .eq('user_id', user?.id)
+          .eq('phone', conversationData.contact_phone)
+          .maybeSingle()
+        existingContact = data
+      }
+      
+      if (!existingContact && conversationData.contact_username) {
+        const { data } = await supabase
+          .from('contacts')
+          .select('*')
+          .eq('user_id', user?.id)
+          .ilike('name', conversationData.contact_name)
+          .maybeSingle()
+        existingContact = data
+      }
+
+      if (existingContact) {
+        // Atualizar contato existente
+        const { data: updatedContact, error } = await supabase
+          .from('contacts')
+          .update({
+            name: conversationData.contact_name,
+            phone: conversationData.contact_phone || existingContact.phone,
+            channel: conversationData.channel || existingContact.channel,
+            last_contact_date: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingContact.id)
+          .select()
+          .single()
+        
+        if (error) throw error
+        return updatedContact
+      } else {
+        // Criar novo contato
+        const { data: newContact, error } = await supabase
+          .from('contacts')
+          .insert({
+            user_id: user?.id,
+            name: conversationData.contact_name,
+            phone: conversationData.contact_phone,
+            email: null,
+            status: 'novo',
+            channel: conversationData.channel || null,
+            last_contact_date: new Date().toISOString(),
+            notes: `Contato criado automaticamente via conversa ${conversationData.channel || 'chat'}`
+          })
+          .select()
+          .single()
+        
+        if (error) throw error
+        return newContact
+      }
+    } catch (error) {
+      console.error('Erro ao sincronizar contato:', error)
+      return null
+    }
+  }
+
   useEffect(() => {
     if (user) {
       console.log('Usuário logado, carregando conversas...')
@@ -42,9 +117,32 @@ export const useConversations = () => {
             table: 'conversations',
             filter: `user_id=eq.${user.id}`
           },
-          (payload) => {
+          async (payload) => {
             console.log('Nova conversa recebida via realtime:', payload.new)
-            setConversations(prev => [payload.new as Conversation, ...prev])
+            const newConversation = payload.new as Conversation
+            
+            // Sincronizar contato para conversas recebidas via realtime
+            if (newConversation.contact_name && !newConversation.contact_id) {
+              const syncedContact = await syncContactFromConversation({
+                contact_name: newConversation.contact_name,
+                contact_phone: newConversation.contact_phone,
+                contact_username: newConversation.contact_username,
+                contact_avatar: newConversation.contact_avatar,
+                channel: newConversation.channel
+              })
+              
+              if (syncedContact) {
+                // Atualizar a conversa com o contact_id sincronizado
+                await supabase
+                  .from('conversations')
+                  .update({ contact_id: syncedContact.id })
+                  .eq('id', newConversation.id)
+                
+                newConversation.contact_id = syncedContact.id
+              }
+            }
+            
+            setConversations(prev => [newConversation, ...prev])
           }
         )
         .on(
@@ -143,6 +241,42 @@ export const useConversations = () => {
       if (!conversationsData || conversationsData.length === 0) {
         setConversations([])
         return
+      }
+
+      // Sincronizar contatos para conversas que não têm contact_id
+      const conversationsToSync = conversationsData.filter(conv => 
+        !conv.contact_id && conv.contact_name
+      )
+      
+      if (conversationsToSync.length > 0) {
+        console.log(`Sincronizando ${conversationsToSync.length} conversas sem contact_id...`)
+        
+        await Promise.all(
+          conversationsToSync.map(async (conversation) => {
+            try {
+              const syncedContact = await syncContactFromConversation({
+                contact_name: conversation.contact_name,
+                contact_phone: conversation.contact_phone,
+                contact_username: conversation.contact_username,
+                contact_avatar: conversation.contact_avatar,
+                channel: conversation.channel
+              })
+              
+              if (syncedContact) {
+                // Atualizar a conversa com o contact_id sincronizado
+                await supabase
+                  .from('conversations')
+                  .update({ contact_id: syncedContact.id })
+                  .eq('id', conversation.id)
+                
+                conversation.contact_id = syncedContact.id
+                console.log(`Conversa ${conversation.id} sincronizada com contato ${syncedContact.id}`)
+              }
+            } catch (error) {
+              console.error(`Erro ao sincronizar conversa ${conversation.id}:`, error)
+            }
+          })
+        )
       }
 
       // Para cada conversa, buscar a mensagem mais recente e contar não lidas
@@ -264,6 +398,7 @@ export const useConversations = () => {
     }
   }
 
+
   const createConversation = async (conversationData: {
     contact_id?: string
     contact_name: string
@@ -277,11 +412,20 @@ export const useConversations = () => {
       console.log('Criando nova conversa:', conversationData)
       console.log('User ID:', user?.id)
       
+      // Sincronizar contato primeiro
+      const syncedContact = await syncContactFromConversation({
+        contact_name: conversationData.contact_name,
+        contact_phone: conversationData.contact_phone,
+        contact_username: conversationData.contact_username,
+        contact_avatar: conversationData.contact_avatar,
+        channel: conversationData.channel
+      })
+      
       const { data, error } = await supabase
         .from('conversations')
         .insert({
           user_id: user?.id,
-          contact_id: conversationData.contact_id || null,
+          contact_id: syncedContact?.id || conversationData.contact_id || null,
           contact_name: conversationData.contact_name,
           contact_phone: conversationData.contact_phone || null,
           contact_username: conversationData.contact_username || null,
@@ -300,6 +444,7 @@ export const useConversations = () => {
       }
       
       console.log('Conversa criada com sucesso:', data)
+      console.log('Contato sincronizado:', syncedContact)
       setConversations(prev => [data, ...prev])
       return data
     } catch (error) {
