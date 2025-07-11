@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -32,6 +32,17 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
   const [newMessage, setNewMessage] = useState("")
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll para o final quando novas mensagens chegam
+  useEffect(() => {
+    if (scrollAreaRef.current && messages.length > 0) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight
+      }
+    }
+  }, [messages])
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,11 +52,6 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
     try {
       await sendMessage({ content: newMessage.trim() })
       setNewMessage("")
-      
-      toast({
-        title: "Mensagem enviada",
-        description: "Sua mensagem foi enviada com sucesso.",
-      })
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       toast({
@@ -164,7 +170,7 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
       </div>
 
       {/* Área das mensagens */}
-      <ScrollArea className="flex-1 bg-abba-black">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 bg-abba-black">
         <div className="p-4 space-y-4">
           {isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[200px]">
