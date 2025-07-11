@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Search, RefreshCw } from "lucide-react"
 import { ConversationList } from "@/components/ConversationList"
 import { ChatArea } from "@/components/ChatArea"
@@ -155,7 +156,7 @@ const Chat = () => {
   }
 
   return (
-    <div className="h-full bg-abba-black text-abba-text">
+    <div className="h-screen bg-abba-black text-abba-text overflow-hidden">
       <div className="flex h-full">
         {/* Sidebar de conversas */}
         <div className="w-96 bg-abba-black border-r border-abba-gray flex flex-col">
@@ -216,7 +217,7 @@ const Chat = () => {
           </div>
 
           {/* Lista de conversas */}
-          <div className="flex-1 overflow-y-auto">
+          <ScrollArea className="flex-1">
             <ConversationList 
               conversations={filteredConversations}
               selectedConversation={selectedConversation}
@@ -225,7 +226,7 @@ const Chat = () => {
               onCloseConversation={handleToggleConversationStatus}
               isLoading={isLoading}
             />
-          </div>
+          </ScrollArea>
         </div>
 
         {/* Área do chat */}
