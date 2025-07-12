@@ -130,23 +130,95 @@ export const MediaMessage = ({ fileInfo, messageText, isOutgoing }: MediaMessage
       
       case 'audio':
         return (
-          <div className="w-full max-w-xs">
-            <audio controls className="w-full">
-              <source src={fileInfo.url} />
-              Seu navegador não suporta o elemento de áudio.
-            </audio>
-          </div>
+          <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+            <DialogTrigger asChild>
+              <div className="w-full max-w-xs cursor-pointer group relative">
+                <audio className="w-full">
+                  <source src={fileInfo.url} />
+                  Seu navegador não suporta o elemento de áudio.
+                </audio>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-colors flex items-center justify-center">
+                  <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-8 border-0 bg-background">
+              <div className="relative flex flex-col items-center justify-center space-y-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFullscreen(false)}
+                  className="absolute top-4 right-4 z-10"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+                <div className="flex items-center space-x-4">
+                  <Music className="h-12 w-12 text-muted-foreground" />
+                  <div>
+                    <h3 className="text-lg font-medium">{fileInfo.filename}</h3>
+                    <p className="text-sm text-muted-foreground">Arquivo de áudio</p>
+                  </div>
+                </div>
+                <audio controls className="w-full max-w-md">
+                  <source src={fileInfo.url} />
+                  Seu navegador não suporta o elemento de áudio.
+                </audio>
+              </div>
+            </DialogContent>
+          </Dialog>
         )
       
       case 'document':
         return (
-          <div className="flex items-center space-x-3 p-3 border rounded-lg bg-muted max-w-xs">
-            <FileText className="h-8 w-8 text-muted-foreground" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{fileInfo.filename}</p>
-              <p className="text-xs text-muted-foreground uppercase">{fileInfo.extension}</p>
-            </div>
-          </div>
+          <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+            <DialogTrigger asChild>
+              <div className="flex items-center space-x-3 p-3 border rounded-lg bg-muted max-w-xs cursor-pointer group hover:bg-muted/80 transition-colors">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{fileInfo.filename}</p>
+                  <p className="text-xs text-muted-foreground uppercase">{fileInfo.extension}</p>
+                </div>
+                <Maximize2 className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-8 border-0 bg-background">
+              <div className="relative flex flex-col items-center justify-center space-y-6">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFullscreen(false)}
+                  className="absolute top-4 right-4 z-10"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+                <div className="flex flex-col items-center space-y-4">
+                  <FileText className="h-24 w-24 text-muted-foreground" />
+                  <div className="text-center">
+                    <h3 className="text-xl font-medium">{fileInfo.filename}</h3>
+                    <p className="text-sm text-muted-foreground uppercase">{fileInfo.extension}</p>
+                  </div>
+                  <div className="flex space-x-4">
+                    <Button
+                      onClick={handleDownload}
+                      disabled={isDownloading}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      {isDownloading ? 'Baixando...' : 'Baixar'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(fileInfo.url, '_blank')}
+                      className="gap-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Abrir
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )
     }
   }
@@ -178,17 +250,15 @@ export const MediaMessage = ({ fileInfo, messageText, isOutgoing }: MediaMessage
           {isDownloading ? 'Baixando...' : 'Baixar'}
         </Button>
         
-        {(fileInfo.type === 'image' || fileInfo.type === 'video') && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsFullscreen(true)}
-            className="h-8 px-2 text-xs"
-          >
-            <Maximize2 className="h-3 w-3 mr-1" />
-            Tela Cheia
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsFullscreen(true)}
+          className="h-8 px-2 text-xs"
+        >
+          <Maximize2 className="h-3 w-3 mr-1" />
+          Tela Cheia
+        </Button>
         
         <Button
           variant="ghost"
