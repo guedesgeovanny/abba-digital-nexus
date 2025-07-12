@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Download, FileText, Music, Video, Image as ImageIcon, ExternalLink } from "lucide-react"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Download, FileText, Music, Video, Image as ImageIcon, ExternalLink, X, Maximize2 } from "lucide-react"
 import { FileInfo, downloadFile } from "@/utils/fileDetection"
 
 interface MediaMessageProps {
@@ -12,6 +13,7 @@ interface MediaMessageProps {
 export const MediaMessage = ({ fileInfo, messageText, isOutgoing }: MediaMessageProps) => {
   const [imageError, setImageError] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const handleDownload = async () => {
     setIsDownloading(true)
@@ -49,29 +51,81 @@ export const MediaMessage = ({ fileInfo, messageText, isOutgoing }: MediaMessage
           )
         }
         return (
-          <div className="max-w-xs">
-            <img
-              src={fileInfo.url}
-              alt={fileInfo.filename}
-              className="rounded-lg max-h-48 object-cover"
-              onError={() => setImageError(true)}
-              onLoad={() => setImageError(false)}
-            />
-          </div>
+          <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+            <DialogTrigger asChild>
+              <div className="max-w-xs cursor-pointer group relative">
+                <img
+                  src={fileInfo.url}
+                  alt={fileInfo.filename}
+                  className="rounded-lg max-h-48 object-cover w-full"
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageError(false)}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-colors flex items-center justify-center">
+                  <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-0 border-0 bg-black/90">
+              <div className="relative flex items-center justify-center min-h-[50vh]">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFullscreen(false)}
+                  className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white border-0"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+                <img
+                  src={fileInfo.url}
+                  alt={fileInfo.filename}
+                  className="max-w-full max-h-full object-contain"
+                  onError={() => setImageError(true)}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
         )
       
       case 'video':
         return (
-          <div className="max-w-xs">
-            <video
-              controls
-              className="rounded-lg max-h-48 w-full"
-              preload="metadata"
-            >
-              <source src={fileInfo.url} />
-              Seu navegador não suporta o elemento de vídeo.
-            </video>
-          </div>
+          <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+            <DialogTrigger asChild>
+              <div className="max-w-xs cursor-pointer group relative">
+                <video
+                  className="rounded-lg max-h-48 w-full"
+                  preload="metadata"
+                  muted
+                >
+                  <source src={fileInfo.url} />
+                  Seu navegador não suporta o elemento de vídeo.
+                </video>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-colors flex items-center justify-center">
+                  <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-0 border-0 bg-black/90">
+              <div className="relative flex items-center justify-center min-h-[50vh]">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFullscreen(false)}
+                  className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white border-0"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+                <video
+                  controls
+                  className="max-w-full max-h-full"
+                  preload="metadata"
+                >
+                  <source src={fileInfo.url} />
+                  Seu navegador não suporta o elemento de vídeo.
+                </video>
+              </div>
+            </DialogContent>
+          </Dialog>
         )
       
       case 'audio':
@@ -123,6 +177,18 @@ export const MediaMessage = ({ fileInfo, messageText, isOutgoing }: MediaMessage
           <Download className="h-3 w-3 ml-1" />
           {isDownloading ? 'Baixando...' : 'Baixar'}
         </Button>
+        
+        {(fileInfo.type === 'image' || fileInfo.type === 'video') && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsFullscreen(true)}
+            className="h-8 px-2 text-xs"
+          >
+            <Maximize2 className="h-3 w-3 mr-1" />
+            Tela Cheia
+          </Button>
+        )}
         
         <Button
           variant="ghost"
