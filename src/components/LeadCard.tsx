@@ -28,13 +28,15 @@ export const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
   }
 
   const getSourceIcon = (source: string) => {
-    switch (source) {
-      case "Instagram":
-        return <Instagram className="w-3 h-3" />
-      case "WhatsApp":
-        return <Phone className="w-3 h-3" />
-      default:
-        return <Mail className="w-3 h-3" />
+    const lowerSource = source.toLowerCase()
+    if (lowerSource.includes('instagram')) {
+      return <Instagram className="w-3 h-3" />
+    } else if (lowerSource.includes('whatsapp')) {
+      return <Phone className="w-3 h-3" />
+    } else if (lowerSource.includes('telefone')) {
+      return <Phone className="w-3 h-3" />
+    } else {
+      return <Mail className="w-3 h-3" />
     }
   }
 
@@ -90,14 +92,18 @@ export const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
         </div>
         
         <div className="space-y-1 mb-3 text-xs">
-          <div className="flex items-center gap-2 text-gray-400">
-            <Phone className="w-3 h-3" />
-            {deal.contact}
-          </div>
-          <div className="flex items-center gap-2 text-gray-400">
-            <Mail className="w-3 h-3" />
-            {deal.email}
-          </div>
+          {deal.contact && (
+            <div className="flex items-center gap-2 text-gray-400">
+              <Phone className="w-3 h-3" />
+              {deal.contact}
+            </div>
+          )}
+          {deal.email && (
+            <div className="flex items-center gap-2 text-gray-400">
+              <Mail className="w-3 h-3" />
+              {deal.email}
+            </div>
+          )}
           {deal.instagram && (
             <div className="flex items-center gap-2 text-gray-400">
               <Instagram className="w-3 h-3" />
