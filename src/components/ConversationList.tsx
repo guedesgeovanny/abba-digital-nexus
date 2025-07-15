@@ -75,6 +75,40 @@ export const ConversationList = ({
     }
   }
 
+  const getAccountColor = (account: string) => {
+    // Paleta de cores para diferenciar contas
+    const colors = [
+      'bg-green-500 text-white',
+      'bg-blue-500 text-white', 
+      'bg-purple-500 text-white',
+      'bg-orange-500 text-white',
+      'bg-pink-500 text-white',
+      'bg-teal-500 text-white',
+      'bg-indigo-500 text-white',
+      'bg-red-500 text-white',
+      'bg-yellow-500 text-black',
+      'bg-cyan-500 text-black'
+    ]
+    
+    // Gerar hash simples da string da conta
+    let hash = 0
+    for (let i = 0; i < account.length; i++) {
+      hash = account.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    
+    // Usar o hash para selecionar uma cor da paleta
+    const colorIndex = Math.abs(hash) % colors.length
+    return colors[colorIndex]
+  }
+
+  const getAccountBadge = (account: string | null) => {
+    return account ? (
+      <Badge className={`${getAccountColor(account)} text-xs px-1 py-0`}>
+        {account.length > 8 ? `${account.slice(0, 8)}...` : account}
+      </Badge>
+    ) : null
+  }
+
   return (
     <div className="space-y-1">
       {conversations.map((conversation) => (
@@ -96,9 +130,12 @@ export const ConversationList = ({
 
           <div className="ml-3 flex-1 min-w-0" onClick={() => onSelectConversation(conversation)}>
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-abba-text truncate">
-                {conversation.contact_name}
-              </h3>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm font-medium text-abba-text truncate">
+                  {conversation.contact_name}
+                </h3>
+                {getAccountBadge(conversation.account)}
+              </div>
               <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
                 {formatTime(conversation.last_message_at)}
               </span>

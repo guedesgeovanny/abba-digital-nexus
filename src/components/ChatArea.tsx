@@ -106,9 +106,35 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
     }
   }
 
+  const getAccountColor = (account: string) => {
+    // Paleta de cores para diferenciar contas
+    const colors = [
+      'bg-green-500 text-white',
+      'bg-blue-500 text-white', 
+      'bg-purple-500 text-white',
+      'bg-orange-500 text-white',
+      'bg-pink-500 text-white',
+      'bg-teal-500 text-white',
+      'bg-indigo-500 text-white',
+      'bg-red-500 text-white',
+      'bg-yellow-500 text-black',
+      'bg-cyan-500 text-black'
+    ]
+    
+    // Gerar hash simples da string da conta
+    let hash = 0
+    for (let i = 0; i < account.length; i++) {
+      hash = account.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    
+    // Usar o hash para selecionar uma cor da paleta
+    const colorIndex = Math.abs(hash) % colors.length
+    return colors[colorIndex]
+  }
+
   const getAccountBadge = (account: string | null) => {
     return account ? (
-      <Badge className="bg-abba-green text-abba-black">{account}</Badge>
+      <Badge className={getAccountColor(account)}>{account}</Badge>
     ) : (
       <Badge className="bg-gray-500 text-white">Sem conta</Badge>
     )
