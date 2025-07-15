@@ -17,28 +17,22 @@ export const useAccountFilter = () => {
     try {
       setIsLoading(true)
       
-      // Buscar dados baseados no channel existente
-      // TODO: Após migração aplicada, trocar por: .select('account')
-      const { data: channelData, error: channelError } = await supabase
+      // Usando contact_phone como fonte para os números de telefone/accounts
+      const { data, error } = await supabase
         .from('conversations')
-        .select('channel')
+        .select('contact_phone')
         .eq('user_id', user?.id)
+        .not('contact_phone', 'is', null)
       
-      if (channelError) {
-        console.error('Erro ao buscar channels:', channelError)
-        setAccounts(['WhatsApp Business', 'Instagram', 'Facebook Messenger', 'Principal'])
+      if (error) {
+        console.error('Erro ao buscar números únicos:', error)
+        setAccounts([])
         return
       }
       
-      // Mapear channels para accounts (simulando dados da coluna account)
-      const channelToAccount: Record<string, string> = {
-        'whatsapp': 'WhatsApp Business',
-        'instagram': 'Instagram',
-        'messenger': 'Facebook Messenger'
-      }
-      
+      // Extrair valores únicos da coluna contact_phone
       const uniqueAccounts = Array.from(new Set(
-        channelData?.map(item => channelToAccount[item.channel || ''] || 'Principal').filter(Boolean)
+        data.map(item => item.contact_phone).filter(Boolean)
       )) as string[]
       
       setAccounts(uniqueAccounts)
