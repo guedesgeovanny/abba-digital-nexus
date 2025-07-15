@@ -17,36 +17,31 @@ export const useAccountFilter = () => {
     try {
       setIsLoading(true)
       
-      // Usando dados fictícios até a migração ser aplicada
-      const sampleAccounts = [
-        'WhatsApp Business',
-        'Instagram', 
-        'Facebook Messenger',
-        'Principal'
-      ]
-      
-      setAccounts(sampleAccounts)
-      
-      // Código para quando a migração estiver aplicada:
-      /*
-      const { data, error } = await supabase
+      // Buscar dados baseados no channel existente
+      // TODO: Após migração aplicada, trocar por: .select('account')
+      const { data: channelData, error: channelError } = await supabase
         .from('conversations')
-        .select('account')
+        .select('channel')
         .eq('user_id', user?.id)
-        .not('account', 'is', null)
       
-      if (error) {
-        console.error('Erro ao buscar accounts únicos:', error)
+      if (channelError) {
+        console.error('Erro ao buscar channels:', channelError)
+        setAccounts(['WhatsApp Business', 'Instagram', 'Facebook Messenger', 'Principal'])
         return
       }
       
-      // Extrair valores únicos
+      // Mapear channels para accounts (simulando dados da coluna account)
+      const channelToAccount: Record<string, string> = {
+        'whatsapp': 'WhatsApp Business',
+        'instagram': 'Instagram',
+        'messenger': 'Facebook Messenger'
+      }
+      
       const uniqueAccounts = Array.from(new Set(
-        data.map(item => item.account).filter(Boolean)
+        channelData?.map(item => channelToAccount[item.channel || ''] || 'Principal').filter(Boolean)
       )) as string[]
       
       setAccounts(uniqueAccounts)
-      */
     } catch (error) {
       console.error('Erro ao carregar accounts:', error)
     } finally {
