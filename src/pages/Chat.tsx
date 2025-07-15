@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Search, RefreshCw } from "lucide-react"
 import { ConversationList } from "@/components/ConversationList"
 import { ChatArea } from "@/components/ChatArea"
+import { AccountFilter } from "@/components/AccountFilter"
 import { useConversations, Conversation } from "@/hooks/useConversations"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
@@ -14,6 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 const Chat = () => {
   const [activeTab, setActiveTab] = useState("geral")
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedAccount, setSelectedAccount] = useState("all")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
   const { conversations, isLoading, deleteConversation, updateConversationStatus, isDeleting, refetch } = useConversations()
@@ -24,11 +26,13 @@ const Chat = () => {
     const matchesSearch = conversation.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (conversation.contact_username && conversation.contact_username.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    if (activeTab === "geral") return matchesSearch
-    if (activeTab === "aberto") return matchesSearch && conversation.status === "aberta"
-    if (activeTab === "fechado") return matchesSearch && conversation.status === "fechada"
+    const matchesAccount = selectedAccount === "all" || conversation.account === selectedAccount
     
-    return matchesSearch
+    if (activeTab === "geral") return matchesSearch && matchesAccount
+    if (activeTab === "aberto") return matchesSearch && matchesAccount && conversation.status === "aberta"
+    if (activeTab === "fechado") return matchesSearch && matchesAccount && conversation.status === "fechada"
+    
+    return matchesSearch && matchesAccount
   })
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -188,6 +192,14 @@ const Chat = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+              />
+            </div>
+
+            {/* Filtro por Account */}
+            <div className="mb-4">
+              <AccountFilter 
+                selectedAccount={selectedAccount}
+                onAccountChange={setSelectedAccount}
               />
             </div>
 

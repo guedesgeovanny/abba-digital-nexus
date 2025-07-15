@@ -106,11 +106,11 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
     }
   }
 
-  const getStatusBadge = (status: 'aberta' | 'fechada') => {
-    return status === 'aberta' ? (
-      <Badge className="bg-green-500 text-white">Aberta</Badge>
+  const getAccountBadge = (account: string | null) => {
+    return account ? (
+      <Badge className="bg-abba-green text-abba-black">{account}</Badge>
     ) : (
-      <Badge className="bg-gray-500 text-white">Fechada</Badge>
+      <Badge className="bg-gray-500 text-white">Sem conta</Badge>
     )
   }
 
@@ -130,7 +130,7 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
             <h3 className="font-semibold text-abba-text">{conversation.contact_name}</h3>
             <div className="flex items-center space-x-2 text-sm text-gray-400">
               <span>{getChannelIcon(conversation.channel)} {conversation.channel || 'Chat'}</span>
-              {getStatusBadge(conversation.status)}
+              {getAccountBadge(conversation.account)}
             </div>
           </div>
         </div>

@@ -15,6 +15,7 @@ export interface Conversation {
   last_message: string | null
   last_message_at: string | null
   profile: string | null
+  account: string | null
   unread_count: number
   created_at: string
   updated_at: string
@@ -313,6 +314,7 @@ export const useConversations = () => {
               last_message: lastMessage?.mensagem || conversation.last_message,
               last_message_at: lastMessage?.data_hora || conversation.last_message_at,
               profile: (conversation as any).profile || null,
+              account: (conversation as any).account || null,
               unread_count: unreadCount || 0
             }
           } catch (error) {
@@ -322,6 +324,7 @@ export const useConversations = () => {
               last_message: conversation.last_message,
               last_message_at: conversation.last_message_at,
               profile: (conversation as any).profile || null,
+              account: (conversation as any).account || null,
               unread_count: 0
             }
           }
@@ -448,7 +451,7 @@ export const useConversations = () => {
       
       console.log('Conversa criada com sucesso:', data)
       console.log('Contato sincronizado:', syncedContact)
-      setConversations(prev => [{ ...data, profile: (data as any).profile || null }, ...prev])
+      setConversations(prev => [{ ...data, profile: (data as any).profile || null, account: (data as any).account || null }, ...prev])
       return data
     } catch (error) {
       console.error('Erro ao criar conversa:', error)
