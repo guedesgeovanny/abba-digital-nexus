@@ -62,9 +62,14 @@ export const useCRMData = () => {
       // Use real value from database or estimate based on status
       const contactValue = (contact as any).value || getEstimatedValue(contact.status, contact.company)
       
+      // For Instagram channel, use instagram handle as name if available
+      const displayName = contact.channel === 'instagram' && contact.instagram 
+        ? `@${contact.instagram}` 
+        : contact.name
+        
       return {
         id: contact.id,
-        name: contact.name,
+        name: displayName,
         company: contact.company || undefined,
         value: `R$ ${contactValue.toLocaleString('pt-BR')}`,
         source: getSourceDisplay(contact.channel, contact.source),
