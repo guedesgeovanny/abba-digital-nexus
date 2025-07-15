@@ -154,14 +154,37 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       ? 'bg-green-500 hover:bg-green-600 text-white' 
       : 'bg-red-500 hover:bg-red-600 text-white'
 
+    const actionText = isActive ? 'desativar' : 'ativar'
+    const newStatusText = isActive ? 'Inativo' : 'Ativo'
+
     return (
-      <Button
-        onClick={handleToggleAgentStatus}
-        className={`px-3 py-1 text-xs ${buttonClass}`}
-        size="sm"
-      >
-        {buttonText}
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            className={`px-3 py-1 text-xs ${buttonClass}`}
+            size="sm"
+          >
+            {buttonText}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isActive ? 'Desativar' : 'Ativar'} agente de IA
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja {actionText} as respostas automáticas do agente de IA para esta conversa? 
+              O status será alterado para "{newStatusText}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleToggleAgentStatus}>
+              {isActive ? 'Desativar' : 'Ativar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     )
   }
 
