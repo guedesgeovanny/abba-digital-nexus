@@ -109,6 +109,20 @@ const Chat = () => {
     }
   }
 
+  const handleUpdateAgentStatus = async (conversationId: string, newStatus: 'Ativo' | 'Inativo') => {
+    try {
+      await updateAgentStatus(conversationId, newStatus)
+      
+      // Atualizar a conversa selecionada se for a mesma
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(prev => prev ? { ...prev, status_agent: newStatus } : null)
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar status do agente:', error)
+      throw error // Re-throw para o componente ChatArea tratar
+    }
+  }
+
   const createSampleConversations = async () => {
     try {
       setIsCreatingSample(true)
@@ -247,7 +261,7 @@ const Chat = () => {
             <ChatArea 
               conversation={selectedConversation} 
               onDeleteConversation={handleDeleteConversation}
-              onUpdateAgentStatus={updateAgentStatus}
+              onUpdateAgentStatus={handleUpdateAgentStatus}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-abba-black">
