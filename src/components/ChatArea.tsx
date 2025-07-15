@@ -32,6 +32,7 @@ interface ChatAreaProps {
 
 export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStatus }: ChatAreaProps) => {
   const [newMessage, setNewMessage] = useState("")
+  const [isUpdatingAgentStatus, setIsUpdatingAgentStatus] = useState(false)
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
@@ -140,9 +141,28 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     )
   }
 
-  const handleToggleAgentStatus = () => {
+  const handleToggleAgentStatus = async () => {
     const newStatus = conversation.status_agent === 'Ativo' ? 'Inativo' : 'Ativo'
-    onUpdateAgentStatus(conversation.id, newStatus)
+    
+    setIsUpdatingAgentStatus(true)
+    
+    try {
+      await onUpdateAgentStatus(conversation.id, newStatus)
+      
+      toast({
+        title: "Status atualizado",
+        description: `Agente de IA ${newStatus === 'Ativo' ? 'ativado' : 'desativado'} com sucesso.`,
+      })
+    } catch (error) {
+      console.error('Erro ao atualizar status do agente:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status do agente. Tente novamente.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsUpdatingAgentStatus(false)
+    }
   }
 
   const renderAgentStatusButton = () => {
@@ -163,8 +183,9 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
           <Button
             className={`px-3 py-1 text-xs ${buttonClass}`}
             size="sm"
+            disabled={isUpdatingAgentStatus}
           >
-            {buttonText}
+            {isUpdatingAgentStatus ? 'Atualizando...' : buttonText}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
@@ -178,9 +199,12 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleToggleAgentStatus}>
-              {isActive ? 'Desativar' : 'Ativar'}
+            <AlertDialogCancel disabled={isUpdatingAgentStatus}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleToggleAgentStatus}
+              disabled={isUpdatingAgentStatus}
+            >
+              {isUpdatingAgentStatus ? 'Atualizando...' : (isActive ? 'Desativar' : 'Ativar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

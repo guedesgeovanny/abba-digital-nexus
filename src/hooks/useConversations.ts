@@ -412,20 +412,28 @@ export const useConversations = () => {
 
   const updateAgentStatus = async (conversationId: string, newStatus: 'Ativo' | 'Inativo') => {
     try {
+      // Atualização otimista - atualiza o estado local primeiro
+      setConversations(prev => prev.map(conv => 
+        conv.id === conversationId ? { ...conv, status_agent: newStatus } : conv
+      ))
+
       const { error } = await supabase
         .from('conversations')
         .update({ status_agent: newStatus } as any)
         .eq('id', conversationId)
 
-      if (error) throw error
+      if (error) {
+        // Reverte a atualização otimista em caso de erro
+        setConversations(prev => prev.map(conv => 
+          conv.id === conversationId ? { ...conv, status_agent: conv.status_agent === 'Ativo' ? 'Inativo' : 'Ativo' } : conv
+        ))
+        throw error
+      }
 
-      setConversations(prev => prev.map(conv => 
-        conv.id === conversationId ? { ...conv, status_agent: newStatus } : conv
-      ))
       console.log(`Status do agente da conversa ${conversationId} alterado para ${newStatus}`)
     } catch (error) {
       console.error('Erro ao atualizar status do agente:', error)
-      setError(error as Error)
+      throw error
     }
   }
 
