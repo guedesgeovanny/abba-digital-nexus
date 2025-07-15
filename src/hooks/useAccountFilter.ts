@@ -17,22 +17,22 @@ export const useAccountFilter = () => {
     try {
       setIsLoading(true)
       
-      // Usando contact_phone como fonte para os números de telefone/accounts
+      // Buscar dados da coluna account (mesmo que não apareça nos tipos ainda)
       const { data, error } = await supabase
         .from('conversations')
-        .select('contact_phone')
+        .select('account')
         .eq('user_id', user?.id)
-        .not('contact_phone', 'is', null)
+        .not('account', 'is', null)
       
       if (error) {
-        console.error('Erro ao buscar números únicos:', error)
+        console.error('Erro ao buscar accounts únicos:', error)
         setAccounts([])
         return
       }
       
-      // Extrair valores únicos da coluna contact_phone
+      // Extrair valores únicos da coluna account
       const uniqueAccounts = Array.from(new Set(
-        data.map(item => item.contact_phone).filter(Boolean)
+        data.map((item: any) => item.account).filter(Boolean)
       )) as string[]
       
       setAccounts(uniqueAccounts)
