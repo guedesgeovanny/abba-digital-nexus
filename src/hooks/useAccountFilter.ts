@@ -17,7 +17,7 @@ export const useAccountFilter = () => {
     try {
       setIsLoading(true)
       
-      // Temporariamente usando dados fictícios até a migração ser aplicada
+      // Usando dados fictícios até a migração ser aplicada
       const sampleAccounts = [
         'WhatsApp Business',
         'Instagram', 
@@ -27,7 +27,7 @@ export const useAccountFilter = () => {
       
       setAccounts(sampleAccounts)
       
-      // Código futuro quando a migração estiver aplicada:
+      // Código para quando a migração estiver aplicada:
       /*
       const { data, error } = await supabase
         .from('conversations')
