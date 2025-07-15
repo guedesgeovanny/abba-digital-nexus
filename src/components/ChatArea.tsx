@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,9 +27,10 @@ import {
 interface ChatAreaProps {
   conversation: Conversation
   onDeleteConversation: (conversationId: string) => void
+  onUpdateAgentStatus: (conversationId: string, newStatus: 'Ativo' | 'Inativo') => void
 }
 
-export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) => {
+export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStatus }: ChatAreaProps) => {
   const [newMessage, setNewMessage] = useState("")
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
@@ -140,6 +140,31 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
     )
   }
 
+  const handleToggleAgentStatus = () => {
+    const newStatus = conversation.status_agent === 'Ativo' ? 'Inativo' : 'Ativo'
+    onUpdateAgentStatus(conversation.id, newStatus)
+  }
+
+  const renderAgentStatusButton = () => {
+    if (!conversation.have_agent) return null
+
+    const isActive = conversation.status_agent === 'Ativo'
+    const buttonText = isActive ? 'Ativo' : 'Inativo'
+    const buttonClass = isActive 
+      ? 'bg-green-500 hover:bg-green-600 text-white' 
+      : 'bg-red-500 hover:bg-red-600 text-white'
+
+    return (
+      <Button
+        onClick={handleToggleAgentStatus}
+        className={`px-3 py-1 text-xs ${buttonClass}`}
+        size="sm"
+      >
+        {buttonText}
+      </Button>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header da conversa */}
@@ -162,34 +187,24 @@ export const ChatArea = ({ conversation, onDeleteConversation }: ChatAreaProps) 
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Botão para apagar mensagens */}
+          {renderAgentStatusButton()}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-400 hover:text-red-500"
-                disabled={isClearing}
-                title="Apagar Mensagens"
-              >
+              <Button variant="ghost" size="sm">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Apagar Mensagens</AlertDialogTitle>
+                <AlertDialogTitle>Excluir conversa</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Tem certeza de que deseja apagar todas as mensagens desta conversa com {conversation.contact_name}? 
-                  Esta ação não pode ser desfeita, mas a conversa permanecerá na lista.
+                  Tem certeza que deseja excluir esta conversa? Esta ação não pode ser desfeita.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={handleClearMessages}
-                  className="bg-red-500 hover:bg-red-600"
-                >
-                  Apagar Mensagens
+                <AlertDialogAction onClick={() => onDeleteConversation(conversation.id)}>
+                  Excluir
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

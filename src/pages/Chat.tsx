@@ -18,7 +18,7 @@ const Chat = () => {
   const [selectedAccount, setSelectedAccount] = useState("all")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
-  const { conversations, isLoading, deleteConversation, updateConversationStatus, isDeleting, refetch } = useConversations()
+  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, isDeleting, refetch } = useConversations()
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -247,6 +247,7 @@ const Chat = () => {
             <ChatArea 
               conversation={selectedConversation} 
               onDeleteConversation={handleDeleteConversation}
+              onUpdateAgentStatus={updateAgentStatus}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-abba-black">

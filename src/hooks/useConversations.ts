@@ -17,6 +17,8 @@ export interface Conversation {
   profile: string | null
   account: string | null
   unread_count: number
+  have_agent: boolean
+  status_agent: 'Ativo' | 'Inativo' | null
   created_at: string
   updated_at: string
 }
@@ -315,6 +317,8 @@ export const useConversations = () => {
               last_message_at: lastMessage?.data_hora || conversation.last_message_at,
               profile: (conversation as any).profile || null,
               account: (conversation as any).account || null,
+              have_agent: (conversation as any).have_agent || false,
+              status_agent: (conversation as any).status_agent || null,
               unread_count: unreadCount || 0
             }
           } catch (error) {
@@ -325,6 +329,8 @@ export const useConversations = () => {
               last_message_at: conversation.last_message_at,
               profile: (conversation as any).profile || null,
               account: (conversation as any).account || null,
+              have_agent: (conversation as any).have_agent || false,
+              status_agent: (conversation as any).status_agent || null,
               unread_count: 0
             }
           }
@@ -404,6 +410,25 @@ export const useConversations = () => {
     }
   }
 
+  const updateAgentStatus = async (conversationId: string, newStatus: 'Ativo' | 'Inativo') => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ status_agent: newStatus } as any)
+        .eq('id', conversationId)
+
+      if (error) throw error
+
+      setConversations(prev => prev.map(conv => 
+        conv.id === conversationId ? { ...conv, status_agent: newStatus } : conv
+      ))
+      console.log(`Status do agente da conversa ${conversationId} alterado para ${newStatus}`)
+    } catch (error) {
+      console.error('Erro ao atualizar status do agente:', error)
+      setError(error as Error)
+    }
+  }
+
 
   const createConversation = async (conversationData: {
     contact_id?: string
@@ -451,7 +476,13 @@ export const useConversations = () => {
       
       console.log('Conversa criada com sucesso:', data)
       console.log('Contato sincronizado:', syncedContact)
-      setConversations(prev => [{ ...data, profile: (data as any).profile || null, account: (data as any).account || null }, ...prev])
+      setConversations(prev => [{ 
+        ...data, 
+        profile: (data as any).profile || null, 
+        account: (data as any).account || null,
+        have_agent: (data as any).have_agent || false,
+        status_agent: (data as any).status_agent || null
+      }, ...prev])
       return data
     } catch (error) {
       console.error('Erro ao criar conversa:', error)
@@ -466,6 +497,7 @@ export const useConversations = () => {
     error,
     deleteConversation,
     updateConversationStatus,
+    updateAgentStatus,
     createConversation,
     isDeleting,
     refetch: fetchConversations
