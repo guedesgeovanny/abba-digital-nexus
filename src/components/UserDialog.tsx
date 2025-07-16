@@ -174,7 +174,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className="border-abba-gray text-abba-text hover:bg-abba-gray/10"
+                className="border-abba-gray text-abba-text hover:bg-abba-gray/10 hover:text-white"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {avatarPreview ? 'Alterar Foto' : 'Adicionar Foto'}
@@ -279,7 +279,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
             <Button 
               variant="outline" 
               onClick={() => setOpen(false)}
-              className="flex-1 border-abba-gray text-abba-text hover:bg-abba-gray/10"
+              className="flex-1 border-abba-gray text-abba-text hover:bg-abba-gray/10 hover:text-white"
             >
               Cancelar
             </Button>
