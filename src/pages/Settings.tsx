@@ -1,4 +1,5 @@
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -6,8 +7,74 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Users, Shield, Trash2, Plus } from "lucide-react"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 const Settings = () => {
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const { toast } = useToast()
+
+  const handlePasswordChange = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Erro", 
+        description: "As senhas não coincidem",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsChangingPassword(true)
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Senha alterada com sucesso",
+        variant: "default"
+      })
+
+      // Limpar campos
+      setNewPassword("")
+      setConfirmPassword("")
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar senha. Tente novamente.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
   return (
     <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
       {/* Watermark */}
@@ -109,19 +176,14 @@ const Settings = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="current-password" className="text-abba-text">Senha Atual</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="new-password" className="text-abba-text">Nova Senha</Label>
                   <Input
                     id="new-password"
                     type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                    placeholder="Digite sua nova senha"
                   />
                 </div>
                 <div>
@@ -129,11 +191,18 @@ const Settings = () => {
                   <Input
                     id="confirm-password"
                     type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                    placeholder="Confirme sua nova senha"
                   />
                 </div>
-                <Button className="bg-abba-gradient hover:opacity-90 text-abba-black">
-                  Alterar Senha
+                <Button 
+                  onClick={handlePasswordChange}
+                  disabled={isChangingPassword}
+                  className="bg-abba-gradient hover:opacity-90 text-abba-black"
+                >
+                  {isChangingPassword ? "Alterando..." : "Alterar Senha"}
                 </Button>
               </div>
             </CardContent>
