@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Edit } from 'lucide-react'
+import { Plus, Edit, Upload, X } from 'lucide-react'
 import { User } from '@/hooks/useUsers'
 
 interface UserDialogProps {
@@ -16,15 +16,58 @@ interface UserDialogProps {
 export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
   const [formData, setFormData] = useState({
     email: user?.email || '',
     full_name: user?.full_name || '',
     password: '',
     role: user?.role || 'viewer' as const,
-    status: user?.status || 'active' as const
+    status: user?.status || 'active' as const,
+    avatar_url: user?.avatar_url || ''
   })
 
   const isEditing = !!user
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        return
+      }
+      
+      // Validar tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const result = reader.result as string
+        setAvatarPreview(result)
+        setFormData(prev => ({ ...prev, avatar_url: result }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeAvatar = () => {
+    setAvatarPreview(null)
+    setFormData(prev => ({ ...prev, avatar_url: '' }))
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const getInitials = (name: string) => {
+    if (!name) return ''
+    const names = name.trim().split(' ')
+    const firstInitial = names[0]?.[0] || ''
+    const lastInitial = names.length > 1 ? names[names.length - 1]?.[0] || '' : ''
+    return (firstInitial + lastInitial).toUpperCase()
+  }
 
   const handleSave = async () => {
     if (!formData.email || !formData.full_name) {
@@ -41,16 +84,21 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
 
     if (success) {
       setOpen(false)
-      if (!isEditing) {
-        // Limpar formulário apenas ao criar
-        setFormData({
-          email: '',
-          full_name: '',
-          password: '',
-          role: 'viewer',
-          status: 'active'
-        })
-      }
+        if (!isEditing) {
+          // Limpar formulário apenas ao criar
+          setFormData({
+            email: '',
+            full_name: '',
+            password: '',
+            role: 'viewer',
+            status: 'active',
+            avatar_url: ''
+          })
+          setAvatarPreview(null)
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
+        }
     }
   }
 
@@ -78,6 +126,55 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
         </DialogHeader>
         
         <div className="space-y-4">
+          {/* Avatar Upload */}
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="w-20 h-20 bg-abba-green rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105">
+                {avatarPreview ? (
+                  <img 
+                    src={avatarPreview} 
+                    alt="Avatar preview" 
+                    className="w-full h-full object-cover animate-fade-in"
+                  />
+                ) : (
+                  <span className="text-abba-black font-semibold text-lg transition-all duration-200">
+                    {getInitials(formData.full_name) || formData.email[0]?.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              {avatarPreview && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeAvatar}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white p-0 transition-all duration-200 hover:scale-110 animate-scale-in"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="border-abba-gray text-abba-text hover:bg-abba-gray/10 transition-all duration-200 hover:scale-105"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {avatarPreview ? 'Alterar Foto' : 'Adicionar Foto'}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="email" className="text-abba-text">Email</Label>
             <Input

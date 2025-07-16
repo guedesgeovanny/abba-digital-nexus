@@ -58,6 +58,7 @@ export const useUsers = () => {
     password: string
     full_name: string
     role?: 'admin' | 'editor' | 'viewer'
+    avatar_url?: string
   }) => {
     try {
       // Criar usuário no Supabase Auth
@@ -80,7 +81,8 @@ export const useUsers = () => {
             email: userData.email,
             full_name: userData.full_name,
             role: userData.role || 'viewer',
-            status: 'active'
+            status: 'active',
+            avatar_url: userData.avatar_url || null
           }
         ])
         .select()
@@ -112,6 +114,7 @@ export const useUsers = () => {
     full_name?: string
     role?: 'admin' | 'editor' | 'viewer'
     status?: 'active' | 'pending' | 'inactive'
+    avatar_url?: string
   }) => {
     try {
       const { error } = await supabase
@@ -120,6 +123,7 @@ export const useUsers = () => {
           full_name: userData.full_name,
           role: userData.role,
           status: userData.status,
+          avatar_url: userData.avatar_url,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId)
