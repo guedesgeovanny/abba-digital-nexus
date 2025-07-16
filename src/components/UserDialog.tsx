@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -84,21 +85,21 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
 
     if (success) {
       setOpen(false)
-        if (!isEditing) {
-          // Limpar formulário apenas ao criar
-          setFormData({
-            email: '',
-            full_name: '',
-            password: '',
-            role: 'viewer',
-            status: 'active',
-            avatar_url: ''
-          })
-          setAvatarPreview(null)
-          if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-          }
+      if (!isEditing) {
+        // Limpar formulário apenas ao criar
+        setFormData({
+          email: '',
+          full_name: '',
+          password: '',
+          role: 'viewer',
+          status: 'active',
+          avatar_url: ''
+        })
+        setAvatarPreview(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
         }
+      }
     }
   }
 
@@ -118,7 +119,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="bg-abba-black border-abba-gray max-w-md z-50 backdrop-blur-none shadow-2xl">
+      <DialogContent className="bg-abba-black border-abba-gray max-w-md z-50">
         <DialogHeader>
           <DialogTitle className="text-abba-text">
             {isEditing ? 'Editar Usuário' : 'Adicionar Usuário'}
@@ -126,20 +127,22 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Avatar Upload */}
+          {/* Avatar Upload - Corrigido */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
-              <div className="w-20 h-20 bg-abba-green rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-105">
+              <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center relative">
                 {avatarPreview ? (
                   <img 
                     src={avatarPreview} 
                     alt="Avatar preview" 
-                    className="w-full h-full object-cover animate-fade-in"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-abba-black font-semibold text-lg transition-all duration-200">
-                    {getInitials(formData.full_name) || formData.email[0]?.toUpperCase()}
-                  </span>
+                  <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
+                    <span className="text-abba-black font-semibold text-lg">
+                      {getInitials(formData.full_name) || formData.email[0]?.toUpperCase()}
+                    </span>
+                  </div>
                 )}
               </div>
               {avatarPreview && (
@@ -148,7 +151,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={removeAvatar}
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white p-0 transition-all duration-200 hover:scale-110 animate-scale-in"
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white p-0"
                 >
                   <X className="w-3 h-3" />
                 </Button>
@@ -160,7 +163,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className="border-abba-gray text-abba-text hover:bg-abba-gray/10 transition-all duration-200 hover:scale-105"
+                className="border-abba-gray text-abba-text hover:bg-abba-gray/10"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {avatarPreview ? 'Alterar Foto' : 'Adicionar Foto'}
@@ -182,7 +185,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              disabled={isEditing} // Não permitir alterar email ao editar
+              disabled={isEditing}
               className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
               placeholder="usuario@email.com"
             />

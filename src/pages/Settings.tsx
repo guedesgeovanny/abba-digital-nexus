@@ -82,6 +82,14 @@ const Settings = () => {
     }
   }
 
+  const getInitials = (name: string) => {
+    if (!name) return ''
+    const names = name.trim().split(' ')
+    const firstInitial = names[0]?.[0] || ''
+    const lastInitial = names.length > 1 ? names[names.length - 1]?.[0] || '' : ''
+    return (firstInitial + lastInitial).toUpperCase()
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
       {/* Watermark */}
@@ -139,9 +147,9 @@ const Settings = () => {
                   </div>
                 ) : (
                   users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all duration-200 hover:scale-[1.02] animate-fade-in">
+                    <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all duration-200">
                       <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-abba-green rounded-full flex items-center justify-center overflow-hidden hover:scale-105 transition-transform duration-200">
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center relative">
                           {user.avatar_url ? (
                             <img 
                               src={user.avatar_url} 
@@ -149,17 +157,11 @@ const Settings = () => {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-abba-black font-semibold text-sm">
-                              {user.full_name ? 
-                                (() => {
-                                  const names = user.full_name.trim().split(' ');
-                                  const firstInitial = names[0]?.[0] || '';
-                                  const lastInitial = names.length > 1 ? names[names.length - 1]?.[0] || '' : '';
-                                  return (firstInitial + lastInitial).toUpperCase();
-                                })() : 
-                                user.email[0].toUpperCase()
-                              }
-                            </span>
+                            <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
+                              <span className="text-abba-black font-semibold text-sm">
+                                {user.full_name ? getInitials(user.full_name) : user.email[0].toUpperCase()}
+                              </span>
+                            </div>
                           )}
                         </div>
                         <div>
@@ -265,7 +267,6 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   )

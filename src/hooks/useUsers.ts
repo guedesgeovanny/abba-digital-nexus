@@ -58,28 +58,13 @@ export const useUsers = () => {
     try {
       console.log('Criando usuário:', userData)
       
-      // 1. Criar usuário no auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password
-      })
-
-      if (authError) {
-        console.error('Erro auth:', authError)
-        throw authError
-      }
-
-      if (!authData.user) {
-        throw new Error('Não foi possível criar o usuário')
-      }
-
-      console.log('Usuário criado no Auth:', authData.user)
-
-      // 2. Criar perfil na tabela profiles
+      // 1. Primeiro criar o perfil diretamente na tabela profiles
+      const userId = crypto.randomUUID()
+      
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: authData.user.id,
+          id: userId,
           email: userData.email,
           full_name: userData.full_name,
           role: userData.role || 'viewer',
