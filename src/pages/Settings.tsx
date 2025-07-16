@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUsers } from "@/hooks/useUsers"
 import { UserDialog } from "@/components/UserDialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { DebugPanel } from "@/components/DebugPanel"
 
 const Settings = () => {
   const [newPassword, setNewPassword] = useState("")
@@ -100,6 +100,9 @@ const Settings = () => {
           </p>
         </div>
       </div>
+
+      {/* Debug Panel - Temporário */}
+      <DebugPanel />
 
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList className="bg-abba-gray border-abba-gray">

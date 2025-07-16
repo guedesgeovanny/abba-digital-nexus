@@ -22,6 +22,7 @@ export const useUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true)
+      console.log('Buscando usuários...')
       
       // Buscar usuários da tabela profiles
       const { data: profiles, error } = await supabase
@@ -30,8 +31,11 @@ export const useUsers = () => {
         .order('created_at', { ascending: false })
 
       if (error) {
+        console.error('Erro ao buscar usuários:', error)
         throw error
       }
+
+      console.log('Profiles encontrados:', profiles)
 
       // Mapear dados com type assertion para role e status
       const usersWithDefaults = profiles?.map(profile => ({
@@ -40,6 +44,7 @@ export const useUsers = () => {
         status: (profile as any).status || 'active'
       })) || []
 
+      console.log('Usuários mapeados:', usersWithDefaults)
       setUsers(usersWithDefaults as User[])
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
@@ -61,6 +66,8 @@ export const useUsers = () => {
     avatar_url?: string
   }) => {
     try {
+      console.log('Criando usuário:', userData)
+      
       // Registrar usuário usando signup normal (não admin)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
@@ -74,12 +81,15 @@ export const useUsers = () => {
       })
 
       if (authError) {
+        console.error('Erro auth:', authError)
         throw authError
       }
 
       if (!authData.user) {
         throw new Error('Não foi possível criar o usuário')
       }
+
+      console.log('Usuário criado no Auth:', authData.user)
 
       // Por enquanto, salvar avatar_url como está (sem upload para Storage)
       let avatarUrl = userData.avatar_url || null
@@ -101,8 +111,11 @@ export const useUsers = () => {
         .single()
 
       if (profileError) {
+        console.error('Erro ao criar perfil:', profileError)
         throw profileError
       }
+
+      console.log('Perfil criado:', profileData)
 
       toast({
         title: 'Sucesso',
@@ -129,6 +142,8 @@ export const useUsers = () => {
     avatar_url?: string
   }) => {
     try {
+      console.log('Atualizando usuário:', userId, userData)
+      
       // Por enquanto, salvar avatar_url como está (sem upload para Storage)
       let avatarUrl = userData.avatar_url
 
@@ -141,14 +156,20 @@ export const useUsers = () => {
       if (userData.status !== undefined) updateData.status = userData.status
       if (avatarUrl !== undefined) updateData.avatar_url = avatarUrl
 
-      const { error } = await supabase
+      console.log('Dados para atualização:', updateData)
+
+      const { data, error } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('id', userId)
+        .select()
 
       if (error) {
+        console.error('Erro ao atualizar no banco:', error)
         throw error
       }
+
+      console.log('Usuário atualizado com sucesso:', data)
 
       toast({
         title: 'Sucesso',
@@ -161,7 +182,7 @@ export const useUsers = () => {
       console.error('Erro ao atualizar usuário:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível atualizar o usuário',
+        description: `Não foi possível atualizar o usuário: ${error.message}`,
         variant: 'destructive'
       })
       return false
@@ -170,6 +191,8 @@ export const useUsers = () => {
 
   const deleteUser = async (userId: string) => {
     try {
+      console.log('Deletando usuário:', userId)
+      
       // Deletar perfil
       const { error: profileError } = await supabase
         .from('profiles')
@@ -177,11 +200,11 @@ export const useUsers = () => {
         .eq('id', userId)
 
       if (profileError) {
+        console.error('Erro ao deletar perfil:', profileError)
         throw profileError
       }
 
-      // Nota: Não é possível deletar usuário do Auth sem permissões admin
-      // Em produção, isso seria feito via função Edge ou RLS policy
+      console.log('Usuário deletado com sucesso')
 
       toast({
         title: 'Sucesso',
