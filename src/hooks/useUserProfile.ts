@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -20,12 +21,16 @@ export const useUserProfile = () => {
 
   const fetchProfile = async () => {
     if (!user?.id) {
+      console.log('No user ID found')
+      setProfile(null)
       setLoading(false)
       return
     }
 
     try {
+      console.log('Fetching profile for user:', user.id)
       setLoading(true)
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -34,12 +39,15 @@ export const useUserProfile = () => {
 
       if (error) {
         console.error('Erro ao buscar perfil:', error)
+        setProfile(null)
         return
       }
 
+      console.log('Profile fetched successfully:', data)
       setProfile(data as UserProfile)
     } catch (error) {
       console.error('Erro ao buscar perfil:', error)
+      setProfile(null)
     } finally {
       setLoading(false)
     }

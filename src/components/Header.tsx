@@ -17,11 +17,14 @@ export const Header = () => {
     return 'Usuário'
   }
 
+  console.log('Header - Profile:', profile)
+  console.log('Header - Loading:', loading)
+
   if (loading) {
     return (
       <header className="bg-abba-black border-b border-abba-gray px-6 py-3 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-full bg-abba-gray animate-pulse" />
+          <div className="w-8 h-8 rounded-full bg-abba-gray animate-pulse" />
           <div className="flex flex-col gap-1">
             <div className="w-16 h-4 bg-abba-gray rounded animate-pulse" />
             <div className="w-24 h-3 bg-abba-gray rounded animate-pulse" />

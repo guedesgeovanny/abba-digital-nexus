@@ -14,6 +14,8 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/AuthContext"
+import { useUserProfile } from "@/hooks/useUserProfile"
 
 // Menu items
 const items = [
@@ -51,11 +53,26 @@ const items = [
 
 export function AppSidebar() {
   const location = useLocation()
+  const { signOut } = useAuth()
+  const { profile, loading } = useUserProfile()
 
-  const handleLogout = () => {
-    // Aqui você implementará a lógica de logout posteriormente
-    console.log("Logout realizado")
-    window.location.href = "/login"
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      console.log("Logout realizado com sucesso")
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error)
+    }
+  }
+
+  const getFirstName = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(' ')[0]
+    }
+    if (profile?.email) {
+      return profile.email.split('@')[0]
+    }
+    return 'Usuário'
   }
 
   return (
@@ -104,15 +121,35 @@ export function AppSidebar() {
       </SidebarContent>
       
       <SidebarFooter className="border-t border-abba-gray p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
-            <Users className="w-4 h-4 text-abba-black" />
+        {loading ? (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-abba-gray rounded-full animate-pulse"></div>
+            <div className="flex flex-col gap-1">
+              <div className="w-16 h-3 bg-abba-gray rounded animate-pulse"></div>
+              <div className="w-24 h-2 bg-abba-gray rounded animate-pulse"></div>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-abba-text">Admin</span>
-            <span className="text-xs text-gray-400">admin@abba.digital</span>
+        ) : (
+          <div className="flex items-center gap-3">
+            {profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt="Avatar do usuário" 
+                className="w-8 h-8 rounded-full"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
+                <span className="text-abba-black font-semibold text-sm">
+                  {getFirstName().charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-abba-text">{getFirstName()}</span>
+              <span className="text-xs text-gray-400">{profile?.email}</span>
+            </div>
           </div>
-        </div>
+        )}
         
         <Button
           variant="ghost"
