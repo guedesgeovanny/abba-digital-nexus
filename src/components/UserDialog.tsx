@@ -80,7 +80,18 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
     }
 
     setLoading(true)
-    const success = await onSave(formData)
+    
+    // Filtrar campos para edição - remover password ao editar
+    const userData = isEditing 
+      ? {
+          full_name: formData.full_name,
+          role: formData.role,
+          status: formData.status,
+          avatar_url: formData.avatar_url
+        }
+      : formData
+    
+    const success = await onSave(userData)
     setLoading(false)
 
     if (success) {
