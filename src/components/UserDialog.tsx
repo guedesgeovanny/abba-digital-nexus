@@ -118,7 +118,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="bg-abba-dark border-abba-gray max-w-md">
+      <DialogContent className="bg-abba-black border-abba-gray max-w-md z-50 backdrop-blur-none shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-abba-text">
             {isEditing ? 'Editar Usuário' : 'Adicionar Usuário'}
@@ -223,14 +223,14 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
               <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-abba-dark border-abba-gray">
-                <SelectItem value="admin" className="text-abba-text hover:bg-abba-gray">
+              <SelectContent className="bg-abba-dark border-abba-gray z-50">
+                <SelectItem value="admin" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
                   Administrador
                 </SelectItem>
-                <SelectItem value="editor" className="text-abba-text hover:bg-abba-gray">
+                <SelectItem value="editor" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
                   Editor
                 </SelectItem>
-                <SelectItem value="viewer" className="text-abba-text hover:bg-abba-gray">
+                <SelectItem value="viewer" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
                   Visualizador
                 </SelectItem>
               </SelectContent>
@@ -247,14 +247,14 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
               <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-abba-dark border-abba-gray">
-                <SelectItem value="active" className="text-abba-text hover:bg-abba-gray">
+              <SelectContent className="bg-abba-dark border-abba-gray z-50">
+                <SelectItem value="active" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
                   Ativo
                 </SelectItem>
-                <SelectItem value="pending" className="text-abba-text hover:bg-abba-gray">
+                <SelectItem value="pending" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
                   Pendente
                 </SelectItem>
-                <SelectItem value="inactive" className="text-abba-text hover:bg-abba-gray">
+                <SelectItem value="inactive" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
                   Inativo
                 </SelectItem>
               </SelectContent>

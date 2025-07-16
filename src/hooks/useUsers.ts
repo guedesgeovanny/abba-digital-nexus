@@ -52,42 +52,6 @@ export const useUsers = () => {
     }
   }
 
-  const uploadAvatar = async (file: string, userId: string) => {
-    try {
-      // Converter base64 para blob
-      const base64Data = file.split(',')[1]
-      const byteCharacters = atob(base64Data)
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-      const blob = new Blob([byteArray], { type: 'image/jpeg' })
-      
-      const fileName = `avatar-${userId}-${Date.now()}.jpg`
-      
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, blob, {
-          cacheControl: '3600',
-          upsert: false
-        })
-      
-      if (error) {
-        throw error
-      }
-      
-      const { data: publicUrl } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
-      
-      return publicUrl.publicUrl
-    } catch (error) {
-      console.error('Erro ao fazer upload do avatar:', error)
-      return null
-    }
-  }
-
   const createUser = async (userData: {
     email: string
     password: string
@@ -107,10 +71,8 @@ export const useUsers = () => {
         throw authError
       }
 
-      let avatarUrl = null
-      if (userData.avatar_url && userData.avatar_url.startsWith('data:')) {
-        avatarUrl = await uploadAvatar(userData.avatar_url, authData.user.id)
-      }
+      // Por enquanto, salvar avatar_url como está (sem upload para Storage)
+      let avatarUrl = userData.avatar_url || null
 
       // Criar perfil na tabela profiles
       const { data: profileData, error: profileError } = await supabase
@@ -122,7 +84,7 @@ export const useUsers = () => {
             full_name: userData.full_name,
             role: userData.role || 'viewer',
             status: 'active',
-            avatar_url: avatarUrl || userData.avatar_url || null
+            avatar_url: avatarUrl
           }
         ])
         .select()
@@ -157,12 +119,8 @@ export const useUsers = () => {
     avatar_url?: string
   }) => {
     try {
+      // Por enquanto, salvar avatar_url como está (sem upload para Storage)
       let avatarUrl = userData.avatar_url
-      
-      // Se avatar_url é uma string base64, fazer upload
-      if (userData.avatar_url && userData.avatar_url.startsWith('data:')) {
-        avatarUrl = await uploadAvatar(userData.avatar_url, userId)
-      }
 
       const updateData: any = {
         updated_at: new Date().toISOString()
