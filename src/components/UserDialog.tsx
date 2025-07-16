@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Edit, Upload, X } from 'lucide-react'
 import { User } from '@/hooks/useUsers'
-import { useAuth } from '@/contexts/AuthContext'
+import { useUserProfile } from '@/hooks/useUserProfile'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface UserDialogProps {
   user?: User
@@ -16,7 +17,7 @@ interface UserDialogProps {
 }
 
 export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
-  const { user: currentUser } = useAuth()
+  const { profile: currentUserProfile } = useUserProfile()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null)
@@ -141,17 +142,26 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
         
         {/* Informações do usuário logado */}
         <div className="flex items-center gap-3 p-3 bg-abba-gray/20 rounded-lg">
-          <div className="w-10 h-10 rounded-full bg-abba-green flex items-center justify-center">
-            <span className="text-abba-black font-semibold text-sm">
-              {currentUser?.user_metadata?.full_name?.split(' ')[0]?.[0] || currentUser?.email?.[0]?.toUpperCase() || 'U'}
-            </span>
-          </div>
+          {currentUserProfile?.avatar_url ? (
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={currentUserProfile.avatar_url} alt="Foto do perfil" />
+              <AvatarFallback className="bg-abba-green text-abba-black font-semibold">
+                {currentUserProfile.full_name?.split(' ')[0]?.[0] || currentUserProfile.email?.[0]?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-abba-green flex items-center justify-center">
+              <span className="text-abba-black font-semibold text-sm">
+                {currentUserProfile?.full_name?.split(' ')[0]?.[0] || currentUserProfile?.email?.[0]?.toUpperCase() || 'U'}
+              </span>
+            </div>
+          )}
           <div className="flex flex-col">
             <span className="text-abba-text font-medium text-sm">
-              {currentUser?.user_metadata?.full_name?.split(' ')[0] || currentUser?.email?.split('@')[0] || 'Usuário'}
+              {currentUserProfile?.full_name?.split(' ')[0] || currentUserProfile?.email?.split('@')[0] || 'Usuário'}
             </span>
             <span className="text-abba-text/70 text-xs">
-              {currentUser?.email}
+              {currentUserProfile?.email}
             </span>
           </div>
         </div>
