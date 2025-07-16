@@ -22,7 +22,7 @@ export const useUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      console.log('Buscando usuários...')
+      console.log('Buscando usuários da tabela profiles...')
       
       const { data: profiles, error } = await supabase
         .from('profiles')
@@ -58,13 +58,30 @@ export const useUsers = () => {
     try {
       console.log('Criando usuário:', userData)
       
-      // 1. Primeiro criar o perfil diretamente na tabela profiles
-      const userId = crypto.randomUUID()
-      
+      // Criar usuário no Auth do Supabase
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: userData.email,
+        password: userData.password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: userData.full_name
+        }
+      })
+
+      if (authError) {
+        console.error('Erro ao criar usuário no auth:', authError)
+        throw authError
+      }
+
+      if (!authData.user) {
+        throw new Error('Erro ao criar usuário')
+      }
+
+      // Criar perfil na tabela profiles
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: userId,
+          id: authData.user.id,
           email: userData.email,
           full_name: userData.full_name,
           role: userData.role || 'viewer',
@@ -79,7 +96,7 @@ export const useUsers = () => {
         throw profileError
       }
 
-      console.log('Perfil criado:', profileData)
+      console.log('Usuário e perfil criados:', { authData, profileData })
 
       toast({
         title: 'Sucesso',
@@ -146,14 +163,25 @@ export const useUsers = () => {
     try {
       console.log('Deletando usuário:', userId)
       
-      const { error } = await supabase
+      // Primeiro deletar da tabela profiles
+      const { error: profileError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId)
 
-      if (error) {
-        console.error('Erro ao deletar:', error)
-        throw error
+      if (profileError) {
+        console.error('Erro ao deletar perfil:', profileError)
+        throw profileError
+      }
+
+      // Tentar deletar do auth (admin function)
+      try {
+        const { error: authError } = await supabase.auth.admin.deleteUser(userId)
+        if (authError) {
+          console.warn('Aviso ao deletar do auth:', authError)
+        }
+      } catch (authError) {
+        console.warn('Não foi possível deletar do auth (requer privilégios admin):', authError)
       }
 
       console.log('Usuário deletado com sucesso')

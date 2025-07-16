@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Shield, Trash2, Edit, Plus } from "lucide-react"
+import { Users, Shield, Trash2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useUsers } from "@/hooks/useUsers"
@@ -19,7 +19,7 @@ const Settings = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const { toast } = useToast()
   
-  // Hook para gerenciar usuários
+  // Hook para gerenciar usuários - busca dados reais da tabela profiles
   const { users, loading, createUser, updateUser, deleteUser } = useUsers()
 
   const handlePasswordChange = async () => {
@@ -90,6 +90,16 @@ const Settings = () => {
     return (firstInitial + lastInitial).toUpperCase()
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
       {/* Watermark */}
@@ -129,7 +139,7 @@ const Settings = () => {
                 <div>
                   <CardTitle className="text-abba-text">Usuários & Permissões</CardTitle>
                   <CardDescription className="text-gray-400">
-                    Gerencie quem tem acesso à plataforma
+                    Gerencie quem tem acesso à plataforma ({users.length} usuários encontrados)
                   </CardDescription>
                 </div>
                 <UserDialog onSave={createUser} />
@@ -139,11 +149,11 @@ const Settings = () => {
               <div className="space-y-4">
                 {loading ? (
                   <div className="flex items-center justify-center p-8">
-                    <div className="text-abba-text">Carregando usuários...</div>
+                    <div className="text-abba-text">Carregando usuários da base de dados...</div>
                   </div>
                 ) : users.length === 0 ? (
                   <div className="flex items-center justify-center p-8">
-                    <div className="text-gray-400">Nenhum usuário encontrado</div>
+                    <div className="text-gray-400">Nenhum usuário encontrado na tabela profiles</div>
                   </div>
                 ) : (
                   users.map((user) => (
@@ -167,6 +177,9 @@ const Settings = () => {
                         <div>
                           <p className="text-sm font-medium text-abba-text">{user.full_name || 'Sem nome'}</p>
                           <p className="text-xs text-gray-400">{user.email}</p>
+                          <p className="text-xs text-gray-500">
+                            Criado em: {formatDate(user.created_at)}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
