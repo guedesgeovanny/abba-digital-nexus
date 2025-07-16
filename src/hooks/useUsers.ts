@@ -35,8 +35,8 @@ export const useUsers = () => {
       // Mapear dados garantindo que role e status tenham valores padrão
       const usersWithDefaults = profiles?.map(profile => ({
         ...profile,
-        role: (profile as any).role || 'viewer',
-        status: (profile as any).status || 'active'
+        role: (profile as any)?.role || 'viewer',
+        status: (profile as any)?.status || 'active'
       })) || []
 
       setUsers(usersWithDefaults)
