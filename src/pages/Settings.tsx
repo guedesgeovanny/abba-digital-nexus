@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Users, CreditCard, Shield, Bell, Trash2, Plus } from "lucide-react"
+import { Users, Shield, Trash2, Plus } from "lucide-react"
 
 const Settings = () => {
   return (
@@ -35,17 +34,9 @@ const Settings = () => {
             <Users className="w-4 h-4 mr-2" />
             Usuários
           </TabsTrigger>
-          <TabsTrigger value="billing" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
-            <CreditCard className="w-4 h-4 mr-2" />
-            Plano & Faturamento
-          </TabsTrigger>
           <TabsTrigger value="security" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
             <Shield className="w-4 h-4 mr-2" />
             Segurança
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
-            <Bell className="w-4 h-4 mr-2" />
-            Notificações
           </TabsTrigger>
         </TabsList>
 
@@ -107,84 +98,6 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="billing" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="bg-abba-black border-abba-gray">
-              <CardHeader>
-                <CardTitle className="text-abba-text">Plano Atual</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Plano Professional
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-baseline space-x-2">
-                    <span className="text-3xl font-bold text-abba-green">R$ 299</span>
-                    <span className="text-gray-400">/mês</span>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Agentes inclusos:</span>
-                      <span className="text-abba-text">50</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Tokens mensais:</span>
-                      <span className="text-abba-text">500K</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Usuários:</span>
-                      <span className="text-abba-text">10</span>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-black">
-                    Alterar Plano
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-abba-black border-abba-gray">
-              <CardHeader>
-                <CardTitle className="text-abba-text">Uso Atual</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Consumo deste mês
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">Agentes ativos</span>
-                      <span className="text-abba-text">45/50</span>
-                    </div>
-                    <div className="w-full bg-abba-gray rounded-full h-2">
-                      <div className="bg-abba-green h-2 rounded-full" style={{ width: '90%' }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">Tokens utilizados</span>
-                      <span className="text-abba-text">312K/500K</span>
-                    </div>
-                    <div className="w-full bg-abba-gray rounded-full h-2">
-                      <div className="bg-abba-green h-2 rounded-full" style={{ width: '62%' }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">Usuários</span>
-                      <span className="text-abba-text">3/10</span>
-                    </div>
-                    <div className="w-full bg-abba-gray rounded-full h-2">
-                      <div className="bg-abba-green h-2 rounded-full" style={{ width: '30%' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
         <TabsContent value="security" className="space-y-4">
           <Card className="bg-abba-black border-abba-gray">
             <CardHeader>
@@ -227,32 +140,6 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-4">
-          <Card className="bg-abba-black border-abba-gray">
-            <CardHeader>
-              <CardTitle className="text-abba-text">Configurações de Notificação</CardTitle>
-              <CardDescription className="text-gray-400">
-                Escolha como você quer ser notificado
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {[
-                { title: "Notificações por Email", description: "Receber atualizações por email" },
-                { title: "Alertas de Agentes", description: "Ser notificado quando agentes ficam offline" },
-                { title: "Relatórios Semanais", description: "Receber relatórios de performance" },
-                { title: "Notificações de Faturamento", description: "Alertas sobre pagamentos e faturas" },
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-abba-text">{item.title}</p>
-                    <p className="text-xs text-gray-400">{item.description}</p>
-                  </div>
-                  <Switch defaultChecked={index < 2} />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   )
