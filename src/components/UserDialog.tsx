@@ -23,8 +23,8 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
     email: user?.email || '',
     full_name: user?.full_name || '',
     password: '',
-    role: user?.role || 'viewer' as const,
-    status: user?.status || 'active' as const,
+    role: (user?.role || 'viewer') as 'admin' | 'editor' | 'viewer',
+    status: (user?.status || 'active') as 'active' | 'pending' | 'inactive',
     avatar_url: user?.avatar_url || ''
   })
 
