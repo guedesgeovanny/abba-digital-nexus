@@ -35,8 +35,8 @@ export const useUsers = () => {
       // Mapear dados garantindo que role e status tenham valores padrão
       const usersWithDefaults = profiles?.map(profile => ({
         ...profile,
-        role: (profile as any)?.role || 'viewer',
-        status: (profile as any)?.status || 'active'
+        role: (profile as any).role || 'viewer',
+        status: (profile as any).status || 'active'
       })) || []
 
       setUsers(usersWithDefaults)
@@ -60,15 +60,24 @@ export const useUsers = () => {
     avatar_url?: string
   }) => {
     try {
-      // Criar usuário no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Registrar usuário usando signup normal (não admin)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
-        email_confirm: true
+        options: {
+          data: {
+            full_name: userData.full_name,
+            role: userData.role || 'viewer'
+          }
+        }
       })
 
       if (authError) {
         throw authError
+      }
+
+      if (!authData.user) {
+        throw new Error('Não foi possível criar o usuário')
       }
 
       // Por enquanto, salvar avatar_url como está (sem upload para Storage)
@@ -170,12 +179,8 @@ export const useUsers = () => {
         throw profileError
       }
 
-      // Deletar usuário do Auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId)
-
-      if (authError) {
-        throw authError
-      }
+      // Nota: Não é possível deletar usuário do Auth sem permissões admin
+      // Em produção, isso seria feito via função Edge ou RLS policy
 
       toast({
         title: 'Sucesso',
