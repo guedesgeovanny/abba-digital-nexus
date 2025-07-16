@@ -10,34 +10,64 @@ export const useDebugDatabase = () => {
       setLoading(true)
       console.log('=== VERIFICANDO ESTRUTURA DA TABELA PROFILES ===')
       
-      // Verificar se a tabela existe
-      const { data: tables, error: tableError } = await supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .eq('table_name', 'profiles')
+      // Verificar se a tabela existe usando SQL bruto
+      const { data: tableExists, error: tableError } = await supabase.rpc('exec_sql', {
+        sql: `
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'profiles'
+          ) as exists;
+        `
+      }).catch(async () => {
+        // Se rpc não funcionar, usar uma query simples na tabela
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .limit(1)
+        return { data: data ? [{ exists: true }] : [{ exists: false }], error }
+      })
 
       if (tableError) {
         console.error('Erro ao verificar tabela:', tableError)
-        return
+      } else {
+        console.log('Tabela profiles existe:', tableExists)
       }
 
-      console.log('Tabela profiles existe:', tables?.length > 0)
-
-      // Verificar colunas da tabela
-      const { data: columns, error: columnError } = await supabase
-        .from('information_schema.columns')
-        .select('column_name, data_type, is_nullable, column_default')
-        .eq('table_schema', 'public')
-        .eq('table_name', 'profiles')
-        .order('ordinal_position')
+      // Verificar colunas usando SQL bruto
+      const { data: columns, error: columnError } = await supabase.rpc('exec_sql', {
+        sql: `
+          SELECT column_name, data_type, is_nullable, column_default
+          FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'profiles'
+          ORDER BY ordinal_position;
+        `
+      }).catch(async () => {
+        // Fallback: tentar buscar dados da tabela para ver estrutura
+        console.log('Usando fallback para verificar estrutura...')
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .limit(1)
+        
+        if (data && data.length > 0) {
+          const sampleRow = data[0]
+          const columnInfo = Object.keys(sampleRow).map(key => ({
+            column_name: key,
+            data_type: typeof sampleRow[key],
+            value_example: sampleRow[key]
+          }))
+          return { data: columnInfo, error: null }
+        }
+        return { data: null, error }
+      })
 
       if (columnError) {
         console.error('Erro ao verificar colunas:', columnError)
-        return
+      } else {
+        console.log('Colunas da tabela profiles:', columns)
       }
-
-      console.log('Colunas da tabela profiles:', columns)
 
       // Verificar dados existentes
       const { data: profiles, error: dataError } = await supabase
@@ -47,23 +77,27 @@ export const useDebugDatabase = () => {
 
       if (dataError) {
         console.error('Erro ao buscar dados:', dataError)
-        return
+      } else {
+        console.log('Dados de exemplo da tabela profiles:', profiles)
       }
 
-      console.log('Dados de exemplo da tabela profiles:', profiles)
-
-      // Verificar políticas RLS
-      const { data: policies, error: policyError } = await supabase
-        .from('pg_policies')
-        .select('policyname, cmd, roles, qual, with_check')
-        .eq('tablename', 'profiles')
+      // Verificar políticas RLS usando SQL bruto se possível
+      const { data: policies, error: policyError } = await supabase.rpc('exec_sql', {
+        sql: `
+          SELECT policyname, cmd, roles, qual, with_check
+          FROM pg_policies 
+          WHERE tablename = 'profiles';
+        `
+      }).catch(() => {
+        console.log('Não foi possível verificar políticas RLS (permissões insuficientes)')
+        return { data: null, error: null }
+      })
 
       if (policyError) {
         console.error('Erro ao verificar políticas:', policyError)
-        return
+      } else if (policies) {
+        console.log('Políticas RLS da tabela profiles:', policies)
       }
-
-      console.log('Políticas RLS da tabela profiles:', policies)
 
     } catch (error) {
       console.error('Erro geral ao verificar estrutura:', error)
@@ -77,27 +111,31 @@ export const useDebugDatabase = () => {
       setLoading(true)
       console.log('=== TESTANDO OPERAÇÕES DE USUÁRIO ===')
       
+      // Usar um ID UUID válido para teste
+      const testUserId = crypto.randomUUID()
+      
       const testUser = {
+        id: testUserId,
         email: 'test@example.com',
-        full_name: 'Test User',
-        role: 'viewer' as const,
-        status: 'active' as const
+        full_name: 'Test User'
       }
 
-      // Teste de inserção
+      // Teste de inserção usando qualquer objeto (sem tipagem estrita)
       console.log('Testando inserção...')
       const { data: insertData, error: insertError } = await supabase
-        .from('profiles')
+        .from('profiles' as any)
         .insert([testUser])
         .select()
 
       if (insertError) {
         console.error('Erro na inserção:', insertError)
+        console.error('Detalhes do erro:', insertError.message)
+        console.error('Código do erro:', insertError.code)
       } else {
         console.log('Inserção bem-sucedida:', insertData)
       }
 
-      // Teste de atualização
+      // Teste de atualização se a inserção funcionou
       if (insertData && insertData[0]) {
         console.log('Testando atualização...')
         const { data: updateData, error: updateError } = await supabase
@@ -108,15 +146,24 @@ export const useDebugDatabase = () => {
 
         if (updateError) {
           console.error('Erro na atualização:', updateError)
+          console.error('Detalhes do erro:', updateError.message)
+          console.error('Código do erro:', updateError.code)
         } else {
           console.log('Atualização bem-sucedida:', updateData)
         }
 
         // Limpeza - deletar usuário de teste
-        await supabase
+        console.log('Limpando dados de teste...')
+        const { error: deleteError } = await supabase
           .from('profiles')
           .delete()
           .eq('id', insertData[0].id)
+
+        if (deleteError) {
+          console.error('Erro ao limpar dados de teste:', deleteError)
+        } else {
+          console.log('Dados de teste removidos com sucesso')
+        }
       }
 
     } catch (error) {
