@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -32,14 +33,14 @@ export const useUsers = () => {
         throw error
       }
 
-      // Mapear dados garantindo que role e status tenham valores padrão
+      // Mapear dados com os tipos corretos
       const usersWithDefaults = profiles?.map(profile => ({
         ...profile,
-        role: (profile as any).role || 'viewer',
-        status: (profile as any).status || 'active'
+        role: profile.role || 'viewer',
+        status: profile.status || 'active'
       })) || []
 
-      setUsers(usersWithDefaults)
+      setUsers(usersWithDefaults as User[])
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
       toast({
