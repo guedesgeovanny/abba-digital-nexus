@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Edit, Upload, X } from 'lucide-react'
 import { User } from '@/hooks/useUsers'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface UserDialogProps {
   user?: User
@@ -15,6 +16,7 @@ interface UserDialogProps {
 }
 
 export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
+  const { user: currentUser } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null)
@@ -136,6 +138,23 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
             {isEditing ? 'Editar Usuário' : 'Adicionar Usuário'}
           </DialogTitle>
         </DialogHeader>
+        
+        {/* Informações do usuário logado */}
+        <div className="flex items-center gap-3 p-3 bg-abba-gray/20 rounded-lg">
+          <div className="w-10 h-10 rounded-full bg-abba-green flex items-center justify-center">
+            <span className="text-abba-black font-semibold text-sm">
+              {currentUser?.user_metadata?.full_name?.split(' ')[0]?.[0] || currentUser?.email?.[0]?.toUpperCase() || 'U'}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-abba-text font-medium text-sm">
+              {currentUser?.user_metadata?.full_name?.split(' ')[0] || currentUser?.email?.split('@')[0] || 'Usuário'}
+            </span>
+            <span className="text-abba-text/70 text-xs">
+              {currentUser?.email}
+            </span>
+          </div>
+        </div>
         
         <div className="space-y-4">
           {/* Avatar Upload - Corrigido */}
