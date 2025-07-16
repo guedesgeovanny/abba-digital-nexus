@@ -24,7 +24,6 @@ export const useUsers = () => {
       setLoading(true)
       console.log('Buscando usuários...')
       
-      // Buscar usuários da tabela profiles
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
@@ -36,16 +35,7 @@ export const useUsers = () => {
       }
 
       console.log('Profiles encontrados:', profiles)
-
-      // Mapear dados com type assertion para role e status
-      const usersWithDefaults = profiles?.map(profile => ({
-        ...profile,
-        role: (profile as any).role || 'viewer',
-        status: (profile as any).status || 'active'
-      })) || []
-
-      console.log('Usuários mapeados:', usersWithDefaults)
-      setUsers(usersWithDefaults as User[])
+      setUsers(profiles as User[])
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
       toast({
@@ -68,16 +58,10 @@ export const useUsers = () => {
     try {
       console.log('Criando usuário:', userData)
       
-      // Registrar usuário usando signup normal (não admin)
+      // 1. Criar usuário no auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            full_name: userData.full_name,
-            role: userData.role || 'viewer'
-          }
-        }
+        password: userData.password
       })
 
       if (authError) {
@@ -91,22 +75,17 @@ export const useUsers = () => {
 
       console.log('Usuário criado no Auth:', authData.user)
 
-      // Por enquanto, salvar avatar_url como está (sem upload para Storage)
-      let avatarUrl = userData.avatar_url || null
-
-      // Criar perfil na tabela profiles
+      // 2. Criar perfil na tabela profiles
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            email: userData.email,
-            full_name: userData.full_name,
-            role: userData.role || 'viewer',
-            status: 'active',
-            avatar_url: avatarUrl
-          }
-        ])
+        .insert({
+          id: authData.user.id,
+          email: userData.email,
+          full_name: userData.full_name,
+          role: userData.role || 'viewer',
+          status: 'active',
+          avatar_url: userData.avatar_url || null
+        })
         .select()
         .single()
 
@@ -119,16 +98,16 @@ export const useUsers = () => {
 
       toast({
         title: 'Sucesso',
-        description: 'Usuário criado com sucesso',
+        description: 'Usuário criado com sucesso'
       })
 
-      await fetchUsers() // Atualizar lista
+      await fetchUsers()
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar usuário:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível criar o usuário',
+        description: error.message || 'Não foi possível criar o usuário',
         variant: 'destructive'
       })
       return false
@@ -144,45 +123,34 @@ export const useUsers = () => {
     try {
       console.log('Atualizando usuário:', userId, userData)
       
-      // Por enquanto, salvar avatar_url como está (sem upload para Storage)
-      let avatarUrl = userData.avatar_url
-
-      const updateData: any = {
-        updated_at: new Date().toISOString()
-      }
-
-      if (userData.full_name !== undefined) updateData.full_name = userData.full_name
-      if (userData.role !== undefined) updateData.role = userData.role
-      if (userData.status !== undefined) updateData.status = userData.status
-      if (avatarUrl !== undefined) updateData.avatar_url = avatarUrl
-
-      console.log('Dados para atualização:', updateData)
-
       const { data, error } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update({
+          ...userData,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId)
         .select()
 
       if (error) {
-        console.error('Erro ao atualizar no banco:', error)
+        console.error('Erro ao atualizar:', error)
         throw error
       }
 
-      console.log('Usuário atualizado com sucesso:', data)
+      console.log('Usuário atualizado:', data)
 
       toast({
         title: 'Sucesso',
-        description: 'Usuário atualizado com sucesso',
+        description: 'Usuário atualizado com sucesso'
       })
 
-      await fetchUsers() // Atualizar lista
+      await fetchUsers()
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao atualizar usuário:', error)
       toast({
         title: 'Erro',
-        description: `Não foi possível atualizar o usuário: ${error.message}`,
+        description: error.message || 'Não foi possível atualizar o usuário',
         variant: 'destructive'
       })
       return false
@@ -193,31 +161,30 @@ export const useUsers = () => {
     try {
       console.log('Deletando usuário:', userId)
       
-      // Deletar perfil
-      const { error: profileError } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId)
 
-      if (profileError) {
-        console.error('Erro ao deletar perfil:', profileError)
-        throw profileError
+      if (error) {
+        console.error('Erro ao deletar:', error)
+        throw error
       }
 
       console.log('Usuário deletado com sucesso')
 
       toast({
         title: 'Sucesso',
-        description: 'Usuário removido com sucesso',
+        description: 'Usuário removido com sucesso'
       })
 
-      await fetchUsers() // Atualizar lista
+      await fetchUsers()
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao deletar usuário:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível remover o usuário',
+        description: error.message || 'Não foi possível remover o usuário',
         variant: 'destructive'
       })
       return false
