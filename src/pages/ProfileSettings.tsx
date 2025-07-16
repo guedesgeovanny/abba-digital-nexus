@@ -14,10 +14,12 @@ const ProfileSettings = () => {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsLoading(true)
     
     try {
+      const formData = new FormData(e.currentTarget)
       const result = await updateProfile(formData)
       
       if (result.success) {
@@ -25,17 +27,11 @@ const ProfileSettings = () => {
           title: "Sucesso",
           description: result.success,
         })
-      } else if (result.error) {
-        toast({
-          title: "Erro",
-          description: result.error,
-          variant: "destructive",
-        })
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erro",
-        description: "Erro inesperado. Tente novamente.",
+        description: error.message || "Erro inesperado. Tente novamente.",
         variant: "destructive",
       })
     } finally {
@@ -62,7 +58,7 @@ const ProfileSettings = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-abba-text">Nome Completo</Label>
               <Input

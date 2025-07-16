@@ -1,16 +1,44 @@
 
+import { useState } from 'react'
 import { signup } from '@/app/auth/actions'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mail, Lock, User } from "lucide-react"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useToast } from "@/hooks/use-toast"
 
 const SignUpWithAction = () => {
-  const [searchParams] = useSearchParams()
-  const error = searchParams.get('error')
-  const message = searchParams.get('message')
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const formData = new FormData(e.currentTarget)
+      const result = await signup(formData)
+      
+      if (result.success) {
+        toast({
+          title: "Sucesso",
+          description: result.success,
+        })
+        navigate('/login')
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao criar conta. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-abba-black flex items-center justify-center p-4">
@@ -44,19 +72,7 @@ const SignUpWithAction = () => {
         </CardHeader>
         
         <CardContent>
-          {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-          
-          {message && (
-            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <p className="text-green-400 text-sm">{message}</p>
-            </div>
-          )}
-
-          <form action={signup} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-abba-text">Nome Completo</Label>
               <div className="relative">
@@ -105,8 +121,9 @@ const SignUpWithAction = () => {
             <Button 
               type="submit" 
               className="w-full bg-abba-gradient hover:opacity-90 text-abba-black font-semibold py-2"
+              disabled={isLoading}
             >
-              Criar Conta
+              {isLoading ? "Criando..." : "Criar Conta"}
             </Button>
           </form>
 

@@ -1,13 +1,9 @@
 
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
+import { supabase } from '@/integrations/supabase/client'
 
 export async function signup(formData: FormData) {
-  const supabase = createClient()
-
   // Extrair dados do formulário
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -15,11 +11,11 @@ export async function signup(formData: FormData) {
 
   // Validações básicas
   if (!email || !password || !fullName) {
-    return redirect('/signup?error=Por favor, preencha todos os campos.')
+    throw new Error('Por favor, preencha todos os campos.')
   }
 
   if (password.length < 6) {
-    return redirect('/signup?error=A senha deve ter pelo menos 6 caracteres.')
+    throw new Error('A senha deve ter pelo menos 6 caracteres.')
   }
 
   try {
@@ -36,11 +32,11 @@ export async function signup(formData: FormData) {
 
     if (authError) {
       console.error('Erro ao criar usuário:', authError)
-      return redirect(`/signup?error=${encodeURIComponent(authError.message)}`)
+      throw new Error(authError.message)
     }
 
     if (!authData.user) {
-      return redirect('/signup?error=Erro ao criar usuário. Tente novamente.')
+      throw new Error('Erro ao criar usuário. Tente novamente.')
     }
 
     // Passo 2: Inserir dados na tabela profiles
@@ -56,22 +52,18 @@ export async function signup(formData: FormData) {
 
     if (profileError) {
       console.error('Erro ao criar perfil:', profileError)
-      // Se houver erro no perfil, ainda redireciona para login pois o usuário foi criado
-      return redirect('/login?message=Usuário criado, mas houve um problema no perfil. Tente fazer login.')
+      throw new Error('Erro ao criar perfil. Tente novamente.')
     }
 
-    // Passo 3: Sucesso - redirecionar para login
-    return redirect('/login?message=Cadastro realizado com sucesso! Faça o login.')
+    return { success: 'Cadastro realizado com sucesso! Faça o login.' }
 
   } catch (error) {
     console.error('Erro inesperado:', error)
-    return redirect('/signup?error=Erro interno do servidor. Tente novamente.')
+    throw error
   }
 }
 
 export async function updateProfile(formData: FormData) {
-  const supabase = createClient()
-
   // Extrair dados do formulário
   const fullName = formData.get('fullName') as string
   const avatarUrl = formData.get('avatarUrl') as string
@@ -83,7 +75,7 @@ export async function updateProfile(formData: FormData) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return { error: 'Usuário não autorizado. Faça login novamente.' }
+      throw new Error('Usuário não autorizado. Faça login novamente.')
     }
 
     // Passo 2: Atualizar perfil na tabela profiles
@@ -101,15 +93,13 @@ export async function updateProfile(formData: FormData) {
 
     if (updateError) {
       console.error('Erro ao atualizar perfil:', updateError)
-      return { error: 'Erro ao atualizar perfil. Tente novamente.' }
+      throw new Error('Erro ao atualizar perfil. Tente novamente.')
     }
 
-    // Passo 3: Revalidar dados e retornar sucesso
-    revalidatePath('/dashboard/settings')
     return { success: 'Perfil atualizado com sucesso!' }
 
   } catch (error) {
     console.error('Erro inesperado ao atualizar perfil:', error)
-    return { error: 'Erro interno do servidor. Tente novamente.' }
+    throw error
   }
 }
