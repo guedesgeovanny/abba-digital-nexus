@@ -33,11 +33,11 @@ export const useUsers = () => {
         throw error
       }
 
-      // Mapear dados com os tipos corretos
+      // Mapear dados com type assertion para role e status
       const usersWithDefaults = profiles?.map(profile => ({
         ...profile,
-        role: profile.role || 'viewer',
-        status: profile.status || 'active'
+        role: (profile as any).role || 'viewer',
+        status: (profile as any).status || 'active'
       })) || []
 
       setUsers(usersWithDefaults as User[])
