@@ -6,15 +6,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Shield, Trash2, Plus } from "lucide-react"
+import { Users, Shield, Trash2, Edit, Plus } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useUsers } from "@/hooks/useUsers"
+import { UserDialog } from "@/components/UserDialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 const Settings = () => {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const { toast } = useToast()
+  
+  // Hook para gerenciar usuários
+  const { users, loading, createUser, updateUser, deleteUser } = useUsers()
 
   const handlePasswordChange = async () => {
     if (!newPassword || !confirmPassword) {
@@ -117,49 +123,83 @@ const Settings = () => {
                     Gerencie quem tem acesso à plataforma
                   </CardDescription>
                 </div>
-                <Button className="bg-abba-gradient hover:opacity-90 text-abba-black">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Convidar Usuário
-                </Button>
+                <UserDialog onSave={createUser} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { name: "João Silva", email: "joao@empresa.com", role: "Admin", status: "active" },
-                  { name: "Maria Santos", email: "maria@empresa.com", role: "Editor", status: "active" },
-                  { name: "Pedro Costa", email: "pedro@empresa.com", role: "Viewer", status: "pending" },
-                ].map((user, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-abba-green rounded-full flex items-center justify-center">
-                        <span className="text-abba-black font-semibold text-sm">
-                          {user.name.split(' ').map(n => n[0]).join('')}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-abba-text">{user.name}</p>
-                        <p className="text-xs text-gray-400">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Badge 
-                        variant="outline" 
-                        className="border-abba-green text-abba-green"
-                      >
-                        {user.role}
-                      </Badge>
-                      <Badge 
-                        className={user.status === 'active' ? 'bg-abba-green text-abba-black' : 'bg-yellow-500 text-black'}
-                      >
-                        {user.status === 'active' ? 'Ativo' : 'Pendente'}
-                      </Badge>
-                      <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                {loading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="text-abba-text">Carregando usuários...</div>
                   </div>
-                ))}
+                ) : users.length === 0 ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="text-gray-400">Nenhum usuário encontrado</div>
+                  </div>
+                ) : (
+                  users.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-abba-green rounded-full flex items-center justify-center">
+                          <span className="text-abba-black font-semibold text-sm">
+                            {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('') : user.email[0].toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-abba-text">{user.full_name || 'Sem nome'}</p>
+                          <p className="text-xs text-gray-400">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Badge 
+                          variant="outline" 
+                          className="border-abba-green text-abba-green"
+                        >
+                          {user.role === 'admin' ? 'Admin' : user.role === 'editor' ? 'Editor' : 'Viewer'}
+                        </Badge>
+                        <Badge 
+                          className={user.status === 'active' ? 'bg-abba-green text-abba-black' : 
+                                    user.status === 'pending' ? 'bg-yellow-500 text-black' : 'bg-gray-500 text-white'}
+                        >
+                          {user.status === 'active' ? 'Ativo' : 
+                           user.status === 'pending' ? 'Pendente' : 'Inativo'}
+                        </Badge>
+                        
+                        <UserDialog 
+                          user={user} 
+                          onSave={(userData) => updateUser(user.id, userData)}
+                        />
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-abba-dark border-abba-gray">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-abba-text">Confirmar Exclusão</AlertDialogTitle>
+                              <AlertDialogDescription className="text-gray-400">
+                                Tem certeza que deseja excluir o usuário {user.full_name || user.email}? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="border-abba-gray text-abba-text hover:bg-abba-gray/10">
+                                Cancelar
+                              </AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteUser(user.id)}
+                                className="bg-red-500 hover:bg-red-600 text-white"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
