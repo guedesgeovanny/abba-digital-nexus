@@ -280,9 +280,11 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
               >
                 <div
                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.direcao === 'sent'
-                      ? 'bg-abba-green text-abba-black'
-                      : 'bg-abba-gray text-abba-text'
+                    message.mensagem_is_agent === true
+                      ? 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100'
+                      : message.direcao === 'sent'
+                        ? 'bg-abba-green text-abba-black'
+                        : 'bg-abba-gray text-abba-text'
                   }`}
                 >
                   {(() => {

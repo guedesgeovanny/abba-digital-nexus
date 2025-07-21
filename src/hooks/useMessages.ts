@@ -11,6 +11,7 @@ export interface Message {
   data_hora: string | null
   created_at: string
   updated_at: string | null
+  mensagem_is_agent?: boolean
 }
 
 export const useMessages = (conversationId: string | null) => {
@@ -81,7 +82,8 @@ export const useMessages = (conversationId: string | null) => {
       // Garantir que os tipos sejam corretos
       const typedMessages: Message[] = (data || []).map(msg => ({
         ...msg,
-        direcao: msg.direcao as 'sent' | 'received'
+        direcao: msg.direcao as 'sent' | 'received',
+        mensagem_is_agent: (msg as any).mensagem_is_agent || false
       }))
       
       setMessages(typedMessages)
@@ -138,15 +140,24 @@ export const useMessages = (conversationId: string | null) => {
       }
       
       // Inserir a nova mensagem usando os novos nomes das colunas
+      const insertData: any = {
+        conversa_id: conversationId,
+        mensagem: content,
+        direcao: 'sent' as const,
+        nome_contato: 'Você',
+        data_hora: new Date().toISOString()
+      }
+      
+      // Adicionar mensagem_is_agent se a coluna existir
+      try {
+        insertData.mensagem_is_agent = false
+      } catch (e) {
+        // Ignorar se a coluna não existir
+      }
+      
       const { data: newMessage, error: messageError } = await supabase
         .from('messages')
-        .insert({
-          conversa_id: conversationId,
-          mensagem: content,
-          direcao: 'sent' as const,
-          nome_contato: 'Você',
-          data_hora: new Date().toISOString()
-        })
+        .insert(insertData)
         .select()
         .single()
       
