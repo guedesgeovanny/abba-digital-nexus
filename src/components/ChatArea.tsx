@@ -23,6 +23,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { LinkMessage } from "@/components/LinkMessage"
+import { detectLinksInMessage } from "@/utils/linkDetection"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -285,6 +287,9 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                 >
                   {(() => {
                     const fileInfo = detectFileInMessage(message.mensagem)
+                    const linkInfo = detectLinksInMessage(message.mensagem)
+                    
+                    // Se tem arquivo, mostrar o componente de mídia
                     if (fileInfo) {
                       return (
                         <MediaMessage
@@ -294,6 +299,19 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                         />
                       )
                     }
+                    
+                    // Se tem links, mostrar o componente de links
+                    if (linkInfo.length > 0) {
+                      return (
+                        <LinkMessage
+                          links={linkInfo}
+                          messageText={message.mensagem}
+                          isOutgoing={message.direcao === 'sent'}
+                        />
+                      )
+                    }
+                    
+                    // Texto simples
                     return <p className="text-sm">{message.mensagem}</p>
                   })()}
                   <p className="text-xs opacity-70 mt-1">
