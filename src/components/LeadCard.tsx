@@ -44,9 +44,11 @@ export const LeadCard = ({ deal, stageColor, onCardClick }: LeadCardProps) => {
   const handleCardClick = (e: React.MouseEvent) => {
     // Prevenir clique se estiver arrastando ou clicando no dropdown
     if (isDragging || (e.target as HTMLElement).closest('[role="button"]')) {
+      console.log('LeadCard: Click prevented - dragging or dropdown')
       return
     }
     
+    console.log('LeadCard: Card clicked', deal)
     onCardClick?.(deal)
   }
 

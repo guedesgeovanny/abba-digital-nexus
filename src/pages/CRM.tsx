@@ -115,8 +115,10 @@ const CRM = () => {
   }
 
   const handleCardClick = (deal: CRMDeal) => {
+    console.log('CRM: handleCardClick called', deal)
     setSelectedDeal(deal)
     setShowChatPopup(true)
+    console.log('CRM: showChatPopup set to true')
   }
 
   const handleCloseChatPopup = () => {
