@@ -10,9 +10,10 @@ import { CSS } from '@dnd-kit/utilities'
 interface LeadCardProps {
   deal: any
   stageColor: string
+  onCardClick?: (deal: any) => void
 }
 
-export const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
+export const LeadCard = ({ deal, stageColor, onCardClick }: LeadCardProps) => {
   const {
     attributes,
     listeners,
@@ -40,14 +41,24 @@ export const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
     }
   }
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevenir clique se estiver arrastando ou clicando no dropdown
+    if (isDragging || (e.target as HTMLElement).closest('[role="button"]')) {
+      return
+    }
+    
+    onCardClick?.(deal)
+  }
+
   return (
     <Card 
       ref={setNodeRef} 
       style={style} 
       {...attributes} 
       {...listeners}
+      onClick={handleCardClick}
       className={`
-        bg-abba-gray border-abba-gray transition-all duration-200 cursor-grab active:cursor-grabbing
+        bg-abba-gray border-abba-gray transition-all duration-200 cursor-pointer
         hover:border-abba-green hover:shadow-lg hover:shadow-abba-green/20 hover:scale-[1.02]
         ${isDragging ? 'shadow-2xl shadow-abba-green/40 scale-105 rotate-2 border-abba-green' : ''}
       `}
@@ -60,7 +71,12 @@ export const LeadCard = ({ deal, stageColor }: LeadCardProps) => {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>

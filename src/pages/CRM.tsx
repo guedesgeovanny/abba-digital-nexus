@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Plus, Filter } from "lucide-react"
@@ -6,7 +7,8 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CRMFilters } from "@/components/CRMFilters"
 import { AddStageDialog } from "@/components/AddStageDialog"
 import { StageColumn } from "@/components/StageColumn"
-import { useCRMData } from "@/hooks/useCRMData"
+import { ChatPopup } from "@/components/ChatPopup"
+import { useCRMData, CRMDeal } from "@/hooks/useCRMData"
 import { ContactForm } from "@/components/ContactForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -27,6 +29,8 @@ const CRM = () => {
 
   const [isAddingStage, setIsAddingStage] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
+  const [selectedDeal, setSelectedDeal] = useState<CRMDeal | null>(null)
+  const [showChatPopup, setShowChatPopup] = useState(false)
   
   // Filter states
   const [filterAgent, setFilterAgent] = useState("")
@@ -108,6 +112,16 @@ const CRM = () => {
   const removeStage = (stageToRemove: string) => {
     // Para implementação futura - por enquanto mantemos os estágios fixos
     console.log('Remove stage not implemented yet:', stageToRemove)
+  }
+
+  const handleCardClick = (deal: CRMDeal) => {
+    setSelectedDeal(deal)
+    setShowChatPopup(true)
+  }
+
+  const handleCloseChatPopup = () => {
+    setShowChatPopup(false)
+    setSelectedDeal(null)
   }
 
   if (isLoading) {
@@ -203,6 +217,13 @@ const CRM = () => {
         onAdd={handleAddStage}
       />
 
+      {/* Chat Popup */}
+      <ChatPopup 
+        isOpen={showChatPopup}
+        onClose={handleCloseChatPopup}
+        deal={selectedDeal}
+      />
+
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
       <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -223,6 +244,7 @@ const CRM = () => {
                   onStageRename={handleStageRename}
                   onColorChange={handleColorChange}
                   onRemoveStage={removeStage}
+                  onCardClick={handleCardClick}
                 />
               )
             })}
