@@ -234,17 +234,10 @@ export const useConversations = () => {
       
       console.log('Fazendo query no Supabase para conversas...')
       
-      // Buscar todas as conversas do usuário com dados do usuário atribuído
+      // Buscar todas as conversas do usuário
       const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
-        .select(`
-          *,
-          assigned_user:profiles!conversations_assigned_to_fkey(
-            id,
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('user_id', user?.id)
         .order('updated_at', { ascending: false })
       
@@ -296,7 +289,7 @@ export const useConversations = () => {
         )
       }
 
-      // Para cada conversa, buscar a mensagem mais recente e contar não lidas
+      // Para cada conversa, buscar a mensagem mais recente, contar não lidas e obter dados do usuário atribuído
       const conversationsWithMessages = await Promise.all(
         conversationsData.map(async (conversation) => {
           try {
@@ -324,6 +317,21 @@ export const useConversations = () => {
               console.error('Erro ao contar mensagens não lidas:', countError)
             }
 
+            // Buscar dados do usuário atribuído se existir
+            let assignedUser = null
+            const assigned_to = (conversation as any).assigned_to
+            if (assigned_to) {
+              const { data: userData, error: userError } = await supabase
+                .from('profiles')
+                .select('id, full_name, email')
+                .eq('id', assigned_to)
+                .maybeSingle()
+              
+              if (!userError && userData) {
+                assignedUser = userData
+              }
+            }
+
             return {
               ...conversation,
               last_message: lastMessage?.mensagem || conversation.last_message,
@@ -332,7 +340,9 @@ export const useConversations = () => {
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
               status_agent: (conversation as any).status_agent || null,
-              unread_count: unreadCount || 0
+              unread_count: unreadCount || 0,
+              assigned_to: assigned_to || null,
+              assigned_user: assignedUser
             }
           } catch (error) {
             console.error('Erro ao processar conversa:', error)
@@ -344,7 +354,9 @@ export const useConversations = () => {
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
               status_agent: (conversation as any).status_agent || null,
-              unread_count: 0
+              unread_count: 0,
+              assigned_to: (conversation as any).assigned_to || null,
+              assigned_user: null
             }
           }
         })
@@ -374,7 +386,7 @@ export const useConversations = () => {
       
       const { error } = await supabase
         .from('conversations')
-        .update({ assigned_to: userId })
+        .update({ assigned_to: userId } as any)
         .eq('id', conversationId)
       
       if (error) throw error
@@ -537,6 +549,7 @@ export const useConversations = () => {
         account: (data as any).account || null,
         have_agent: (data as any).have_agent || false,
         status_agent: (data as any).status_agent || null,
+        assigned_to: (data as any).assigned_to || null,
         assigned_user: null
       }, ...prev])
       return data
