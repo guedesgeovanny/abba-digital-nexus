@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { Plus, Edit, Upload, X } from 'lucide-react'
 import { User } from '@/hooks/useUsers'
 import { useUserProfile } from '@/hooks/useUserProfile'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useToast } from '@/hooks/use-toast'
 
 interface UserDialogProps {
   user?: User
@@ -22,6 +23,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
   const [loading, setLoading] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
   
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -32,18 +34,45 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
     avatar_url: user?.avatar_url || ''
   })
 
+  const [formErrors, setFormErrors] = useState({
+    email: false,
+    full_name: false,
+    password: false
+  })
+
   const isEditing = !!user
+
+  useEffect(() => {
+    if (open) {
+      // Reset form errors when dialog opens
+      setFormErrors({
+        email: false,
+        full_name: false,
+        password: false
+      })
+    }
+  }, [open])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       // Validar tipo de arquivo
       if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Erro',
+          description: 'Por favor, selecione uma imagem válida',
+          variant: 'destructive'
+        })
         return
       }
       
       // Validar tamanho (máximo 5MB)
       if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Erro',
+          description: 'A imagem deve ter no máximo 5MB',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -73,12 +102,23 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
     return (firstInitial + lastInitial).toUpperCase()
   }
 
-  const handleSave = async () => {
-    if (!formData.email || !formData.full_name) {
-      return
+  const validateForm = () => {
+    const errors = {
+      email: !formData.email || !/\S+@\S+\.\S+/.test(formData.email),
+      full_name: !formData.full_name || formData.full_name.trim().length < 2,
+      password: !isEditing && (!formData.password || formData.password.length < 6)
     }
+    
+    setFormErrors(errors)
+    
+    return !Object.values(errors).some(Boolean)
+  }
 
-    if (!isEditing && !formData.password) {
+  const handleSave = async () => {
+    console.log("Attempting to save user:", formData)
+    
+    if (!validateForm()) {
+      console.log("Form validation failed:", formErrors)
       return
     }
 
@@ -167,7 +207,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
         </div>
         
         <div className="space-y-4">
-          {/* Avatar Upload - Corrigido */}
+          {/* Avatar Upload */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
               <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center relative">
@@ -180,7 +220,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
                 ) : (
                   <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
                     <span className="text-abba-black font-semibold text-lg">
-                      {getInitials(formData.full_name) || formData.email[0]?.toUpperCase()}
+                      {getInitials(formData.full_name) || (formData.email?.[0]?.toUpperCase() || '?')}
                     </span>
                   </div>
                 )}
@@ -226,9 +266,12 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               disabled={isEditing}
-              className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+              className={`bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green ${formErrors.email ? 'border-red-500' : ''}`}
               placeholder="usuario@email.com"
             />
+            {formErrors.email && (
+              <p className="text-red-500 text-xs mt-1">Email inválido</p>
+            )}
           </div>
 
           <div>
@@ -237,9 +280,12 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
               id="full_name"
               value={formData.full_name}
               onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-              className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+              className={`bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green ${formErrors.full_name ? 'border-red-500' : ''}`}
               placeholder="Nome do usuário"
             />
+            {formErrors.full_name && (
+              <p className="text-red-500 text-xs mt-1">Nome inválido</p>
+            )}
           </div>
 
           {!isEditing && (
@@ -250,9 +296,12 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                className={`bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green ${formErrors.password ? 'border-red-500' : ''}`}
                 placeholder="Senha do usuário"
               />
+              {formErrors.password && (
+                <p className="text-red-500 text-xs mt-1">A senha deve ter pelo menos 6 caracteres</p>
+              )}
             </div>
           )}
 
@@ -314,7 +363,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={loading || !formData.email || !formData.full_name || (!isEditing && !formData.password)}
+              disabled={loading}
               className="flex-1 bg-abba-gradient hover:opacity-90 text-abba-black"
             >
               {loading ? 'Salvando...' : isEditing ? 'Atualizar' : 'Criar'}

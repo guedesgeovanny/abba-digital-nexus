@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -77,6 +76,8 @@ export const useUsers = () => {
         throw new Error('Erro ao criar usuário')
       }
 
+      console.log('Usuário criado no auth:', authData.user)
+
       // Criar perfil na tabela profiles
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -107,11 +108,27 @@ export const useUsers = () => {
       return true
     } catch (error: any) {
       console.error('Erro ao criar usuário:', error)
-      toast({
-        title: 'Erro',
-        description: error.message || 'Não foi possível criar o usuário',
-        variant: 'destructive'
-      })
+      
+      // Tratamento específico para erros comuns
+      if (error.message?.includes('duplicate key')) {
+        toast({
+          title: 'Erro',
+          description: 'Este email já está em uso',
+          variant: 'destructive'
+        })
+      } else if (error.message?.includes('admin')) {
+        toast({
+          title: 'Erro',
+          description: 'Você precisa de privilégios de administrador para criar usuários',
+          variant: 'destructive'
+        })
+      } else {
+        toast({
+          title: 'Erro',
+          description: error.message || 'Não foi possível criar o usuário',
+          variant: 'destructive'
+        })
+      }
       return false
     }
   }
