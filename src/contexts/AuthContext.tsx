@@ -50,15 +50,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      // Tentar criar usuário sem confirmação de email
+      // Criar usuário SEM confirmação de email
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName || '',
-          },
-          emailRedirectTo: undefined // Remove redirect para não precisar confirmar
+          }
+          // Removido emailRedirectTo para não precisar de confirmação
         }
       })
 

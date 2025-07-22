@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -35,7 +34,7 @@ export const useUsers = () => {
       setLoading(true)
       console.log('Admin buscando todos os usuários da tabela profiles...')
       
-      // Buscar todos os profiles da tabela
+      // Buscar todos os profiles da tabela, incluindo usuários não confirmados
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
@@ -48,24 +47,6 @@ export const useUsers = () => {
 
       console.log('Profiles encontrados na tabela:', profiles)
       console.log('Total de usuários encontrados:', profiles?.length || 0)
-
-      // Se não encontrou nenhum profile, vamos tentar buscar também do auth.users (para debug)
-      if (!profiles || profiles.length === 0) {
-        console.log('Nenhum perfil encontrado na tabela profiles. Verificando auth.users...')
-        
-        try {
-          const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
-          
-          if (authError) {
-            console.warn('Erro ao buscar usuários do auth (esperado se não for admin):', authError)
-          } else {
-            console.log('Usuários encontrados no auth.users:', authUsers.users.length)
-            console.log('Usuários do auth:', authUsers.users)
-          }
-        } catch (authErr) {
-          console.warn('Não foi possível acessar auth.admin.listUsers:', authErr)
-        }
-      }
 
       // Garantir que temos um array válido
       const validProfiles = profiles || []
@@ -80,7 +61,7 @@ export const useUsers = () => {
         description: 'Não foi possível carregar os usuários',
         variant: 'destructive'
       })
-      setUsers([]) // Garantir que temos um array vazio em caso de erro
+      setUsers([])
     } finally {
       setLoading(false)
     }
@@ -114,7 +95,7 @@ export const useUsers = () => {
 
       console.log('Tentando criar usuário com admin API...')
       
-      // Tentar criar usuário com admin API primeiro
+      // Criar usuário com admin API - SEM confirmação de email
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userData.email,
         password: userData.password,
@@ -158,7 +139,7 @@ export const useUsers = () => {
 
       toast({
         title: 'Sucesso',
-        description: 'Usuário criado com sucesso! Status: Pendente (aguardando ativação do admin)'
+        description: 'Usuário criado com sucesso! Status: Pendente (ative o usuário para permitir login)'
       })
 
       await fetchUsers()
