@@ -37,12 +37,12 @@ export const CRMFilters = ({
       </CardHeader>
       <CardContent>
         <div className="flex gap-4 flex-wrap">
-          <Select value={filterAgent} onValueChange={setFilterAgent}>
+          <Select value={filterAgent || 'all_agents'} onValueChange={(value) => setFilterAgent(value === 'all_agents' ? '' : value)}>
             <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
               <SelectValue placeholder="Agente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os agentes</SelectItem>
+              <SelectItem value="all_agents">Todos os agentes</SelectItem>
               {allAgents.map((agent) => (
                 <SelectItem key={agent} value={agent}>
                   {agent}
@@ -51,12 +51,12 @@ export const CRMFilters = ({
             </SelectContent>
           </Select>
           
-          <Select value={filterChannel} onValueChange={setFilterChannel}>
+          <Select value={filterChannel || 'all_channels'} onValueChange={(value) => setFilterChannel(value === 'all_channels' ? '' : value)}>
             <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
               <SelectValue placeholder="Canal" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os canais</SelectItem>
+              <SelectItem value="all_channels">Todos os canais</SelectItem>
               {allChannels.map((channel) => (
                 <SelectItem key={channel} value={channel}>
                   {channel}
@@ -65,12 +65,12 @@ export const CRMFilters = ({
             </SelectContent>
           </Select>
           
-          <Select value={filterTag} onValueChange={setFilterTag}>
+          <Select value={filterTag || 'all_tags'} onValueChange={(value) => setFilterTag(value === 'all_tags' ? '' : value)}>
             <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
               <SelectValue placeholder="Tag" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as tags</SelectItem>
+              <SelectItem value="all_tags">Todas as tags</SelectItem>
               {allTags.map((tag) => (
                 <SelectItem key={tag} value={tag}>
                   {tag}
