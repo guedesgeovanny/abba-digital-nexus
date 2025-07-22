@@ -96,15 +96,15 @@ export const AssignConversationDialog = ({
           <div className="space-y-2">
             <label className="text-sm font-medium">Usuário</label>
             <Select
-              value={selectedUserId || 'unassigned'}
-              onValueChange={(value) => setSelectedUserId(value === 'unassigned' ? null : value)}
+              value={selectedUserId || ''}
+              onValueChange={(value) => setSelectedUserId(value === '' ? null : value)}
               disabled={usersLoading}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um usuário" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Nenhum usuário (remover atribuição)</SelectItem>
+                <SelectItem value="">Nenhum usuário (remover atribuição)</SelectItem>
                 {activeUsers.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.full_name || user.email}
