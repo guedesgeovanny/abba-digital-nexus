@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Shield, Trash2 } from "lucide-react"
+import { Users, Shield, Trash2, Lock } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useUsers } from "@/hooks/useUsers"
+import { useUserProfile } from "@/hooks/useUserProfile"
 import { UserDialog } from "@/components/UserDialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
@@ -19,8 +20,16 @@ const Settings = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const { toast } = useToast()
   
-  // Hook para gerenciar usuários - busca dados reais da tabela profiles
+  // Hook para buscar o perfil do usuário atual
+  const { profile: currentUserProfile, loading: profileLoading } = useUserProfile()
+  
+  // Hook para gerenciar usuários - só executa se for admin
   const { users, loading, createUser, updateUser, deleteUser } = useUsers()
+
+  const isAdmin = currentUserProfile?.role === 'admin'
+
+  console.log('Current user profile:', currentUserProfile)
+  console.log('Is admin:', isAdmin)
 
   const handlePasswordChange = async () => {
     if (!newPassword || !confirmPassword) {
@@ -100,6 +109,17 @@ const Settings = () => {
     })
   }
 
+  // Se ainda está carregando o perfil, mostrar loading
+  if (profileLoading) {
+    return (
+      <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-abba-text">Carregando perfil...</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
       {/* Watermark */}
@@ -120,122 +140,142 @@ const Settings = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="users" className="space-y-4">
+      <Tabs defaultValue={isAdmin ? "users" : "security"} className="space-y-4">
         <TabsList className="bg-abba-gray border-abba-gray">
-          <TabsTrigger value="users" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
-            <Users className="w-4 h-4 mr-2" />
-            Usuários
-          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="users" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
+              <Users className="w-4 h-4 mr-2" />
+              Usuários
+            </TabsTrigger>
+          )}
           <TabsTrigger value="security" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
             <Shield className="w-4 h-4 mr-2" />
             Segurança
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users" className="space-y-4">
-          <Card className="bg-abba-black border-abba-gray">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-abba-text">Usuários & Permissões</CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Gerencie quem tem acesso à plataforma ({users.length} usuários encontrados)
-                  </CardDescription>
+        {isAdmin && (
+          <TabsContent value="users" className="space-y-4">
+            <Card className="bg-abba-black border-abba-gray">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-abba-text">Usuários & Permissões</CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Gerencie quem tem acesso à plataforma ({users.length} usuários encontrados)
+                    </CardDescription>
+                  </div>
+                  <UserDialog onSave={createUser} />
                 </div>
-                <UserDialog onSave={createUser} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {loading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <div className="text-abba-text">Carregando usuários da base de dados...</div>
-                  </div>
-                ) : users.length === 0 ? (
-                  <div className="flex items-center justify-center p-8">
-                    <div className="text-gray-400">Nenhum usuário encontrado na tabela profiles</div>
-                  </div>
-                ) : (
-                  users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all duration-200">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center relative">
-                          {user.avatar_url ? (
-                            <img 
-                              src={user.avatar_url} 
-                              alt={user.full_name || 'Avatar'} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
-                              <span className="text-abba-black font-semibold text-sm">
-                                {user.full_name ? getInitials(user.full_name) : user.email[0].toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-abba-text">{user.full_name || 'Sem nome'}</p>
-                          <p className="text-xs text-gray-400">{user.email}</p>
-                          <p className="text-xs text-gray-500">
-                            Criado em: {formatDate(user.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Badge 
-                          variant="outline" 
-                          className="border-abba-green text-abba-green"
-                        >
-                          {user.role === 'admin' ? 'Admin' : user.role === 'editor' ? 'Editor' : 'Viewer'}
-                        </Badge>
-                        <Badge 
-                          className={user.status === 'active' ? 'bg-abba-green text-abba-black' : 
-                                    user.status === 'pending' ? 'bg-yellow-500 text-black' : 'bg-gray-500 text-white'}
-                        >
-                          {user.status === 'active' ? 'Ativo' : 
-                           user.status === 'pending' ? 'Pendente' : 'Inativo'}
-                        </Badge>
-                        
-                        <UserDialog 
-                          user={user} 
-                          onSave={(userData) => updateUser(user.id, userData)}
-                        />
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-abba-dark border-abba-gray">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="text-abba-text">Confirmar Exclusão</AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-400">
-                                Tem certeza que deseja excluir o usuário {user.full_name || user.email}? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="border-abba-gray text-abba-text hover:bg-abba-gray/10">
-                                Cancelar
-                              </AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => deleteUser(user.id)}
-                                className="bg-red-500 hover:bg-red-600 text-white"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {loading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="text-abba-text">Carregando usuários da base de dados...</div>
                     </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  ) : users.length === 0 ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="text-gray-400">Nenhum usuário encontrado na tabela profiles</div>
+                    </div>
+                  ) : (
+                    users.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all duration-200">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center relative">
+                            {user.avatar_url ? (
+                              <img 
+                                src={user.avatar_url} 
+                                alt={user.full_name || 'Avatar'} 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
+                                <span className="text-abba-black font-semibold text-sm">
+                                  {user.full_name ? getInitials(user.full_name) : user.email[0].toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-abba-text">{user.full_name || 'Sem nome'}</p>
+                            <p className="text-xs text-gray-400">{user.email}</p>
+                            <p className="text-xs text-gray-500">
+                              Criado em: {formatDate(user.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Badge 
+                            variant="outline" 
+                            className="border-abba-green text-abba-green"
+                          >
+                            {user.role === 'admin' ? 'Admin' : user.role === 'editor' ? 'Editor' : 'Viewer'}
+                          </Badge>
+                          <Badge 
+                            className={user.status === 'active' ? 'bg-abba-green text-abba-black' : 
+                                      user.status === 'pending' ? 'bg-yellow-500 text-black' : 'bg-gray-500 text-white'}
+                          >
+                            {user.status === 'active' ? 'Ativo' : 
+                             user.status === 'pending' ? 'Pendente' : 'Inativo'}
+                          </Badge>
+                          
+                          <UserDialog 
+                            user={user} 
+                            onSave={(userData) => updateUser(user.id, userData)}
+                          />
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-abba-dark border-abba-gray">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-abba-text">Confirmar Exclusão</AlertDialogTitle>
+                                <AlertDialogDescription className="text-gray-400">
+                                  Tem certeza que deseja excluir o usuário {user.full_name || user.email}? Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="border-abba-gray text-abba-text hover:bg-abba-gray/10">
+                                  Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => deleteUser(user.id)}
+                                  className="bg-red-500 hover:bg-red-600 text-white"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {!isAdmin && (
+          <TabsContent value="users" className="space-y-4">
+            <Card className="bg-abba-black border-abba-gray">
+              <CardHeader>
+                <CardTitle className="text-abba-text flex items-center gap-2">
+                  <Lock className="w-5 h-5" />
+                  Acesso Restrito
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  Você não tem permissão para gerenciar usuários. Entre em contato com um administrador.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="security" className="space-y-4">
           <Card className="bg-abba-black border-abba-gray">
