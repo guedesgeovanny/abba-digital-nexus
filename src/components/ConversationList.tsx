@@ -40,7 +40,10 @@ export const ConversationList = ({
   canAssignConversations = false,
   isLoading 
 }: ConversationListProps) => {
+  console.log('ConversationList rendered with:', { conversations, isLoading, conversationsLength: conversations.length })
+  
   if (isLoading) {
+    console.log('ConversationList: Showing loading state')
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-gray-400">Carregando conversas...</div>
@@ -49,12 +52,15 @@ export const ConversationList = ({
   }
 
   if (conversations.length === 0) {
+    console.log('ConversationList: No conversations found')
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-gray-400">Nenhuma conversa encontrada</div>
       </div>
     )
   }
+
+  console.log('ConversationList: Rendering conversations:', conversations.slice(0, 2))
 
   const formatTime = (dateString: string | null) => {
     if (!dateString) return ''
