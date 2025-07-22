@@ -1,7 +1,8 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { User, Trash2 } from "lucide-react"
+import { User, Trash2, UserPlus } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -16,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { AssignConversationDialog } from "@/components/AssignConversationDialog"
 
 interface ConversationListProps {
   conversations: Conversation[]
@@ -23,6 +25,8 @@ interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void
   onDeleteConversation?: (conversationId: string) => void
   onCloseConversation?: (conversationId: string) => void
+  onAssignConversation?: (conversationId: string, userId: string | null) => Promise<void>
+  canAssignConversations?: boolean
   isLoading?: boolean
 }
 
@@ -32,8 +36,10 @@ export const ConversationList = ({
   onSelectConversation,
   onDeleteConversation,
   onCloseConversation,
+  onAssignConversation,
+  canAssignConversations = false,
   isLoading 
-}: ConversationListProps & { onCloseConversation?: (conversationId: string) => void }) => {
+}: ConversationListProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -109,6 +115,16 @@ export const ConversationList = ({
     ) : null
   }
 
+  const getAssignedUserBadge = (assignedUser: Conversation['assigned_user']) => {
+    if (!assignedUser) return null
+    
+    return (
+      <Badge variant="outline" className="text-xs px-2 py-0 bg-blue-50 border-blue-200">
+        👤 {assignedUser.full_name || assignedUser.email}
+      </Badge>
+    )
+  }
+
   return (
     <div className="space-y-1">
       {conversations.map((conversation) => (
@@ -151,9 +167,36 @@ export const ConversationList = ({
                 </Badge>
               )}
             </div>
+
+            {/* Badge do usuário atribuído */}
+            {conversation.assigned_user && (
+              <div className="mt-1">
+                {getAssignedUserBadge(conversation.assigned_user)}
+              </div>
+            )}
           </div>
 
           <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
+            {/* Botão de Atribuir (apenas para admin/editor) */}
+            {canAssignConversations && onAssignConversation && (
+              <AssignConversationDialog
+                conversationId={conversation.id}
+                currentAssignedUserId={conversation.assigned_to}
+                contactName={conversation.contact_name}
+                onAssign={onAssignConversation}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500"
+                  title="Atribuir Conversa"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </AssignConversationDialog>
+            )}
+
             {/* Botão de Fechar/Abrir Conversa */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
