@@ -15,15 +15,15 @@ const Login = () => {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   
-  const { signIn, user } = useAuth()
+  const { signIn, user, userProfile, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
-  // Redirect if already logged in
+  // Redirect if already logged in and profile is loaded
   useEffect(() => {
-    if (user) {
+    if (user && userProfile && userProfile.status === 'active' && !authLoading) {
       navigate("/dashboard")
     }
-  }, [user, navigate])
+  }, [user, userProfile, authLoading, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,15 +38,15 @@ const Login = () => {
         description: error.message || "Email ou senha incorretos",
         variant: "destructive",
       })
+      setLoading(false)
     } else {
       toast({
         title: "Login realizado com sucesso!",
         description: "Redirecionando para o dashboard...",
       })
-      navigate("/dashboard")
+      // O redirecionamento será feito automaticamente pelo useEffect
+      // quando o user e userProfile forem carregados
     }
-    
-    setLoading(false)
   }
 
   return (
