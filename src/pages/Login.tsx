@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,38 +15,107 @@ const Login = () => {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   
-  const { signIn, user, userProfile, loading: authLoading } = useAuth()
+  const { signIn, user, userProfile, loading: authLoading, isLoadingProfile } = useAuth()
   const navigate = useNavigate()
+  const hasRedirectedRef = useRef(false)
+  const redirectTimeoutRef = useRef<NodeJS.Timeout>()
 
-  // Redirect if already logged in and profile is loaded
+  // Simplificar lógica de redirecionamento com debounce
   useEffect(() => {
-    if (user && userProfile && userProfile.status === 'active' && !authLoading) {
-      navigate("/dashboard")
+    console.log('Login: Auth state check:', {
+      user: !!user,
+      userProfile,
+      authLoading,
+      isLoadingProfile,
+      hasRedirected: hasRedirectedRef.current
+    })
+
+    // Não redirecionar se ainda estiver carregando ou já redirecionou
+    if (authLoading || isLoadingProfile || hasRedirectedRef.current) {
+      return
     }
-  }, [user, userProfile, authLoading, navigate])
+
+    // Limpar timeout anterior
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current)
+    }
+
+    // Só redirecionar se tiver usuário autenticado E perfil ativo
+    if (user && userProfile && userProfile.status === 'active') {
+      console.log('Login: Redirecting to dashboard')
+      hasRedirectedRef.current = true
+      
+      // Usar timeout para evitar redirecionamento imediato
+      redirectTimeoutRef.current = setTimeout(() => {
+        navigate("/dashboard", { replace: true })
+      }, 100)
+    }
+
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current)
+      }
+    }
+  }, [user, userProfile, authLoading, isLoadingProfile, navigate])
+
+  // Reset do flag de redirecionamento quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      hasRedirectedRef.current = false
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (loading || authLoading) {
+      console.log('Login: Already loading, skipping submit')
+      return
+    }
+
+    console.log('Login: Submitting form')
     setLoading(true)
     
-    const { error } = await signIn(email, password)
-    
-    if (error) {
-      console.error('Login error:', error)
+    try {
+      const { error } = await signIn(email, password)
+      
+      if (error) {
+        console.error('Login error:', error)
+        toast({
+          title: "Erro no login",
+          description: error.message || "Email ou senha incorretos",
+          variant: "destructive",
+        })
+      } else {
+        console.log('Login: Success, waiting for auth state update')
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando...",
+        })
+        // Não redirecionar aqui - deixar o useEffect lidar com isso
+      }
+    } catch (error: any) {
+      console.error('Login exception:', error)
       toast({
         title: "Erro no login",
-        description: error.message || "Email ou senha incorretos",
+        description: "Ocorreu um erro inesperado",
         variant: "destructive",
       })
+    } finally {
       setLoading(false)
-    } else {
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Redirecionando para o dashboard...",
-      })
-      // O redirecionamento será feito automaticamente pelo useEffect
-      // quando o user e userProfile forem carregados
     }
+  }
+
+  // Mostrar loading se ainda estiver verificando autenticação
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-abba-black flex items-center justify-center p-4">
+        <div className="text-abba-text">Verificando autenticação...</div>
+      </div>
+    )
   }
 
   return (
@@ -94,6 +163,7 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -110,11 +180,13 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-abba-green"
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -124,7 +196,7 @@ const Login = () => {
             <Button 
               type="submit" 
               className="w-full bg-abba-gradient hover:opacity-90 text-abba-black font-semibold py-2"
-              disabled={loading}
+              disabled={loading || authLoading}
             >
               {loading ? "Entrando..." : "Entrar"}
             </Button>
