@@ -246,7 +246,12 @@ export const useUsers = () => {
   }
 
   const deleteUser = async (userId: string) => {
+    console.log('=== INÍCIO DELETE USER ===')
+    console.log('userId:', userId)
+    console.log('isAdmin:', isAdmin)
+    
     if (!isAdmin) {
+      console.log('Usuário não é admin, bloqueando exclusão')
       toast({
         title: 'Erro',
         description: 'Apenas administradores podem deletar usuários',
@@ -256,9 +261,11 @@ export const useUsers = () => {
     }
 
     try {
-      console.log('Admin deletando usuário:', userId)
+      console.log('Iniciando processo de exclusão...')
+      setLoading(true)
       
       // Primeiro deletar da tabela profiles
+      console.log('Deletando da tabela profiles...')
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
@@ -271,15 +278,14 @@ export const useUsers = () => {
 
       console.log('Usuário removido do sistema com sucesso')
 
-      // Nota: O usuário ainda existirá no auth.users mas não terá acesso ao sistema
-      // pois não há mais perfil associado
-
       toast({
         title: 'Sucesso',
         description: 'Usuário removido com sucesso'
       })
 
+      console.log('Chamando fetchUsers para atualizar lista...')
       await fetchUsers()
+      console.log('=== FIM DELETE USER ===')
       return true
     } catch (error: any) {
       console.error('Erro ao deletar usuário:', error)
@@ -289,6 +295,8 @@ export const useUsers = () => {
         variant: 'destructive'
       })
       return false
+    } finally {
+      setLoading(false)
     }
   }
 
