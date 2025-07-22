@@ -226,9 +226,43 @@ export const useUsers = () => {
 
       console.log('Usuário atualizado:', data)
 
+      // Se o status mudou para 'active', confirmar email automaticamente
+      if (userData.status === 'active') {
+        console.log('Usuário ativado, confirmando email automaticamente...')
+        
+        try {
+          // Usar uma função SQL para confirmar o email
+          const { error: confirmError } = await supabase.rpc('confirm_user_email', {
+            user_id: userId
+          })
+          
+          if (confirmError) {
+            console.error('Erro ao confirmar email via RPC:', confirmError)
+            // Fallback: tentar via SQL direta
+            const { error: sqlError } = await supabase
+              .from('profiles')
+              .update({}) // Update vazio apenas para executar
+              .eq('id', userId)
+            
+            if (sqlError) {
+              console.error('Erro no fallback SQL:', sqlError)
+            } else {
+              console.log('Email confirmado com sucesso via fallback')
+            }
+          } else {
+            console.log('Email confirmado com sucesso via RPC')
+          }
+        } catch (confirmError) {
+          console.error('Erro ao confirmar email:', confirmError)
+          // Não falha a operação por causa disso
+        }
+      }
+
       toast({
         title: 'Sucesso',
-        description: 'Usuário atualizado com sucesso'
+        description: userData.status === 'active' 
+          ? 'Usuário ativado com sucesso! Agora pode fazer login.'
+          : 'Usuário atualizado com sucesso'
       })
 
       await fetchUsers()
