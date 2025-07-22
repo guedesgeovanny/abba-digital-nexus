@@ -2,10 +2,20 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/integrations/supabase/client'
+import { useToast } from '@/hooks/use-toast'
+
+interface UserProfile {
+  id: string
+  email: string
+  full_name: string | null
+  role: string
+  status: string
+}
 
 interface AuthContextType {
   user: User | null
   session: Session | null
+  userProfile: UserProfile | null
   loading: boolean
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
@@ -25,23 +35,108 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+
+  // Função para buscar perfil do usuário
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        console.error('Erro ao buscar perfil:', error)
+        return null
+      }
+
+      return data as UserProfile
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error)
+      return null
+    }
+  }
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session)
         setSession(session)
         setUser(session?.user ?? null)
+
+        if (session?.user) {
+          // Buscar perfil do usuário
+          const profile = await fetchUserProfile(session.user.id)
+          setUserProfile(profile)
+
+          // Verificar se o usuário está pendente de aprovação
+          if (profile?.status === 'pending') {
+            toast({
+              title: 'Conta Pendente de Aprovação',
+              description: 'Sua conta foi criada com sucesso, mas precisa ser aprovada por um administrador antes de acessar o sistema.',
+              variant: 'destructive'
+            })
+            // Fazer logout automático
+            await supabase.auth.signOut()
+            return
+          }
+
+          // Verificar se o usuário está inativo
+          if (profile?.status === 'inactive') {
+            toast({
+              title: 'Conta Inativa',
+              description: 'Sua conta foi desativada. Entre em contato com o administrador.',
+              variant: 'destructive'
+            })
+            // Fazer logout automático
+            await supabase.auth.signOut()
+            return
+          }
+        } else {
+          setUserProfile(null)
+        }
+
         setLoading(false)
       }
     )
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id)
+        setUserProfile(profile)
+
+        // Verificar status também na sessão inicial
+        if (profile?.status === 'pending') {
+          toast({
+            title: 'Conta Pendente de Aprovação',
+            description: 'Sua conta precisa ser aprovada por um administrador.',
+            variant: 'destructive'
+          })
+          await supabase.auth.signOut()
+          setLoading(false)
+          return
+        }
+
+        if (profile?.status === 'inactive') {
+          toast({
+            title: 'Conta Inativa',
+            description: 'Sua conta foi desativada.',
+            variant: 'destructive'
+          })
+          await supabase.auth.signOut()
+          setLoading(false)
+          return
+        }
+      }
+
       setLoading(false)
     })
 
@@ -110,6 +205,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = {
     user,
     session,
+    userProfile,
     loading,
     signUp,
     signIn,
