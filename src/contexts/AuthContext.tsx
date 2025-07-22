@@ -65,14 +65,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('AuthContext: Auth state changed:', event, session?.user?.id)
         setSession(session)
         setUser(session?.user ?? null)
 
-        if (session?.user) {
-          // Buscar perfil do usuário apenas se não for evento de logout
-          if (event !== 'SIGNED_OUT') {
+        // Usar setTimeout para evitar deadlock no onAuthStateChange
+        if (session?.user && event !== 'SIGNED_OUT') {
+          setTimeout(async () => {
             const profile = await fetchUserProfile(session.user.id)
             setUserProfile(profile)
 
@@ -83,7 +83,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 description: 'Sua conta foi criada com sucesso, mas precisa ser aprovada por um administrador antes de acessar o sistema.',
                 variant: 'destructive'
               })
-              // Fazer logout automático
               await supabase.auth.signOut()
               return
             }
@@ -95,11 +94,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 description: 'Sua conta foi desativada. Entre em contato com o administrador.',
                 variant: 'destructive'
               })
-              // Fazer logout automático
               await supabase.auth.signOut()
               return
             }
-          }
+          }, 0)
         } else {
           setUserProfile(null)
         }
@@ -110,6 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('AuthContext: Initial session check:', !!session)
       setSession(session)
       setUser(session?.user ?? null)
 
@@ -139,8 +138,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false)
           return
         }
+      } else {
+        setUserProfile(null)
       }
 
+      setLoading(false)
+    }).catch(error => {
+      console.error('AuthContext: Error getting session:', error)
       setLoading(false)
     })
 
