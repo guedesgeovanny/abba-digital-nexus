@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Shield, Trash2, Lock, AlertCircle, RefreshCw } from "lucide-react"
+import { Users, Shield, Trash2, Lock, AlertCircle, RefreshCw, CheckCircle, Clock } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useUsers } from "@/hooks/useUsers"
@@ -108,12 +109,39 @@ const Settings = () => {
     })
   }
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle className="w-4 h-4 text-green-500" />
+      case 'pending':
+        return <Clock className="w-4 h-4 text-yellow-500" />
+      default:
+        return <AlertCircle className="w-4 h-4 text-red-500" />
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Ativo'
+      case 'pending':
+        return 'Pendente'
+      case 'inactive':
+        return 'Inativo'
+      default:
+        return 'Desconhecido'
+    }
+  }
+
   // Se ainda está carregando o perfil, mostrar loading
   if (profileLoading) {
     return (
       <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
         <div className="flex items-center justify-center p-8">
-          <div className="text-abba-text">Carregando perfil...</div>
+          <div className="flex items-center gap-2 text-abba-text">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            Carregando perfil...
+          </div>
         </div>
       </div>
     )
@@ -144,7 +172,7 @@ const Settings = () => {
           {isAdmin && (
             <TabsTrigger value="users" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
               <Users className="w-4 h-4 mr-2" />
-              Usuários
+              Usuários ({users.length})
             </TabsTrigger>
           )}
           <TabsTrigger value="security" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
@@ -161,7 +189,7 @@ const Settings = () => {
                   <div>
                     <CardTitle className="text-abba-text">Usuários & Permissões</CardTitle>
                     <CardDescription className="text-gray-400">
-                      Gerencie quem tem acesso à plataforma ({users.length} usuários encontrados)
+                      Gerencie quem tem acesso à plataforma. {users.length > 0 ? `${users.length} usuários encontrados` : 'Nenhum usuário encontrado'}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
@@ -185,26 +213,19 @@ const Settings = () => {
                     <div className="flex items-center justify-center p-8">
                       <div className="flex items-center gap-2 text-abba-text">
                         <RefreshCw className="w-4 h-4 animate-spin" />
-                        Carregando usuários da base de dados...
+                        Carregando usuários...
                       </div>
                     </div>
                   ) : users.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 space-y-4">
                       <AlertCircle className="w-8 h-8 text-gray-400" />
                       <div className="text-center">
-                        <div className="text-gray-400 mb-2">Nenhum usuário encontrado na tabela profiles</div>
+                        <div className="text-gray-400 mb-2">Nenhum usuário encontrado</div>
                         <div className="text-sm text-gray-500">
-                          Verifique se a tabela profiles existe e possui dados, ou tente criar um novo usuário.
+                          Clique em "Novo Usuário" para adicionar o primeiro usuário ao sistema.
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        onClick={refetch}
-                        className="border-abba-gray text-abba-text hover:bg-abba-gray/20"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Tentar Novamente
-                      </Button>
+                      <UserDialog onSave={createUser} />
                     </div>
                   ) : (
                     users.map((user) => (
@@ -240,13 +261,16 @@ const Settings = () => {
                           >
                             {user.role === 'admin' ? 'Admin' : user.role === 'editor' ? 'Editor' : 'Viewer'}
                           </Badge>
-                          <Badge 
-                            className={user.status === 'active' ? 'bg-abba-green text-abba-black' : 
-                                      user.status === 'pending' ? 'bg-yellow-500 text-black' : 'bg-gray-500 text-white'}
-                          >
-                            {user.status === 'active' ? 'Ativo' : 
-                             user.status === 'pending' ? 'Pendente' : 'Inativo'}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            {getStatusIcon(user.status)}
+                            <Badge 
+                              className={user.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500' : 
+                                        user.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500' : 'bg-red-500/20 text-red-400 border-red-500'}
+                              variant="outline"
+                            >
+                              {getStatusLabel(user.status)}
+                            </Badge>
+                          </div>
                           
                           <UserDialog 
                             user={user} 

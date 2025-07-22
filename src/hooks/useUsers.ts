@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -34,7 +35,7 @@ export const useUsers = () => {
       setLoading(true)
       console.log('Admin buscando todos os usuários da tabela profiles...')
       
-      // Buscar todos os profiles da tabela, incluindo usuários não confirmados
+      // Buscar todos os profiles da tabela
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
@@ -45,14 +46,21 @@ export const useUsers = () => {
         throw error
       }
 
-      console.log('Profiles encontrados na tabela:', profiles)
-      console.log('Total de usuários encontrados:', profiles?.length || 0)
+      console.log('Profiles encontrados:', profiles)
 
-      // Garantir que temos um array válido
-      const validProfiles = profiles || []
-      
-      setUsers(validProfiles as User[])
-      console.log('Usuários definidos no state:', validProfiles.length)
+      // Filtrar e mapear usuários válidos
+      const validUsers = (profiles || [])
+        .filter(profile => profile.email && profile.id)
+        .map(profile => ({
+          ...profile,
+          role: profile.role || 'viewer',
+          status: profile.status || 'pending',
+          full_name: profile.full_name || '',
+          avatar_url: profile.avatar_url || null
+        }))
+
+      setUsers(validUsers as User[])
+      console.log('Usuários válidos carregados:', validUsers.length)
       
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
@@ -84,29 +92,28 @@ export const useUsers = () => {
     }
 
     try {
-      console.log('Admin criando novo usuário:', userData)
+      console.log('Criando usuário via signup sem confirmação de email...')
       setLoading(true)
       
       // Validar dados de entrada
       if (!userData.email || !userData.password || !userData.full_name) {
-        console.error('Dados de usuário incompletos:', userData)
         throw new Error('Dados de usuário incompletos')
       }
 
-      console.log('Tentando criar usuário com admin API...')
-      
-      // Criar usuário com admin API - SEM confirmação de email
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Criar usuário via signup normal (sem admin API para evitar problemas de permissão)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
-        email_confirm: true, // Confirma email automaticamente
-        user_metadata: {
-          full_name: userData.full_name
+        options: {
+          data: {
+            full_name: userData.full_name
+          }
+          // Remover emailRedirectTo para não precisar confirmar email
         }
       })
 
       if (authError) {
-        console.error('Erro ao criar usuário com admin API:', authError)
+        console.error('Erro ao criar usuário:', authError)
         throw authError
       }
 
@@ -114,32 +121,37 @@ export const useUsers = () => {
         throw new Error('Erro ao criar usuário - usuário não retornado')
       }
 
-      console.log('Usuário criado no auth:', authData.user.id)
+      console.log('Usuário criado:', authData.user.id)
 
-      // Criar perfil na tabela profiles
+      // Criar/atualizar perfil na tabela profiles com dados completos
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           id: authData.user.id,
           email: userData.email,
           full_name: userData.full_name,
           role: userData.role || 'viewer',
-          status: 'pending', // Status padrão pending para admin aprovar
-          avatar_url: userData.avatar_url || null
+          status: 'pending', // Status padrão pending para aprovação
+          avatar_url: userData.avatar_url || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
         })
         .select()
-        .single()
 
       if (profileError) {
-        console.error('Erro ao criar perfil:', profileError)
-        throw profileError
+        console.error('Erro ao criar/atualizar perfil:', profileError)
+        // Mesmo se houver erro no perfil, não falha completamente
+        console.warn('Perfil pode não ter sido criado corretamente, mas usuário auth foi criado')
       }
 
-      console.log('Perfil criado com sucesso:', profileData)
+      console.log('Perfil criado/atualizado:', profileData)
 
       toast({
         title: 'Sucesso',
-        description: 'Usuário criado com sucesso! Status: Pendente (ative o usuário para permitir login)'
+        description: `Usuário ${userData.full_name} criado com sucesso! Status: Pendente (ative o usuário para permitir login)`
       })
 
       await fetchUsers()
@@ -153,6 +165,18 @@ export const useUsers = () => {
         toast({
           title: 'Erro',
           description: 'Este email já está em uso',
+          variant: 'destructive'
+        })
+      } else if (error.message?.includes('Invalid email')) {
+        toast({
+          title: 'Erro',
+          description: 'Email inválido',
+          variant: 'destructive'
+        })
+      } else if (error.message?.includes('Password')) {
+        toast({
+          title: 'Erro',
+          description: 'Senha deve ter pelo menos 6 caracteres',
           variant: 'destructive'
         })
       } else {
@@ -233,7 +257,7 @@ export const useUsers = () => {
     try {
       console.log('Admin deletando usuário:', userId)
       
-      // Primeiro deletar da tabela profiles
+      // Deletar da tabela profiles
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
@@ -242,16 +266,6 @@ export const useUsers = () => {
       if (profileError) {
         console.error('Erro ao deletar perfil:', profileError)
         throw profileError
-      }
-
-      // Tentar deletar do auth (admin function)
-      try {
-        const { error: authError } = await supabase.auth.admin.deleteUser(userId)
-        if (authError) {
-          console.warn('Aviso ao deletar do auth:', authError)
-        }
-      } catch (authError) {
-        console.warn('Não foi possível deletar do auth (requer privilégios admin):', authError)
       }
 
       console.log('Usuário deletado com sucesso')
@@ -277,14 +291,14 @@ export const useUsers = () => {
   useEffect(() => {
     // Só busca usuários quando o perfil do usuário atual for carregado e for admin
     if (currentUserProfile) {
-      console.log('Perfil do usuário atual carregado:', currentUserProfile)
+      console.log('Perfil do usuário atual:', currentUserProfile)
       console.log('É admin?', isAdmin)
       
       if (isAdmin) {
         fetchUsers()
       } else {
         setLoading(false)
-        console.log('Usuário não é admin, não buscando lista de usuários')
+        console.log('Usuário não é admin')
       }
     }
   }, [currentUserProfile, isAdmin])

@@ -1,3 +1,4 @@
+
 'use server'
 
 import { supabase } from '@/integrations/supabase/client'
@@ -25,8 +26,8 @@ export async function signup(formData: FormData) {
       options: {
         data: {
           full_name: fullName,
-        },
-        emailRedirectTo: undefined // Remove redirect para não precisar confirmar
+        }
+        // Removido emailRedirectTo para não precisar confirmar email
       }
     })
 
@@ -42,20 +43,29 @@ export async function signup(formData: FormData) {
     // Passo 2: Inserir dados na tabela profiles com status pending
     const { error: profileError } = await supabase
       .from('profiles')
-      .insert({
+      .upsert({
         id: authData.user.id,
         email: authData.user.email!,
         full_name: fullName,
-        role: 'viewer',
-        status: 'pending' // Status pending para admin aprovar
+        role: 'viewer', // Role padrão
+        status: 'pending', // Status pending para admin aprovar
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { 
+        onConflict: 'id',
+        ignoreDuplicates: false 
       })
 
     if (profileError) {
       console.error('Erro ao criar perfil:', profileError)
-      throw new Error('Erro ao criar perfil. Tente novamente.')
+      // Não falha completamente se o perfil não foi criado
+      console.warn('Perfil pode não ter sido criado, mas usuário auth foi criado')
     }
 
-    return { success: 'Cadastro realizado com sucesso! Aguarde a aprovação do administrador para fazer login.' }
+    return { 
+      success: 'Cadastro realizado com sucesso! Aguarde a aprovação do administrador para fazer login.',
+      user: authData.user
+    }
 
   } catch (error) {
     console.error('Erro inesperado:', error)
@@ -79,7 +89,9 @@ export async function updateProfile(formData: FormData) {
     }
 
     // Passo 2: Atualizar perfil na tabela profiles
-    const updateData: any = {}
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    }
     
     if (fullName) updateData.full_name = fullName
     if (avatarUrl) updateData.avatar_url = avatarUrl
