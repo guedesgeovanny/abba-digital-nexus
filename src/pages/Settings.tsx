@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Shield, Trash2, Lock } from "lucide-react"
+import { Users, Shield, Trash2, Lock, AlertCircle, RefreshCw } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useUsers } from "@/hooks/useUsers"
@@ -23,13 +22,13 @@ const Settings = () => {
   // Hook para buscar o perfil do usuário atual
   const { profile: currentUserProfile, loading: profileLoading } = useUserProfile()
   
-  // Hook para gerenciar usuários - só executa se for admin
-  const { users, loading, createUser, updateUser, deleteUser } = useUsers()
-
-  const isAdmin = currentUserProfile?.role === 'admin'
+  // Hook para gerenciar usuários - agora com verificação de admin interna
+  const { users, loading, createUser, updateUser, deleteUser, refetch, isAdmin } = useUsers()
 
   console.log('Current user profile:', currentUserProfile)
   console.log('Is admin:', isAdmin)
+  console.log('Users loaded:', users)
+  console.log('Users count:', users.length)
 
   const handlePasswordChange = async () => {
     if (!newPassword || !confirmPassword) {
@@ -165,18 +164,47 @@ const Settings = () => {
                       Gerencie quem tem acesso à plataforma ({users.length} usuários encontrados)
                     </CardDescription>
                   </div>
-                  <UserDialog onSave={createUser} />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={refetch}
+                      disabled={loading}
+                      className="border-abba-gray text-abba-text hover:bg-abba-gray/20"
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                      Atualizar
+                    </Button>
+                    <UserDialog onSave={createUser} />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {loading ? (
                     <div className="flex items-center justify-center p-8">
-                      <div className="text-abba-text">Carregando usuários da base de dados...</div>
+                      <div className="flex items-center gap-2 text-abba-text">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Carregando usuários da base de dados...
+                      </div>
                     </div>
                   ) : users.length === 0 ? (
-                    <div className="flex items-center justify-center p-8">
-                      <div className="text-gray-400">Nenhum usuário encontrado na tabela profiles</div>
+                    <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                      <AlertCircle className="w-8 h-8 text-gray-400" />
+                      <div className="text-center">
+                        <div className="text-gray-400 mb-2">Nenhum usuário encontrado na tabela profiles</div>
+                        <div className="text-sm text-gray-500">
+                          Verifique se a tabela profiles existe e possui dados, ou tente criar um novo usuário.
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={refetch}
+                        className="border-abba-gray text-abba-text hover:bg-abba-gray/20"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Tentar Novamente
+                      </Button>
                     </div>
                   ) : (
                     users.map((user) => (
