@@ -55,68 +55,140 @@ export const useUsers = () => {
     avatar_url?: string
   }) => {
     try {
-      console.log('Criando usuário:', userData)
+      console.log('Iniciando criação de usuário:', userData)
+      setLoading(true)
       
-      // Criar usuário no Auth do Supabase
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: userData.email,
-        password: userData.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: userData.full_name
-        }
-      })
-
-      if (authError) {
-        console.error('Erro ao criar usuário no auth:', authError)
-        throw authError
+      // Validar dados de entrada
+      if (!userData.email || !userData.password || !userData.full_name) {
+        console.error('Dados de usuário incompletos:', userData)
+        throw new Error('Dados de usuário incompletos')
       }
 
-      if (!authData.user) {
-        throw new Error('Erro ao criar usuário')
-      }
-
-      console.log('Usuário criado no auth:', authData.user)
-
-      // Criar perfil na tabela profiles
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
+      console.log('Criando usuário no auth...')
+      
+      // Método alternativo: tentar primeiro com signUp (para ambientes sem permissão admin)
+      console.log('Tentando método signUp primeiro...')
+      try {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: userData.email,
-          full_name: userData.full_name,
-          role: userData.role || 'viewer',
-          status: 'active',
-          avatar_url: userData.avatar_url || null
+          password: userData.password,
+          options: {
+            data: {
+              full_name: userData.full_name
+            }
+          }
         })
-        .select()
-        .single()
+        
+        if (signUpError) {
+          console.log('SignUp falhou, tentando método admin..', signUpError)
+          throw signUpError // Cair no método admin abaixo
+        }
+        
+        if (!signUpData.user) {
+          throw new Error('Erro ao criar usuário')
+        }
+        
+        console.log('Usuário criado com signUp:', signUpData.user)
+        
+        // Criar perfil na tabela profiles
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: signUpData.user.id,
+            email: userData.email,
+            full_name: userData.full_name,
+            role: userData.role || 'viewer',
+            status: 'active',
+            avatar_url: userData.avatar_url || null
+          })
+          .select()
+          .single()
 
-      if (profileError) {
-        console.error('Erro ao criar perfil:', profileError)
-        throw profileError
+        if (profileError) {
+          console.error('Erro ao criar perfil:', profileError)
+          throw profileError
+        }
+
+        console.log('Perfil criado com sucesso:', profileData)
+        
+        toast({
+          title: 'Sucesso',
+          description: 'Usuário criado com sucesso'
+        })
+
+        await fetchUsers()
+        setLoading(false)
+        return true
+        
+      } catch (signUpIssue) {
+        // Falhou o signUp, tentando método admin
+        console.log('Tentando método admin após falha no signUp')
+        
+        // Criar usuário no Auth do Supabase com admin
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: userData.email,
+          password: userData.password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: userData.full_name
+          }
+        })
+
+        if (authError) {
+          console.error('Erro ao criar usuário com admin:', authError)
+          throw authError
+        }
+
+        if (!authData.user) {
+          console.error('Usuário não criado no auth')
+          throw new Error('Erro ao criar usuário')
+        }
+
+        console.log('Usuário criado com admin:', authData.user)
+
+        // Criar perfil na tabela profiles
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: userData.email,
+            full_name: userData.full_name,
+            role: userData.role || 'viewer',
+            status: 'active',
+            avatar_url: userData.avatar_url || null
+          })
+          .select()
+          .single()
+
+        if (profileError) {
+          console.error('Erro ao criar perfil:', profileError)
+          throw profileError
+        }
+
+        console.log('Perfil criado com sucesso:', profileData)
+
+        toast({
+          title: 'Sucesso',
+          description: 'Usuário criado com sucesso'
+        })
+
+        await fetchUsers()
+        setLoading(false)
+        return true
       }
 
-      console.log('Usuário e perfil criados:', { authData, profileData })
-
-      toast({
-        title: 'Sucesso',
-        description: 'Usuário criado com sucesso'
-      })
-
-      await fetchUsers()
-      return true
     } catch (error: any) {
-      console.error('Erro ao criar usuário:', error)
+      setLoading(false)
+      console.error('Erro detalhado ao criar usuário:', error)
       
       // Tratamento específico para erros comuns
-      if (error.message?.includes('duplicate key')) {
+      if (error.message?.includes('duplicate key') || error.message?.includes('already registered')) {
         toast({
           title: 'Erro',
           description: 'Este email já está em uso',
           variant: 'destructive'
         })
-      } else if (error.message?.includes('admin')) {
+      } else if (error.message?.includes('admin') || error.message?.includes('not authorized')) {
         toast({
           title: 'Erro',
           description: 'Você precisa de privilégios de administrador para criar usuários',

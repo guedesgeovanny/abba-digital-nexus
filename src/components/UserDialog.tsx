@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -44,14 +43,40 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
 
   useEffect(() => {
     if (open) {
-      // Reset form errors when dialog opens
+      // Reset form when dialog opens
+      if (!isEditing) {
+        setFormData({
+          email: '',
+          full_name: '',
+          password: '',
+          role: 'viewer',
+          status: 'active',
+          avatar_url: ''
+        })
+        setAvatarPreview(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+      } else {
+        setFormData({
+          email: user?.email || '',
+          full_name: user?.full_name || '',
+          password: '',
+          role: (user?.role || 'viewer') as 'admin' | 'editor' | 'viewer',
+          status: (user?.status || 'active') as 'active' | 'pending' | 'inactive',
+          avatar_url: user?.avatar_url || ''
+        })
+        setAvatarPreview(user?.avatar_url || null)
+      }
+      
+      // Reset form errors
       setFormErrors({
         email: false,
         full_name: false,
         password: false
       })
     }
-  }, [open])
+  }, [open, user, isEditing])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -115,7 +140,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
   }
 
   const handleSave = async () => {
-    console.log("Attempting to save user:", formData)
+    console.log("Iniciando salvamento de usuário:", formData)
     
     if (!validateForm()) {
       console.log("Form validation failed:", formErrors)
@@ -124,36 +149,51 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
 
     setLoading(true)
     
-    // Filtrar campos para edição - remover password ao editar
-    const userData = isEditing 
-      ? {
-          full_name: formData.full_name,
-          role: formData.role,
-          status: formData.status,
-          avatar_url: formData.avatar_url
+    try {
+      // Filtrar campos para edição - remover password ao editar
+      const userData = isEditing 
+        ? {
+            full_name: formData.full_name,
+            role: formData.role,
+            status: formData.status,
+            avatar_url: formData.avatar_url
+          }
+        : formData
+      
+      console.log("Enviando dados para criação/edição:", userData)
+      
+      const success = await onSave(userData)
+      
+      if (success) {
+        console.log("Usuário salvo com sucesso, fechando diálogo")
+        setOpen(false)
+        // Limpar formulário ao criar apenas
+        if (!isEditing) {
+          setFormData({
+            email: '',
+            full_name: '',
+            password: '',
+            role: 'viewer',
+            status: 'active',
+            avatar_url: ''
+          })
+          setAvatarPreview(null)
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
         }
-      : formData
-    
-    const success = await onSave(userData)
-    setLoading(false)
-
-    if (success) {
-      setOpen(false)
-      if (!isEditing) {
-        // Limpar formulário apenas ao criar
-        setFormData({
-          email: '',
-          full_name: '',
-          password: '',
-          role: 'viewer',
-          status: 'active',
-          avatar_url: ''
-        })
-        setAvatarPreview(null)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ''
-        }
+      } else {
+        console.log("Falha ao salvar usuário")
       }
+    } catch (error) {
+      console.error("Erro durante o salvamento:", error)
+      toast({
+        title: 'Erro',
+        description: 'Falha ao processar solicitação',
+        variant: 'destructive'
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
