@@ -51,13 +51,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error('AuthContext: Erro ao buscar perfil:', error)
+        setUserProfile(null)
         return null
       }
 
       console.log('AuthContext: Profile fetched:', data)
-      return data as UserProfile
+      const profile = data as UserProfile
+      setUserProfile(profile)
+      return profile
     } catch (error) {
       console.error('Erro ao buscar perfil:', error)
+      setUserProfile(null)
       return null
     }
   }
@@ -73,30 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Usar setTimeout para evitar deadlock no onAuthStateChange
         if (session?.user && event !== 'SIGNED_OUT') {
           setTimeout(async () => {
-            const profile = await fetchUserProfile(session.user.id)
-            setUserProfile(profile)
-
-            // Verificar se o usuário está pendente de aprovação
-            if (profile?.status === 'pending') {
-              toast({
-                title: 'Conta Pendente de Aprovação',
-                description: 'Sua conta foi criada com sucesso, mas precisa ser aprovada por um administrador antes de acessar o sistema.',
-                variant: 'destructive'
-              })
-              await supabase.auth.signOut()
-              return
-            }
-
-            // Verificar se o usuário está inativo
-            if (profile?.status === 'inactive') {
-              toast({
-                title: 'Conta Inativa',
-                description: 'Sua conta foi desativada. Entre em contato com o administrador.',
-                variant: 'destructive'
-              })
-              await supabase.auth.signOut()
-              return
-            }
+            await fetchUserProfile(session.user.id)
           }, 0)
         } else {
           setUserProfile(null)
@@ -113,31 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id)
-        setUserProfile(profile)
-
-        // Verificar status também na sessão inicial
-        if (profile?.status === 'pending') {
-          toast({
-            title: 'Conta Pendente de Aprovação',
-            description: 'Sua conta precisa ser aprovada por um administrador.',
-            variant: 'destructive'
-          })
-          await supabase.auth.signOut()
-          setLoading(false)
-          return
-        }
-
-        if (profile?.status === 'inactive') {
-          toast({
-            title: 'Conta Inativa',
-            description: 'Sua conta foi desativada.',
-            variant: 'destructive'
-          })
-          await supabase.auth.signOut()
-          setLoading(false)
-          return
-        }
+        await fetchUserProfile(session.user.id)
       } else {
         setUserProfile(null)
       }

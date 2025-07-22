@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
-import { useUserProfile } from "@/hooks/useUserProfile"
 
 // Menu items
 const items = [
@@ -53,8 +52,7 @@ const items = [
 
 export function AppSidebar() {
   const location = useLocation()
-  const { signOut } = useAuth()
-  const { profile, loading } = useUserProfile()
+  const { signOut, userProfile, loading } = useAuth()
 
   const handleLogout = async () => {
     try {
@@ -66,11 +64,11 @@ export function AppSidebar() {
   }
 
   const getFirstName = () => {
-    if (profile?.full_name) {
-      return profile.full_name.split(' ')[0]
+    if (userProfile?.full_name) {
+      return userProfile.full_name.split(' ')[0]
     }
-    if (profile?.email) {
-      return profile.email.split('@')[0]
+    if (userProfile?.email) {
+      return userProfile.email.split('@')[0]
     }
     return 'Usuário'
   }
@@ -131,22 +129,14 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            {profile?.avatar_url ? (
-              <img 
-                src={profile.avatar_url} 
-                alt="Avatar do usuário" 
-                className="w-8 h-8 rounded-full"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
-                <span className="text-abba-black font-semibold text-sm">
-                  {getFirstName().charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
+            <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
+              <span className="text-abba-black font-semibold text-sm">
+                {getFirstName().charAt(0).toUpperCase()}
+              </span>
+            </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-abba-text">{getFirstName()}</span>
-              <span className="text-xs text-gray-400">{profile?.email}</span>
+              <span className="text-xs text-gray-400">{userProfile?.email}</span>
             </div>
           </div>
         )}

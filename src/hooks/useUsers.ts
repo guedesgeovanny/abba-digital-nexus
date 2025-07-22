@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { useUserProfile } from './useUserProfile'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface User {
   id: string
@@ -18,7 +18,7 @@ export const useUsers = () => {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
-  const { profile: currentUserProfile } = useUserProfile()
+  const { userProfile: currentUserProfile } = useAuth()
 
   // Só executa se for admin
   const isAdmin = currentUserProfile?.role === 'admin'

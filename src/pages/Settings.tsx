@@ -10,7 +10,7 @@ import { Users, Shield, Trash2, Lock, AlertCircle, RefreshCw, CheckCircle, Clock
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useUsers } from "@/hooks/useUsers"
-import { useUserProfile } from "@/hooks/useUserProfile"
+import { useAuth } from "@/contexts/AuthContext"
 import { UserDialog } from "@/components/UserDialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
@@ -21,7 +21,7 @@ const Settings = () => {
   const { toast } = useToast()
   
   // Hook para buscar o perfil do usuário atual
-  const { profile: currentUserProfile, loading: profileLoading } = useUserProfile()
+  const { userProfile: currentUserProfile, loading: profileLoading } = useAuth()
   
   // Hook para gerenciar usuários - agora com verificação de admin interna
   const { users, loading, createUser, updateUser, deleteUser, refetch, isAdmin } = useUsers()
