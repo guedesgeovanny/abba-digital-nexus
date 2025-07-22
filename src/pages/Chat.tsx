@@ -68,6 +68,8 @@ export default function Chat() {
     }
   }
 
+  console.log('Chat page - conversations:', conversations.length, 'isLoading:', isLoading)
+  
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       <div className="w-1/3 border-r border-gray-200 bg-white">
