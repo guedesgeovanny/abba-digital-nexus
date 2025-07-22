@@ -63,13 +63,13 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Abba brand colors
-				'abba-green': '#8ED93C',
-				'abba-green-light': '#A6FF59',
-				'abba-green-dark': '#56C236',
-				'abba-black': '#000000',
-				'abba-gray': '#111111',
-				'abba-text': '#F7FAFC'
+				// Abba brand colors - using CSS variables for theme consistency
+				'abba-green': 'var(--abba-green)',
+				'abba-green-light': 'var(--abba-green-light)',
+				'abba-green-dark': 'var(--abba-green-dark)',
+				'abba-black': 'var(--abba-black)',
+				'abba-gray': 'var(--abba-gray)',
+				'abba-text': 'var(--abba-text)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
