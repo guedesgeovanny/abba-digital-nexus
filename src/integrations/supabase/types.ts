@@ -264,7 +264,6 @@ export type Database = {
       conversations: {
         Row: {
           account: string | null
-          assigned_to: string | null
           channel: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar: string | null
           contact_id: string | null
@@ -284,7 +283,6 @@ export type Database = {
         }
         Insert: {
           account?: string | null
-          assigned_to?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar?: string | null
           contact_id?: string | null
@@ -304,7 +302,6 @@ export type Database = {
         }
         Update: {
           account?: string | null
-          assigned_to?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"] | null
           contact_avatar?: string | null
           contact_id?: string | null

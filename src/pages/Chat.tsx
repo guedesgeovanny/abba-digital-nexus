@@ -18,7 +18,7 @@ const Chat = () => {
   const [selectedAccount, setSelectedAccount] = useState("all")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
-  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, assignConversation, isDeleting, refetch } = useConversations()
+  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, isDeleting, refetch } = useConversations()
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -120,23 +120,6 @@ const Chat = () => {
     } catch (error) {
       console.error('Erro ao atualizar status do agente:', error)
       throw error // Re-throw para o componente ChatArea tratar
-    }
-  }
-
-  const handleAssignConversation = async (conversationId: string, userId: string | null) => {
-    try {
-      await assignConversation(conversationId, userId)
-      
-      // Atualizar a conversa selecionada se for a mesma
-      if (selectedConversation?.id === conversationId) {
-        const updatedConversation = conversations.find(conv => conv.id === conversationId)
-        if (updatedConversation) {
-          setSelectedConversation(updatedConversation)
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao atribuir conversa:', error)
-      throw error
     }
   }
 
@@ -267,7 +250,6 @@ const Chat = () => {
               onSelectConversation={handleSelectConversation}
               onDeleteConversation={handleDeleteConversation}
               onCloseConversation={handleToggleConversationStatus}
-              onAssignConversation={handleAssignConversation}
               isLoading={isLoading}
             />
           </ScrollArea>
