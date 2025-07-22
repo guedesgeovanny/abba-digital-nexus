@@ -22,6 +22,10 @@ export const useUsers = () => {
 
   // Só executa se for admin
   const isAdmin = currentUserProfile?.role === 'admin'
+  
+  useEffect(() => {
+    console.log('useUsers - currentUserProfile:', currentUserProfile)
+  }, [currentUserProfile])
 
   const fetchUsers = async () => {
     // Só busca usuários se for admin

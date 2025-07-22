@@ -54,7 +54,9 @@ export const useUserProfile = () => {
   }
 
   useEffect(() => {
-    fetchProfile()
+    if (user?.id) {
+      fetchProfile()
+    }
   }, [user?.id])
 
   return {
