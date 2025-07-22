@@ -15,6 +15,8 @@ const data = [
 ]
 
 const Dashboard = () => {
+  console.log('Dashboard: Component rendered');
+  
   return (
     <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
       {/* Watermark */}

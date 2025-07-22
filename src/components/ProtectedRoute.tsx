@@ -10,6 +10,8 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, userProfile, loading } = useAuth()
 
+  console.log('ProtectedRoute: loading =', loading, 'user =', !!user, 'userProfile =', userProfile)
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

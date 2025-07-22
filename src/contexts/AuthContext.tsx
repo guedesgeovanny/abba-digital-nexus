@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Função para buscar perfil do usuário
   const fetchUserProfile = async (userId: string) => {
+    console.log('AuthContext: Fetching profile for user:', userId)
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -49,10 +50,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single()
 
       if (error) {
-        console.error('Erro ao buscar perfil:', error)
+        console.error('AuthContext: Erro ao buscar perfil:', error)
         return null
       }
 
+      console.log('AuthContext: Profile fetched:', data)
       return data as UserProfile
     } catch (error) {
       console.error('Erro ao buscar perfil:', error)
@@ -64,37 +66,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session)
+        console.log('AuthContext: Auth state changed:', event, session?.user?.id)
         setSession(session)
         setUser(session?.user ?? null)
 
         if (session?.user) {
-          // Buscar perfil do usuário
-          const profile = await fetchUserProfile(session.user.id)
-          setUserProfile(profile)
+          // Buscar perfil do usuário apenas se não for evento de logout
+          if (event !== 'SIGNED_OUT') {
+            const profile = await fetchUserProfile(session.user.id)
+            setUserProfile(profile)
 
-          // Verificar se o usuário está pendente de aprovação
-          if (profile?.status === 'pending') {
-            toast({
-              title: 'Conta Pendente de Aprovação',
-              description: 'Sua conta foi criada com sucesso, mas precisa ser aprovada por um administrador antes de acessar o sistema.',
-              variant: 'destructive'
-            })
-            // Fazer logout automático
-            await supabase.auth.signOut()
-            return
-          }
+            // Verificar se o usuário está pendente de aprovação
+            if (profile?.status === 'pending') {
+              toast({
+                title: 'Conta Pendente de Aprovação',
+                description: 'Sua conta foi criada com sucesso, mas precisa ser aprovada por um administrador antes de acessar o sistema.',
+                variant: 'destructive'
+              })
+              // Fazer logout automático
+              await supabase.auth.signOut()
+              return
+            }
 
-          // Verificar se o usuário está inativo
-          if (profile?.status === 'inactive') {
-            toast({
-              title: 'Conta Inativa',
-              description: 'Sua conta foi desativada. Entre em contato com o administrador.',
-              variant: 'destructive'
-            })
-            // Fazer logout automático
-            await supabase.auth.signOut()
-            return
+            // Verificar se o usuário está inativo
+            if (profile?.status === 'inactive') {
+              toast({
+                title: 'Conta Inativa',
+                description: 'Sua conta foi desativada. Entre em contato com o administrador.',
+                variant: 'destructive'
+              })
+              // Fazer logout automático
+              await supabase.auth.signOut()
+              return
+            }
           }
         } else {
           setUserProfile(null)
