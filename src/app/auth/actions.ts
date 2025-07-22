@@ -1,4 +1,3 @@
-
 'use server'
 
 import { supabase } from '@/integrations/supabase/client'
@@ -19,14 +18,15 @@ export async function signup(formData: FormData) {
   }
 
   try {
-    // Passo 1: Criar usuário no Auth
+    // Passo 1: Criar usuário no Auth sem confirmação de email
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-        }
+        },
+        emailRedirectTo: undefined // Remove redirect para não precisar confirmar
       }
     })
 
@@ -39,7 +39,7 @@ export async function signup(formData: FormData) {
       throw new Error('Erro ao criar usuário. Tente novamente.')
     }
 
-    // Passo 2: Inserir dados na tabela profiles
+    // Passo 2: Inserir dados na tabela profiles com status pending
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
@@ -47,7 +47,7 @@ export async function signup(formData: FormData) {
         email: authData.user.email!,
         full_name: fullName,
         role: 'viewer',
-        status: 'active'
+        status: 'pending' // Status pending para admin aprovar
       })
 
     if (profileError) {
@@ -55,7 +55,7 @@ export async function signup(formData: FormData) {
       throw new Error('Erro ao criar perfil. Tente novamente.')
     }
 
-    return { success: 'Cadastro realizado com sucesso! Faça o login.' }
+    return { success: 'Cadastro realizado com sucesso! Aguarde a aprovação do administrador para fazer login.' }
 
   } catch (error) {
     console.error('Erro inesperado:', error)

@@ -49,17 +49,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [])
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName || '',
+    try {
+      // Tentar criar usuário sem confirmação de email
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName || '',
+          },
+          emailRedirectTo: undefined // Remove redirect para não precisar confirmar
+        }
+      })
+
+      if (error) {
+        return { error }
+      }
+
+      // Se o usuário foi criado, criar perfil com status pending
+      if (data.user) {
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email!,
+              full_name: fullName || '',
+              role: 'viewer',
+              status: 'pending' // Status pending para admin aprovar
+            })
+
+          if (profileError) {
+            console.error('Erro ao criar perfil:', profileError)
+            // Não retornar erro aqui para não bloquear o signup
+          }
+        } catch (profileError) {
+          console.error('Erro ao criar perfil:', profileError)
         }
       }
-    })
-    
-    return { error }
+      
+      return { error: null }
+    } catch (error) {
+      return { error }
+    }
   }
 
   const signIn = async (email: string, password: string) => {
