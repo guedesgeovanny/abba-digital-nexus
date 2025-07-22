@@ -269,23 +269,10 @@ export const useUsers = () => {
         throw profileError
       }
 
-      console.log('Perfil deletado com sucesso')
+      console.log('Usuário removido do sistema com sucesso')
 
-      // Tentar deletar do auth.users usando a API admin do Supabase
-      try {
-        const { data, error: authError } = await supabase.auth.admin.deleteUser(userId)
-        
-        if (authError) {
-          console.error('Erro ao deletar usuário do auth:', authError)
-          // Não falha a operação se não conseguir deletar do auth
-          console.log('Usuário removido do profiles, mas pode ainda existir no auth')
-        } else {
-          console.log('Usuário deletado completamente do sistema:', data)
-        }
-      } catch (authDeleteError) {
-        console.error('Erro ao acessar auth admin:', authDeleteError)
-        // Continua mesmo se não conseguir deletar do auth
-      }
+      // Nota: O usuário ainda existirá no auth.users mas não terá acesso ao sistema
+      // pois não há mais perfil associado
 
       toast({
         title: 'Sucesso',
