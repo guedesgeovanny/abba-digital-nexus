@@ -1,279 +1,85 @@
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, RefreshCw } from "lucide-react"
-import { ConversationList } from "@/components/ConversationList"
-import { ChatArea } from "@/components/ChatArea"
-import { AccountFilter } from "@/components/AccountFilter"
-import { useConversations, Conversation } from "@/hooks/useConversations"
-import { useAuth } from "@/contexts/AuthContext"
-import { supabase } from "@/integrations/supabase/client"
-import { useToast } from "@/hooks/use-toast"
 
-const Chat = () => {
-  const [activeTab, setActiveTab] = useState("geral")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedAccount, setSelectedAccount] = useState("all")
+import { useState } from 'react'
+import { useConversations, Conversation } from '@/hooks/useConversations'
+import { ConversationList } from '@/components/ConversationList'
+import { ChatArea } from '@/components/ChatArea'
+import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+
+export default function Chat() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const [isCreatingSample, setIsCreatingSample] = useState(false)
-  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, isDeleting, refetch } = useConversations()
-  const { user } = useAuth()
-  const { toast } = useToast()
-
-  const filteredConversations = conversations.filter(conversation => {
-    const matchesSearch = conversation.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (conversation.contact_username && conversation.contact_username.toLowerCase().includes(searchTerm.toLowerCase()))
-    
-    const matchesAccount = selectedAccount === "all" || conversation.account === selectedAccount
-    
-    if (activeTab === "geral") return matchesSearch && matchesAccount
-    if (activeTab === "aberto") return matchesSearch && matchesAccount && conversation.status === "aberta"
-    if (activeTab === "fechado") return matchesSearch && matchesAccount && conversation.status === "fechada"
-    
-    return matchesSearch && matchesAccount
-  })
+  const { 
+    conversations, 
+    isLoading, 
+    deleteConversation, 
+    updateConversationStatus,
+    assignConversation
+  } = useConversations()
 
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation)
   }
 
-  const handleDeleteConversation = (conversationId: string) => {
-    deleteConversation(conversationId)
-    
-    // Se a conversa excluída era a selecionada, seleciona a primeira disponível
+  const handleDeleteConversation = async (conversationId: string) => {
+    await deleteConversation(conversationId)
     if (selectedConversation?.id === conversationId) {
-      const remainingConversations = conversations.filter(conv => conv.id !== conversationId)
-      setSelectedConversation(remainingConversations.length > 0 ? remainingConversations[0] : null)
+      setSelectedConversation(null)
     }
-    
-    toast({
-      title: "Conversa excluída",
-      description: "A conversa e todas as suas mensagens foram excluídas com sucesso.",
-    })
-    
-    console.log(`Conversa ${conversationId} excluída com sucesso`)
   }
 
   const handleCloseConversation = async (conversationId: string) => {
-    try {
-      await updateConversationStatus(conversationId, 'fechada')
-      
-      // Atualizar a conversa selecionada se for a mesma
-      if (selectedConversation?.id === conversationId) {
-        setSelectedConversation(prev => prev ? { ...prev, status: 'fechada' } : null)
-      }
-      
-      toast({
-        title: "Conversa fechada",
-        description: "A conversa foi fechada com sucesso.",
-      })
-      
-      console.log(`Conversa ${conversationId} fechada com sucesso`)
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao fechar a conversa. Tente novamente.",
-        variant: "destructive"
-      })
-    }
-  }
-
-  const handleToggleConversationStatus = async (conversationId: string) => {
-    const conversation = conversations.find(conv => conv.id === conversationId)
-    if (!conversation) return
-
-    const newStatus = conversation.status === 'aberta' ? 'fechada' : 'aberta'
-    
-    try {
+    const conversation = conversations.find(c => c.id === conversationId)
+    if (conversation) {
+      const newStatus = conversation.status === 'aberta' ? 'fechada' : 'aberta'
       await updateConversationStatus(conversationId, newStatus)
-      
-      // Atualizar a conversa selecionada se for a mesma
-      if (selectedConversation?.id === conversationId) {
-        setSelectedConversation(prev => prev ? { ...prev, status: newStatus } : null)
-      }
-      
-      toast({
-        title: newStatus === 'fechada' ? "Conversa fechada" : "Conversa aberta",
-        description: `A conversa foi ${newStatus === 'fechada' ? 'fechada' : 'reaberta'} com sucesso.`,
-      })
-      
-      console.log(`Conversa ${conversationId} ${newStatus === 'fechada' ? 'fechada' : 'reaberta'} com sucesso`)
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: `Erro ao ${newStatus === 'fechada' ? 'fechar' : 'reabrir'} a conversa. Tente novamente.`,
-        variant: "destructive"
-      })
     }
   }
 
-  const handleUpdateAgentStatus = async (conversationId: string, newStatus: 'Ativo' | 'Inativo') => {
-    try {
-      await updateAgentStatus(conversationId, newStatus)
-      
-      // Atualizar a conversa selecionada se for a mesma
-      if (selectedConversation?.id === conversationId) {
-        setSelectedConversation(prev => prev ? { ...prev, status_agent: newStatus } : null)
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar status do agente:', error)
-      throw error // Re-throw para o componente ChatArea tratar
-    }
-  }
-
-  const createSampleConversations = async () => {
-    try {
-      setIsCreatingSample(true)
-      console.log('Criando conversas de exemplo...')
-      
-      const { error } = await supabase.rpc('create_sample_conversations')
-      
-      if (error) {
-        console.error('Erro ao criar conversas de exemplo:', error)
-        toast({
-          title: "Erro",
-          description: "Erro ao criar conversas de exemplo: " + error.message,
-          variant: "destructive"
-        })
-        return
-      }
-      
-      console.log('Conversas de exemplo criadas com sucesso')
-      toast({
-        title: "Sucesso",
-        description: "Conversas de exemplo criadas com sucesso!",
-      })
-      
-      // Recarregar conversas
-      refetch()
-    } catch (error) {
-      console.error('Erro:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao criar conversas de exemplo",
-        variant: "destructive"
-      })
-    } finally {
-      setIsCreatingSample(false)
-    }
-  }
-
-  // Selecionar automaticamente a primeira conversa se nenhuma estiver selecionada
-  if (!selectedConversation && conversations.length > 0 && !isLoading) {
-    setSelectedConversation(conversations[0])
-  }
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-full bg-abba-black">
-        <p className="text-gray-400">Você precisa estar logado para ver as conversas</p>
-      </div>
-    )
+  const handleAssignConversation = async (conversationId: string, userId: string | null) => {
+    await assignConversation(conversationId, userId)
   }
 
   return (
-    <div className="h-screen bg-abba-black text-abba-text overflow-hidden">
-      <div className="flex h-full">
-        {/* Sidebar de conversas */}
-        <div className="w-96 bg-abba-black border-r border-abba-gray flex flex-col">
-          {/* Header */}
-          <div className="p-4 border-b border-abba-gray">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-abba-text">Chat</h2>
-              {conversations.length === 0 && !isLoading && (
-                <Button
-                  onClick={createSampleConversations}
-                  disabled={isCreatingSample}
-                  size="sm"
-                  className="bg-abba-green text-abba-black hover:bg-abba-green/90"
-                >
-                  {isCreatingSample ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Criar Exemplos"
-                  )}
-                </Button>
-              )}
+    <SidebarProvider>
+      <div className="flex h-screen bg-abba-bg text-abba-text">
+        <Sidebar>
+          <SidebarContent>
+            <div className="p-4 border-b border-abba-border">
+              <h2 className="text-xl font-semibold text-abba-text">Conversas</h2>
             </div>
-            
-            {/* Campo de busca */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Pesquisar"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
-              />
-            </div>
-
-            {/* Filtro por Account */}
-            <div className="mb-4">
-              <AccountFilter 
-                selectedAccount={selectedAccount}
-                onAccountChange={setSelectedAccount}
-              />
-            </div>
-
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-abba-gray">
-                <TabsTrigger 
-                  value="geral" 
-                  className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
-                >
-                  Geral
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="aberto"
-                  className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
-                >
-                  Em Aberto
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="fechado"
-                  className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
-                >
-                  Fechadas
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
-          {/* Lista de conversas */}
-          <ScrollArea className="flex-1">
-            <ConversationList 
-              conversations={filteredConversations}
+            <ConversationList
+              conversations={conversations}
               selectedConversation={selectedConversation}
               onSelectConversation={handleSelectConversation}
               onDeleteConversation={handleDeleteConversation}
-              onCloseConversation={handleToggleConversationStatus}
+              onCloseConversation={handleCloseConversation}
+              onAssignConversation={handleAssignConversation}
               isLoading={isLoading}
             />
-          </ScrollArea>
-        </div>
+          </SidebarContent>
+        </Sidebar>
 
-        {/* Área do chat */}
         <div className="flex-1 flex flex-col">
-          {selectedConversation ? (
-            <ChatArea 
-              conversation={selectedConversation} 
-              onDeleteConversation={handleDeleteConversation}
-              onUpdateAgentStatus={handleUpdateAgentStatus}
-            />
-          ) : (
-            <div className="flex-1 flex items-center justify-center bg-abba-black">
-              <p className="text-gray-400">
-                {isLoading ? 'Carregando conversas...' : 'Selecione uma conversa para começar'}
-              </p>
-            </div>
-          )}
+          <div className="border-b border-abba-border p-4 flex items-center">
+            <SidebarTrigger className="mr-4" />
+            <h1 className="text-xl font-semibold">
+              {selectedConversation ? selectedConversation.contact_name : 'Selecione uma conversa'}
+            </h1>
+          </div>
+          
+          <div className="flex-1">
+            {selectedConversation ? (
+              <ChatArea conversation={selectedConversation} />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <div className="text-center">
+                  <p className="text-lg mb-2">Nenhuma conversa selecionada</p>
+                  <p className="text-sm">Escolha uma conversa na lista para começar</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }
-
-export default Chat

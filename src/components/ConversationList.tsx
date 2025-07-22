@@ -1,10 +1,14 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { User, Trash2 } from "lucide-react"
+import { User, Trash2, UserPlus } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { AssignConversationDialog } from "./AssignConversationDialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +27,7 @@ interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void
   onDeleteConversation?: (conversationId: string) => void
   onCloseConversation?: (conversationId: string) => void
+  onAssignConversation?: (conversationId: string, userId: string | null) => Promise<void>
   isLoading?: boolean
 }
 
@@ -32,8 +37,15 @@ export const ConversationList = ({
   onSelectConversation,
   onDeleteConversation,
   onCloseConversation,
+  onAssignConversation,
   isLoading 
-}: ConversationListProps & { onCloseConversation?: (conversationId: string) => void }) => {
+}: ConversationListProps) => {
+  const { userProfile } = useAuth()
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [conversationToAssign, setConversationToAssign] = useState<Conversation | null>(null)
+
+  const canAssignConversations = userProfile?.role === 'admin' || userProfile?.role === 'editor'
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -75,6 +87,12 @@ export const ConversationList = ({
     }
   }
 
+  const handleAssignConversation = (conversation: Conversation, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setConversationToAssign(conversation)
+    setAssignDialogOpen(true)
+  }
+
   const getAccountColor = (account: string) => {
     // Paleta de cores para diferenciar contas
     const colors = [
@@ -110,130 +128,157 @@ export const ConversationList = ({
   }
 
   return (
-    <div className="space-y-1">
-      {conversations.map((conversation) => (
-        <div
-          key={conversation.id}
-          className={`
-            flex items-center p-3 cursor-pointer hover:bg-abba-gray transition-colors group
-            ${selectedConversation?.id === conversation.id ? 'bg-abba-gray border-r-2 border-abba-green' : ''}
-          `}
-        >
-          <div className="relative" onClick={() => onSelectConversation(conversation)}>
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
-              <AvatarFallback className="bg-abba-gray">
-                <User className="h-6 w-6 text-abba-green" />
-              </AvatarFallback>
-            </Avatar>
-          </div>
-
-          <div className="ml-3 flex-1 min-w-0" onClick={() => onSelectConversation(conversation)}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-medium text-abba-text truncate">
-                  {conversation.contact_name}
-                </h3>
-                {getAccountBadge(conversation.account)}
-              </div>
-              <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                {formatTime(conversation.last_message_at)}
-              </span>
+    <>
+      <div className="space-y-1">
+        {conversations.map((conversation) => (
+          <div
+            key={conversation.id}
+            className={`
+              flex items-center p-3 cursor-pointer hover:bg-abba-gray transition-colors group
+              ${selectedConversation?.id === conversation.id ? 'bg-abba-gray border-r-2 border-abba-green' : ''}
+            `}
+          >
+            <div className="relative" onClick={() => onSelectConversation(conversation)}>
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
+                <AvatarFallback className="bg-abba-gray">
+                  <User className="h-6 w-6 text-abba-green" />
+                </AvatarFallback>
+              </Avatar>
             </div>
-            
-            <div className="flex items-center justify-between mt-1">
-              <p className="text-sm text-gray-400 truncate">
-                {conversation.last_message || 'Nenhuma mensagem'}
-              </p>
-              {conversation.unread_count > 0 && (
-                <Badge className="bg-abba-green text-abba-black ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-xs">
-                  {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
-                </Badge>
-              )}
-            </div>
-          </div>
 
-          <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
-            {/* Botão de Fechar/Abrir Conversa */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500"
-                  title={conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {conversation.status === 'aberta' ? (
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8m-8 0V8a4 4 0 118 0v4m-8 0v4a4 4 0 108 0v-4" />
-                    </svg>
+            <div className="ml-3 flex-1 min-w-0" onClick={() => onSelectConversation(conversation)}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-sm font-medium text-abba-text truncate">
+                    {conversation.contact_name}
+                  </h3>
+                  {getAccountBadge(conversation.account)}
+                  {conversation.assigned_user && (
+                    <Badge variant="outline" className="text-xs">
+                      {conversation.assigned_user.full_name || conversation.assigned_user.email}
+                    </Badge>
                   )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {conversation.status === 'aberta' 
-                      ? `Tem certeza de que deseja fechar a conversa com ${conversation.contact_name}?`
-                      : `Tem certeza de que deseja reabrir a conversa com ${conversation.contact_name}?`
-                    }
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={(e) => handleToggleConversationStatus(conversation, e)}
-                    className={conversation.status === 'aberta' ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500 hover:bg-green-600"}
-                  >
-                    {conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                </div>
+                <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
+                  {formatTime(conversation.last_message_at)}
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-sm text-gray-400 truncate">
+                  {conversation.last_message || 'Nenhuma mensagem'}
+                </p>
+                {conversation.unread_count > 0 && (
+                  <Badge className="bg-abba-green text-abba-black ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-xs">
+                    {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
+                  </Badge>
+                )}
+              </div>
+            </div>
 
-            {/* Botão de Excluir */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
+              {/* Botão de Atribuição (apenas para admin/editor) */}
+              {canAssignConversations && onAssignConversation && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
-                  title="Excluir Conversa"
-                  onClick={(e) => e.stopPropagation()}
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-purple-500"
+                  title="Atribuir Conversa"
+                  onClick={(e) => handleAssignConversation(conversation, e)}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <UserPlus className="h-4 w-4" />
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir Conversa</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza de que deseja excluir esta conversa com {conversation.contact_name}? 
-                    Todas as mensagens também serão excluídas permanentemente. Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                    className="bg-red-500 hover:bg-red-600"
+              )}
+
+              {/* Botão de Fechar/Abrir Conversa */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500"
+                    title={conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    Excluir Conversa
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    {conversation.status === 'aberta' ? (
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8m-8 0V8a4 4 0 118 0v4m-8 0v4a4 4 0 108 0v-4" />
+                      </svg>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {conversation.status === 'aberta' 
+                        ? `Tem certeza de que deseja fechar a conversa com ${conversation.contact_name}?`
+                        : `Tem certeza de que deseja reabrir a conversa com ${conversation.contact_name}?`
+                      }
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={(e) => handleToggleConversationStatus(conversation, e)}
+                      className={conversation.status === 'aberta' ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500 hover:bg-green-600"}
+                    >
+                      {conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Botão de Excluir */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                    title="Excluir Conversa"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir Conversa</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza de que deseja excluir esta conversa com {conversation.contact_name}? 
+                      Todas as mensagens também serão excluídas permanentemente. Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      Excluir Conversa
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      <AssignConversationDialog
+        open={assignDialogOpen}
+        onOpenChange={setAssignDialogOpen}
+        conversation={conversationToAssign}
+        onAssign={onAssignConversation || (() => Promise.resolve())}
+      />
+    </>
   )
 }

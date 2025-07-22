@@ -19,6 +19,12 @@ export interface Conversation {
   unread_count: number
   have_agent: boolean
   status_agent: 'Ativo' | 'Inativo' | null
+  assigned_to: string | null
+  assigned_user?: {
+    id: string
+    full_name: string | null
+    email: string
+  } | null
   created_at: string
   updated_at: string
 }
@@ -228,10 +234,17 @@ export const useConversations = () => {
       
       console.log('Fazendo query no Supabase para conversas...')
       
-      // Buscar todas as conversas do usuário
+      // Buscar todas as conversas do usuário com dados do usuário atribuído
       const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
-        .select('*')
+        .select(`
+          *,
+          assigned_user:profiles!conversations_assigned_to_fkey(
+            id,
+            full_name,
+            email
+          )
+        `)
         .eq('user_id', user?.id)
         .order('updated_at', { ascending: false })
       
@@ -437,6 +450,41 @@ export const useConversations = () => {
     }
   }
 
+  const assignConversation = async (conversationId: string, userId: string | null) => {
+    try {
+      console.log('Atribuindo conversa:', conversationId, 'para usuário:', userId)
+      
+      const { error } = await supabase
+        .from('conversations')
+        .update({ assigned_to: userId })
+        .eq('id', conversationId)
+      
+      if (error) throw error
+      
+      // Buscar dados do usuário atribuído
+      let assignedUser = null
+      if (userId) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .eq('id', userId)
+          .single()
+        assignedUser = data
+      }
+      
+      setConversations(prev => prev.map(conv => 
+        conv.id === conversationId 
+          ? { ...conv, assigned_to: userId, assigned_user: assignedUser }
+          : conv
+      ))
+      
+      console.log(`Conversa ${conversationId} atribuída para ${userId || 'ninguém'}`)
+    } catch (error) {
+      console.error('Erro ao atribuir conversa:', error)
+      setError(error as Error)
+      throw error
+    }
+  }
 
   const createConversation = async (conversationData: {
     contact_id?: string
@@ -506,6 +554,7 @@ export const useConversations = () => {
     deleteConversation,
     updateConversationStatus,
     updateAgentStatus,
+    assignConversation,
     createConversation,
     isDeleting,
     refetch: fetchConversations
