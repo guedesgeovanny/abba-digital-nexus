@@ -332,6 +332,10 @@ export const useConversations = () => {
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
               status_agent: (conversation as any).status_agent || null,
+              assigned_to: (conversation as any).assigned_to || null,
+              assigned_user: (conversation as any).assigned_user && !(conversation as any).assigned_user.error 
+                ? (conversation as any).assigned_user 
+                : null,
               unread_count: unreadCount || 0
             }
           } catch (error) {
@@ -344,6 +348,8 @@ export const useConversations = () => {
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
               status_agent: (conversation as any).status_agent || null,
+              assigned_to: (conversation as any).assigned_to || null,
+              assigned_user: null,
               unread_count: 0
             }
           }
@@ -456,7 +462,7 @@ export const useConversations = () => {
       
       const { error } = await supabase
         .from('conversations')
-        .update({ assigned_to: userId })
+        .update({ assigned_to: userId } as any)
         .eq('id', conversationId)
       
       if (error) throw error
@@ -537,7 +543,9 @@ export const useConversations = () => {
         profile: (data as any).profile || null, 
         account: (data as any).account || null,
         have_agent: (data as any).have_agent || false,
-        status_agent: (data as any).status_agent || null
+        status_agent: (data as any).status_agent || null,
+        assigned_to: (data as any).assigned_to || null,
+        assigned_user: null
       }, ...prev])
       return data
     } catch (error) {

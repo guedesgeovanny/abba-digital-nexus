@@ -12,6 +12,7 @@ export default function Chat() {
     isLoading, 
     deleteConversation, 
     updateConversationStatus,
+    updateAgentStatus,
     assignConversation
   } = useConversations()
 
@@ -68,7 +69,11 @@ export default function Chat() {
           
           <div className="flex-1">
             {selectedConversation ? (
-              <ChatArea conversation={selectedConversation} />
+        <ChatArea 
+          conversation={selectedConversation} 
+          onDeleteConversation={deleteConversation}
+          onUpdateAgentStatus={updateAgentStatus}
+        />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <div className="text-center">
