@@ -18,7 +18,7 @@ const Chat = () => {
   const [selectedAccount, setSelectedAccount] = useState("all")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
-  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, isDeleting, refetch } = useConversations()
+  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, assignConversation, isDeleting, refetch } = useConversations()
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -244,14 +244,15 @@ const Chat = () => {
 
           {/* Lista de conversas */}
           <ScrollArea className="flex-1">
-            <ConversationList 
-              conversations={filteredConversations}
-              selectedConversation={selectedConversation}
-              onSelectConversation={handleSelectConversation}
-              onDeleteConversation={handleDeleteConversation}
-              onCloseConversation={handleToggleConversationStatus}
-              isLoading={isLoading}
-            />
+                    <ConversationList
+                      conversations={filteredConversations}
+                      selectedConversation={selectedConversation}
+                      onSelectConversation={handleSelectConversation}
+                      onDeleteConversation={handleDeleteConversation}
+                      onCloseConversation={handleToggleConversationStatus}
+                      onAssignConversation={assignConversation}
+                      isLoading={isLoading}
+                    />
           </ScrollArea>
         </div>
 

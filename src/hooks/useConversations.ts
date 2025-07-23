@@ -499,6 +499,25 @@ export const useConversations = () => {
     }
   }
 
+  const assignConversation = async (conversationId: string, newUserId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ user_id: newUserId })
+        .eq('id', conversationId)
+      
+      if (error) throw error
+      
+      // Remove conversation from local state since it now belongs to another user
+      setConversations(prev => prev.filter(conv => conv.id !== conversationId))
+      console.log(`Conversa ${conversationId} atribuída ao usuário ${newUserId}`)
+    } catch (error) {
+      console.error('Erro ao atribuir conversa:', error)
+      setError(error as Error)
+      throw error
+    }
+  }
+
   return {
     conversations,
     isLoading,
@@ -507,6 +526,7 @@ export const useConversations = () => {
     updateConversationStatus,
     updateAgentStatus,
     createConversation,
+    assignConversation,
     isDeleting,
     refetch: fetchConversations
   }

@@ -5,6 +5,8 @@ import { User, Trash2 } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { useAuth } from "@/contexts/AuthContext"
+import { AssignConversationDialog } from "./AssignConversationDialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +25,7 @@ interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void
   onDeleteConversation?: (conversationId: string) => void
   onCloseConversation?: (conversationId: string) => void
+  onAssignConversation?: (conversationId: string, userId: string) => Promise<void>
   isLoading?: boolean
 }
 
@@ -32,8 +35,11 @@ export const ConversationList = ({
   onSelectConversation,
   onDeleteConversation,
   onCloseConversation,
+  onAssignConversation,
   isLoading 
-}: ConversationListProps & { onCloseConversation?: (conversationId: string) => void }) => {
+}: ConversationListProps) => {
+  const { userProfile } = useAuth()
+  const isAdmin = userProfile?.role === 'admin'
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -154,6 +160,15 @@ export const ConversationList = ({
           </div>
 
           <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
+            {/* Botão de Atribuir Conversa (apenas para admins) */}
+            {isAdmin && onAssignConversation && (
+              <AssignConversationDialog
+                conversationId={conversation.id}
+                conversationContactName={conversation.contact_name}
+                onAssign={onAssignConversation}
+              />
+            )}
+            
             {/* Botão de Fechar/Abrir Conversa */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
