@@ -19,12 +19,6 @@ export interface Conversation {
   unread_count: number
   have_agent: boolean
   status_agent: 'Ativo' | 'Inativo' | null
-  assigned_to: string | null
-  assigned_user?: {
-    id: string
-    full_name: string | null
-    email: string
-  } | null
   created_at: string
   updated_at: string
 }
@@ -111,32 +105,9 @@ export const useConversations = () => {
     }
   }
 
-  // Função para buscar dados do usuário atribuído
-  const fetchAssignedUser = async (assignedTo: string | null) => {
-    if (!assignedTo) return null
-    
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .eq('id', assignedTo)
-        .single()
-      
-      if (error) {
-        console.error('Erro ao buscar usuário atribuído:', error)
-        return null
-      }
-      
-      return data
-    } catch (error) {
-      console.error('Erro ao buscar usuário atribuído:', error)
-      return null
-    }
-  }
-
   useEffect(() => {
     if (user) {
-      console.log('Usuário logado, carregando conversas...', user.id)
+      console.log('Usuário logado, carregando conversas...')
       fetchConversations()
       
       // Configurar listener para realtime nas conversas
@@ -175,10 +146,6 @@ export const useConversations = () => {
               }
             }
             
-            // Buscar dados do usuário atribuído
-            const assignedUser = await fetchAssignedUser(newConversation.assigned_to)
-            newConversation.assigned_user = assignedUser
-            
             setConversations(prev => [newConversation, ...prev])
           }
         )
@@ -190,17 +157,11 @@ export const useConversations = () => {
             table: 'conversations',
             filter: `user_id=eq.${user.id}`
           },
-          async (payload) => {
+          (payload) => {
             console.log('Conversa atualizada via realtime:', payload.new)
-            const updatedConversation = payload.new as Conversation
-            
-            // Buscar dados do usuário atribuído se necessário
-            const assignedUser = await fetchAssignedUser(updatedConversation.assigned_to)
-            updatedConversation.assigned_user = assignedUser
-            
             setConversations(prev => 
               prev.map(conv => 
-                conv.id === updatedConversation.id ? updatedConversation : conv
+                conv.id === payload.new.id ? payload.new as Conversation : conv
               ).sort((a, b) => {
                 const dateA = new Date(a.last_message_at || a.updated_at)
                 const dateB = new Date(b.last_message_at || b.updated_at)
@@ -266,9 +227,8 @@ export const useConversations = () => {
       setError(null)
       
       console.log('Fazendo query no Supabase para conversas...')
-      console.log('User ID:', user?.id)
       
-      // Buscar todas as conversas do usuário (query simplificada)
+      // Buscar todas as conversas do usuário
       const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
         .select('*')
@@ -280,7 +240,7 @@ export const useConversations = () => {
         throw conversationsError
       }
       
-      console.log('Conversas retornadas:', conversationsData?.length || 0)
+      console.log('Conversas retornadas:', conversationsData)
       
       if (!conversationsData || conversationsData.length === 0) {
         setConversations([])
@@ -323,11 +283,11 @@ export const useConversations = () => {
         )
       }
 
-      // Para cada conversa, buscar a mensagem mais recente, contar não lidas e buscar usuário atribuído
+      // Para cada conversa, buscar a mensagem mais recente e contar não lidas
       const conversationsWithMessages = await Promise.all(
         conversationsData.map(async (conversation) => {
           try {
-            // Buscar a mensagem mais recente desta conversa
+            // Buscar a mensagem mais recente desta conversa usando os novos nomes das colunas
             const { data: lastMessage, error: messageError } = await supabase
               .from('messages')
               .select('mensagem, data_hora, direcao')
@@ -351,9 +311,6 @@ export const useConversations = () => {
               console.error('Erro ao contar mensagens não lidas:', countError)
             }
 
-            // Buscar dados do usuário atribuído
-            const assignedUser = await fetchAssignedUser((conversation as any).assigned_to)
-
             return {
               ...conversation,
               last_message: lastMessage?.mensagem || conversation.last_message,
@@ -362,10 +319,8 @@ export const useConversations = () => {
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
               status_agent: (conversation as any).status_agent || null,
-              assigned_to: (conversation as any).assigned_to || null,
-              assigned_user: assignedUser,
               unread_count: unreadCount || 0
-            } as Conversation
+            }
           } catch (error) {
             console.error('Erro ao processar conversa:', error)
             return {
@@ -376,10 +331,8 @@ export const useConversations = () => {
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
               status_agent: (conversation as any).status_agent || null,
-              assigned_to: (conversation as any).assigned_to || null,
-              assigned_user: null,
               unread_count: 0
-            } as Conversation
+            }
           }
         })
       )
@@ -392,7 +345,7 @@ export const useConversations = () => {
       })
 
       setConversations(sortedConversations)
-      console.log('Conversas processadas com mensagens:', sortedConversations.length)
+      console.log('Conversas processadas com mensagens:', sortedConversations)
       
     } catch (error) {
       console.error('Erro ao carregar conversas:', error)
@@ -484,33 +437,6 @@ export const useConversations = () => {
     }
   }
 
-  const assignConversation = async (conversationId: string, userId: string | null) => {
-    try {
-      console.log('Atribuindo conversa:', conversationId, 'para usuário:', userId)
-      
-      const { error } = await supabase
-        .from('conversations')
-        .update({ assigned_to: userId } as any)
-        .eq('id', conversationId)
-      
-      if (error) throw error
-      
-      // Buscar dados do usuário atribuído
-      const assignedUser = await fetchAssignedUser(userId)
-      
-      setConversations(prev => prev.map(conv => 
-        conv.id === conversationId 
-          ? { ...conv, assigned_to: userId, assigned_user: assignedUser }
-          : conv
-      ))
-      
-      console.log(`Conversa ${conversationId} atribuída para ${userId || 'ninguém'}`)
-    } catch (error) {
-      console.error('Erro ao atribuir conversa:', error)
-      setError(error as Error)
-      throw error
-    }
-  }
 
   const createConversation = async (conversationData: {
     contact_id?: string
@@ -558,18 +484,13 @@ export const useConversations = () => {
       
       console.log('Conversa criada com sucesso:', data)
       console.log('Contato sincronizado:', syncedContact)
-      
-      const newConversation: Conversation = { 
+      setConversations(prev => [{ 
         ...data, 
         profile: (data as any).profile || null, 
         account: (data as any).account || null,
         have_agent: (data as any).have_agent || false,
-        status_agent: (data as any).status_agent || null,
-        assigned_to: (data as any).assigned_to || null,
-        assigned_user: null
-      }
-      
-      setConversations(prev => [newConversation, ...prev])
+        status_agent: (data as any).status_agent || null
+      }, ...prev])
       return data
     } catch (error) {
       console.error('Erro ao criar conversa:', error)
@@ -585,7 +506,6 @@ export const useConversations = () => {
     deleteConversation,
     updateConversationStatus,
     updateAgentStatus,
-    assignConversation,
     createConversation,
     isDeleting,
     refetch: fetchConversations
