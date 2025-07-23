@@ -352,17 +352,17 @@ export const useConversations = () => {
             }
 
             // Buscar dados do usuário atribuído
-            const assignedUser = await fetchAssignedUser(conversation.assigned_to)
+            const assignedUser = await fetchAssignedUser((conversation as any).assigned_to)
 
             return {
               ...conversation,
               last_message: lastMessage?.mensagem || conversation.last_message,
               last_message_at: lastMessage?.data_hora || conversation.last_message_at,
-              profile: conversation.profile || null,
-              account: conversation.account || null,
-              have_agent: conversation.have_agent || false,
-              status_agent: conversation.status_agent || null,
-              assigned_to: conversation.assigned_to || null,
+              profile: (conversation as any).profile || null,
+              account: (conversation as any).account || null,
+              have_agent: (conversation as any).have_agent || false,
+              status_agent: (conversation as any).status_agent || null,
+              assigned_to: (conversation as any).assigned_to || null,
               assigned_user: assignedUser,
               unread_count: unreadCount || 0
             } as Conversation
@@ -372,11 +372,11 @@ export const useConversations = () => {
               ...conversation,
               last_message: conversation.last_message,
               last_message_at: conversation.last_message_at,
-              profile: conversation.profile || null,
-              account: conversation.account || null,
-              have_agent: conversation.have_agent || false,
-              status_agent: conversation.status_agent || null,
-              assigned_to: conversation.assigned_to || null,
+              profile: (conversation as any).profile || null,
+              account: (conversation as any).account || null,
+              have_agent: (conversation as any).have_agent || false,
+              status_agent: (conversation as any).status_agent || null,
+              assigned_to: (conversation as any).assigned_to || null,
               assigned_user: null,
               unread_count: 0
             } as Conversation
