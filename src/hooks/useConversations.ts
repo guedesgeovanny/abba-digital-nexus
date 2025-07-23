@@ -24,11 +24,14 @@ export interface Conversation {
 }
 
 export const useConversations = () => {
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Verificar se o usuário é admin
+  const isAdmin = userProfile?.role === 'admin'
 
   // Função para sincronizar contato baseado nos dados da conversa
   const syncContactFromConversation = async (conversationData: {
@@ -108,9 +111,14 @@ export const useConversations = () => {
   useEffect(() => {
     if (user) {
       console.log('Usuário logado, carregando conversas...')
+      console.log('Usuário é admin:', isAdmin)
       fetchConversations()
       
       // Configurar listener para realtime nas conversas
+      const conversationsFilter = isAdmin ? 
+        {} : // Admin vê todas as conversas
+        { filter: `user_id=eq.${user.id}` } // Não-admin vê apenas suas conversas
+
       const conversationsChannel = supabase
         .channel('conversations-realtime')
         .on(
@@ -119,7 +127,7 @@ export const useConversations = () => {
             event: 'INSERT',
             schema: 'public',
             table: 'conversations',
-            filter: `user_id=eq.${user.id}`
+            ...conversationsFilter
           },
           async (payload) => {
             console.log('Nova conversa recebida via realtime:', payload.new)
@@ -155,7 +163,7 @@ export const useConversations = () => {
             event: 'UPDATE',
             schema: 'public',
             table: 'conversations',
-            filter: `user_id=eq.${user.id}`
+            ...conversationsFilter
           },
           (payload) => {
             console.log('Conversa atualizada via realtime:', payload.new)
@@ -219,7 +227,7 @@ export const useConversations = () => {
       setConversations([])
       setIsLoading(false)
     }
-  }, [user])
+  }, [user, isAdmin])
 
   const fetchConversations = async () => {
     try {
@@ -227,13 +235,20 @@ export const useConversations = () => {
       setError(null)
       
       console.log('Fazendo query no Supabase para conversas...')
+      console.log('Buscando conversas como admin:', isAdmin)
       
-      // Buscar todas as conversas do usuário
-      const { data: conversationsData, error: conversationsError } = await supabase
+      // Buscar conversas baseado no papel do usuário
+      let conversationsQuery = supabase
         .from('conversations')
         .select('*')
-        .eq('user_id', user?.id)
         .order('updated_at', { ascending: false })
+      
+      // Se não for admin, filtrar apenas as conversas do usuário
+      if (!isAdmin) {
+        conversationsQuery = conversationsQuery.eq('user_id', user?.id)
+      }
+      
+      const { data: conversationsData, error: conversationsError } = await conversationsQuery
       
       if (conversationsError) {
         console.error('Erro na query de conversas:', conversationsError)
@@ -436,7 +451,6 @@ export const useConversations = () => {
       throw error
     }
   }
-
 
   const createConversation = async (conversationData: {
     contact_id?: string

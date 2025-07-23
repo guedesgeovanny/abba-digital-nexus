@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { User, Trash2 } from "lucide-react"
+import { User, Trash2, UserPlus } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -38,8 +38,9 @@ export const ConversationList = ({
   onAssignConversation,
   isLoading 
 }: ConversationListProps) => {
-  const { userProfile } = useAuth()
+  const { user, userProfile } = useAuth()
   const isAdmin = userProfile?.role === 'admin'
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -115,6 +116,30 @@ export const ConversationList = ({
     ) : null
   }
 
+  // Função para verificar se a conversa pertence ao usuário atual
+  const isOwnConversation = (conversation: Conversation) => {
+    return conversation.user_id === user?.id
+  }
+
+  // Função para obter o indicador de propriedade da conversa
+  const getOwnershipIndicator = (conversation: Conversation) => {
+    if (!isAdmin) return null
+    
+    if (isOwnConversation(conversation)) {
+      return (
+        <Badge className="bg-green-100 text-green-800 text-xs px-1 py-0" title="Sua conversa">
+          Minha
+        </Badge>
+      )
+    } else {
+      return (
+        <Badge className="bg-blue-100 text-blue-800 text-xs px-1 py-0" title="Conversa de outro usuário">
+          Atribuída
+        </Badge>
+      )
+    }
+  }
+
   return (
     <div className="space-y-1">
       {conversations.map((conversation) => (
@@ -141,6 +166,7 @@ export const ConversationList = ({
                   {conversation.contact_name}
                 </h3>
                 {getAccountBadge(conversation.account)}
+                {getOwnershipIndicator(conversation)}
               </div>
               <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
                 {formatTime(conversation.last_message_at)}
