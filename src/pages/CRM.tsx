@@ -2,11 +2,24 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Plus, Filter } from "lucide-react"
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors, 
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  pointerWithin,
+  rectIntersection
+} from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CRMFilters } from "@/components/CRMFilters"
 import { AddStageDialog } from "@/components/AddStageDialog"
 import { StageColumn } from "@/components/StageColumn"
+import { LeadCard } from "@/components/LeadCard"
 import { ChatPopup } from "@/components/ChatPopup"
 import { useCRMData, CRMDeal } from "@/hooks/useCRMData"
 import { ContactForm } from "@/components/ContactForm"
@@ -31,6 +44,7 @@ const CRM = () => {
   const [showNewLead, setShowNewLead] = useState(false)
   const [selectedDeal, setSelectedDeal] = useState<CRMDeal | null>(null)
   const [showChatPopup, setShowChatPopup] = useState(false)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
   
   // Filter states
   const [filterAgent, setFilterAgent] = useState("")
@@ -39,7 +53,11 @@ const CRM = () => {
   const [showFilters, setShowFilters] = useState(false)
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -51,8 +69,13 @@ const CRM = () => {
     tag: filterTag || undefined
   }
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string)
+  }
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
+    setActiveDragId(null)
 
     if (!over) return
 
@@ -125,6 +148,10 @@ const CRM = () => {
     setShowChatPopup(false)
     setSelectedDeal(null)
   }
+
+  // Get the currently dragging deal for overlay
+  const activeDeal = activeDragId ? 
+    Object.values(crmData).flat().find(deal => deal.id === activeDragId) : null
 
   if (isLoading) {
     return (
@@ -228,7 +255,12 @@ const CRM = () => {
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
       <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={pointerWithin}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           <div className="flex gap-6 pb-6 min-w-max h-full">
             {stages.map((stage) => {
               const stageDeals = crmData[stage] || []
@@ -247,10 +279,23 @@ const CRM = () => {
                   onColorChange={handleColorChange}
                   onRemoveStage={removeStage}
                   onCardClick={handleCardClick}
+                  isDragActive={!!activeDragId}
                 />
               )
             })}
           </div>
+          
+          <DragOverlay>
+            {activeDeal ? (
+              <div className="transform rotate-6 scale-105">
+                <LeadCard 
+                  deal={activeDeal} 
+                  stageColor={stageColorsMap[activeDeal.status] || '#64748b'}
+                  isDragOverlay={true}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </div>
     </div>

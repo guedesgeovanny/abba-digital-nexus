@@ -21,6 +21,7 @@ interface StageColumnProps {
   onColorChange: (stage: string, color: string) => void
   onRemoveStage: (stage: string) => void
   onCardClick?: (deal: CRMDeal) => void
+  isDragActive?: boolean
 }
 
 export const StageColumn = ({
@@ -33,7 +34,8 @@ export const StageColumn = ({
   onStageRename,
   onColorChange,
   onRemoveStage,
-  onCardClick
+  onCardClick,
+  isDragActive = false
 }: StageColumnProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editingName, setEditingName] = useState(stage)
@@ -67,7 +69,8 @@ export const StageColumn = ({
       ref={setNodeRef}
       className={`
         flex-shrink-0 w-80 bg-abba-black rounded-lg border transition-colors duration-200
-        ${isOver ? 'border-abba-green bg-abba-green/5' : 'border-abba-gray'}
+        ${isOver ? 'border-abba-green bg-abba-green/5 shadow-lg shadow-abba-green/20' : 'border-abba-gray'}
+        ${isDragActive && !isOver ? 'border-dashed border-gray-600 opacity-60' : ''}
       `}
     >
       {/* Header do estágio */}
@@ -147,8 +150,40 @@ export const StageColumn = ({
         </SortableContext>
         
         {filteredStageDeals.length === 0 && (
-          <div className="text-center text-gray-400 py-8">
-            <p className="text-sm">Nenhum lead neste estágio</p>
+          <div className={`
+            text-center py-12 border-2 border-dashed rounded-lg transition-colors duration-200
+            ${isOver ? 'border-abba-green bg-abba-green/10' : 'border-gray-600'}
+            ${isDragActive ? 'border-gray-500' : 'border-transparent'}
+          `}>
+            <div className="text-gray-400">
+              {isOver ? (
+                <div className="animate-pulse">
+                  <div className="text-abba-green font-medium mb-1">Solte aqui</div>
+                  <p className="text-sm">Para mover o card para "{stage}"</p>
+                </div>
+              ) : (
+                <p className="text-sm">Nenhum lead neste estágio</p>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Drop zone for when there are cards */}
+        {filteredStageDeals.length > 0 && isDragActive && (
+          <div className={`
+            text-center py-6 border-2 border-dashed rounded-lg transition-colors duration-200 mt-3
+            ${isOver ? 'border-abba-green bg-abba-green/10' : 'border-gray-600'}
+          `}>
+            <div className="text-gray-400">
+              {isOver ? (
+                <div className="animate-pulse">
+                  <div className="text-abba-green font-medium mb-1">Solte aqui</div>
+                  <p className="text-sm">Para mover para "{stage}"</p>
+                </div>
+              ) : (
+                <p className="text-sm">Arrastar para "{stage}"</p>
+              )}
+            </div>
           </div>
         )}
       </div>

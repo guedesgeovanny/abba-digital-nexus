@@ -11,9 +11,10 @@ interface LeadCardProps {
   deal: any
   stageColor: string
   onCardClick?: (deal: any) => void
+  isDragOverlay?: boolean
 }
 
-export const LeadCard = ({ deal, stageColor, onCardClick }: LeadCardProps) => {
+export const LeadCard = ({ deal, stageColor, onCardClick, isDragOverlay = false }: LeadCardProps) => {
   const {
     attributes,
     listeners,
@@ -21,7 +22,10 @@ export const LeadCard = ({ deal, stageColor, onCardClick }: LeadCardProps) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: deal.id })
+  } = useSortable({ 
+    id: deal.id,
+    disabled: isDragOverlay
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -56,13 +60,14 @@ export const LeadCard = ({ deal, stageColor, onCardClick }: LeadCardProps) => {
     <Card 
       ref={setNodeRef} 
       style={style} 
-      {...attributes} 
-      {...listeners}
+      {...(!isDragOverlay ? attributes : {})} 
+      {...(!isDragOverlay ? listeners : {})}
       onClick={handleCardClick}
       className={`
         bg-abba-gray border-abba-gray transition-all duration-200 cursor-pointer
         hover:border-abba-green hover:shadow-lg hover:shadow-abba-green/20 hover:scale-[1.02]
-        ${isDragging ? 'shadow-2xl shadow-abba-green/40 scale-105 rotate-2 border-abba-green' : ''}
+        ${isDragging && !isDragOverlay ? 'opacity-50' : ''}
+        ${isDragOverlay ? 'shadow-2xl shadow-abba-green/40 border-abba-green' : ''}
       `}
     >
       <CardContent className="p-4">
