@@ -160,17 +160,18 @@ export const ConversationList = ({
           </div>
 
           <div className="ml-3 flex-1 min-w-0" onClick={() => onSelectConversation(conversation)}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-medium text-abba-text truncate">
-                  {conversation.contact_name}
-                </h3>
-                {getAccountBadge(conversation.account)}
-                {getOwnershipIndicator(conversation)}
-              </div>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-medium text-abba-text truncate">
+                {conversation.contact_name}
+              </h3>
               <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
                 {formatTime(conversation.last_message_at)}
               </span>
+            </div>
+            
+            <div className="flex items-center space-x-2 mb-1">
+              {getAccountBadge(conversation.account)}
+              {getOwnershipIndicator(conversation)}
             </div>
             
             <div className="flex items-center justify-between mt-1">
