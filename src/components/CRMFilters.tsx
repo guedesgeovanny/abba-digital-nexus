@@ -42,7 +42,7 @@ export const CRMFilters = ({
               <SelectValue placeholder="Agente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os agentes</SelectItem>
+              <SelectItem value="all">Todos os agentes</SelectItem>
               {allAgents.map((agent) => (
                 <SelectItem key={agent} value={agent}>
                   {agent}
@@ -56,7 +56,7 @@ export const CRMFilters = ({
               <SelectValue placeholder="Canal" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os canais</SelectItem>
+              <SelectItem value="all-channels">Todos os canais</SelectItem>
               {allChannels.map((channel) => (
                 <SelectItem key={channel} value={channel}>
                   {channel}
@@ -70,7 +70,7 @@ export const CRMFilters = ({
               <SelectValue placeholder="Tag" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as tags</SelectItem>
+              <SelectItem value="all-tags">Todas as tags</SelectItem>
               {allTags.map((tag) => (
                 <SelectItem key={tag} value={tag}>
                   {tag}
@@ -81,9 +81,9 @@ export const CRMFilters = ({
           
           <Button 
             onClick={() => {
-              setFilterAgent("")
-              setFilterChannel("")
-              setFilterTag("")
+              setFilterAgent("all")
+              setFilterChannel("all-channels")
+              setFilterTag("all-tags")
             }}
             variant="outline"
             className="border-abba-gray text-abba-text"

@@ -33,9 +33,9 @@ const CRM = () => {
   const [showChatPopup, setShowChatPopup] = useState(false)
   
   // Filter states
-  const [filterAgent, setFilterAgent] = useState("")
-  const [filterChannel, setFilterChannel] = useState("")
-  const [filterTag, setFilterTag] = useState("")
+  const [filterAgent, setFilterAgent] = useState("all")
+  const [filterChannel, setFilterChannel] = useState("all-channels")
+  const [filterTag, setFilterTag] = useState("all-tags")
   const [showFilters, setShowFilters] = useState(false)
 
   const sensors = useSensors(
@@ -46,9 +46,9 @@ const CRM = () => {
   )
 
   const filters = {
-    agent: filterAgent || undefined,
-    channel: filterChannel || undefined,
-    tag: filterTag || undefined
+    agent: filterAgent !== "all" ? filterAgent : undefined,
+    channel: filterChannel !== "all-channels" ? filterChannel : undefined,
+    tag: filterTag !== "all-tags" ? filterTag : undefined
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {

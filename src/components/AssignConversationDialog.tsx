@@ -48,7 +48,7 @@ export const AssignConversationDialog = ({
   useEffect(() => {
     if (open) {
       fetchUsers()
-      setSelectedUserId(conversation?.assigned_to || '')
+      setSelectedUserId(conversation?.assigned_to || 'unassigned')
     }
   }, [open, conversation])
 
@@ -88,11 +88,11 @@ export const AssignConversationDialog = ({
 
     try {
       setLoading(true)
-      await onAssign(conversation.id, selectedUserId || null)
+      await onAssign(conversation.id, selectedUserId === 'unassigned' ? null : selectedUserId)
       
       toast({
         title: 'Sucesso',
-        description: selectedUserId 
+        description: selectedUserId && selectedUserId !== 'unassigned'
           ? 'Conversa atribuída com sucesso' 
           : 'Atribuição removida com sucesso'
       })
@@ -130,7 +130,7 @@ export const AssignConversationDialog = ({
                 <SelectValue placeholder="Selecione um usuário" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sem atribuição</SelectItem>
+                <SelectItem value="unassigned">Sem atribuição</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.full_name} ({user.email})
