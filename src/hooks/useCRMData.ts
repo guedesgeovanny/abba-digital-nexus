@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react'
 import { useContacts, ContactWithTags } from './useContacts'
 import { useAgents } from './useAgents'
@@ -162,29 +163,47 @@ export const useCRMData = () => {
   const getUniqueAgents = () => {
     const agentNames = new Set<string>()
     Object.values(crmData).flat().forEach(deal => {
-      if (deal.agent && deal.agent !== 'Não atribuído') {
-        agentNames.add(deal.agent)
+      // Only add valid, non-empty agent names that are not "Não atribuído"
+      if (deal.agent && 
+          deal.agent.trim() !== '' && 
+          deal.agent !== 'Não atribuído' && 
+          deal.agent !== 'null' && 
+          deal.agent !== 'undefined') {
+        agentNames.add(deal.agent.trim())
       }
     })
-    return Array.from(agentNames)
+    return Array.from(agentNames).filter(name => name.length > 0)
   }
 
   const getUniqueChannels = () => {
     const channels = new Set<string>()
     Object.values(crmData).flat().forEach(deal => {
-      if (deal.source) {
-        channels.add(deal.source)
+      // Only add valid, non-empty channel sources
+      if (deal.source && 
+          deal.source.trim() !== '' && 
+          deal.source !== 'Desconhecido' && 
+          deal.source !== 'null' && 
+          deal.source !== 'undefined') {
+        channels.add(deal.source.trim())
       }
     })
-    return Array.from(channels)
+    return Array.from(channels).filter(channel => channel.length > 0)
   }
 
   const getUniqueTags = () => {
     const tags = new Set<string>()
     Object.values(crmData).flat().forEach(deal => {
-      deal.tags.forEach(tag => tags.add(tag))
+      deal.tags.forEach(tag => {
+        // Only add valid, non-empty tags
+        if (tag && 
+            tag.trim() !== '' && 
+            tag !== 'null' && 
+            tag !== 'undefined') {
+          tags.add(tag.trim())
+        }
+      })
     })
-    return Array.from(tags)
+    return Array.from(tags).filter(tag => tag.length > 0)
   }
 
   return {
@@ -227,8 +246,12 @@ function getEstimatedValue(status: string, company?: string): number {
 }
 
 function getSourceDisplay(channel?: string, source?: string): string {
-  if (source) return source
+  // If source exists and is not empty, use it
+  if (source && source.trim() !== '') {
+    return source.trim()
+  }
   
+  // Map channels to display names, ensuring non-empty strings
   const channelMap = {
     'instagram': 'Instagram',
     'whatsapp': 'WhatsApp',
@@ -239,5 +262,10 @@ function getSourceDisplay(channel?: string, source?: string): string {
     'indicacao': 'Indicação'
   }
   
-  return channel ? channelMap[channel as keyof typeof channelMap] || channel : 'Desconhecido'
+  // Return mapped channel or default value, never empty string
+  if (channel && channel.trim() !== '') {
+    return channelMap[channel.trim() as keyof typeof channelMap] || channel.trim()
+  }
+  
+  return 'Desconhecido'
 }
