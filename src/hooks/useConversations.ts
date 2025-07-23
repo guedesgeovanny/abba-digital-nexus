@@ -111,9 +111,32 @@ export const useConversations = () => {
     }
   }
 
+  // Função para buscar dados do usuário atribuído
+  const fetchAssignedUser = async (assignedTo: string | null) => {
+    if (!assignedTo) return null
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('id', assignedTo)
+        .single()
+      
+      if (error) {
+        console.error('Erro ao buscar usuário atribuído:', error)
+        return null
+      }
+      
+      return data
+    } catch (error) {
+      console.error('Erro ao buscar usuário atribuído:', error)
+      return null
+    }
+  }
+
   useEffect(() => {
     if (user) {
-      console.log('Usuário logado, carregando conversas...')
+      console.log('Usuário logado, carregando conversas...', user.id)
       fetchConversations()
       
       // Configurar listener para realtime nas conversas
@@ -152,6 +175,10 @@ export const useConversations = () => {
               }
             }
             
+            // Buscar dados do usuário atribuído
+            const assignedUser = await fetchAssignedUser(newConversation.assigned_to)
+            newConversation.assigned_user = assignedUser
+            
             setConversations(prev => [newConversation, ...prev])
           }
         )
@@ -163,11 +190,17 @@ export const useConversations = () => {
             table: 'conversations',
             filter: `user_id=eq.${user.id}`
           },
-          (payload) => {
+          async (payload) => {
             console.log('Conversa atualizada via realtime:', payload.new)
+            const updatedConversation = payload.new as Conversation
+            
+            // Buscar dados do usuário atribuído se necessário
+            const assignedUser = await fetchAssignedUser(updatedConversation.assigned_to)
+            updatedConversation.assigned_user = assignedUser
+            
             setConversations(prev => 
               prev.map(conv => 
-                conv.id === payload.new.id ? payload.new as Conversation : conv
+                conv.id === updatedConversation.id ? updatedConversation : conv
               ).sort((a, b) => {
                 const dateA = new Date(a.last_message_at || a.updated_at)
                 const dateB = new Date(b.last_message_at || b.updated_at)
@@ -233,18 +266,12 @@ export const useConversations = () => {
       setError(null)
       
       console.log('Fazendo query no Supabase para conversas...')
+      console.log('User ID:', user?.id)
       
-      // Buscar todas as conversas do usuário com dados do usuário atribuído
+      // Buscar todas as conversas do usuário (query simplificada)
       const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
-        .select(`
-          *,
-          assigned_user:profiles!conversations_assigned_to_fkey(
-            id,
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('user_id', user?.id)
         .order('updated_at', { ascending: false })
       
@@ -253,7 +280,7 @@ export const useConversations = () => {
         throw conversationsError
       }
       
-      console.log('Conversas retornadas:', conversationsData)
+      console.log('Conversas retornadas:', conversationsData?.length || 0)
       
       if (!conversationsData || conversationsData.length === 0) {
         setConversations([])
@@ -296,11 +323,11 @@ export const useConversations = () => {
         )
       }
 
-      // Para cada conversa, buscar a mensagem mais recente e contar não lidas
+      // Para cada conversa, buscar a mensagem mais recente, contar não lidas e buscar usuário atribuído
       const conversationsWithMessages = await Promise.all(
         conversationsData.map(async (conversation) => {
           try {
-            // Buscar a mensagem mais recente desta conversa usando os novos nomes das colunas
+            // Buscar a mensagem mais recente desta conversa
             const { data: lastMessage, error: messageError } = await supabase
               .from('messages')
               .select('mensagem, data_hora, direcao')
@@ -324,34 +351,35 @@ export const useConversations = () => {
               console.error('Erro ao contar mensagens não lidas:', countError)
             }
 
+            // Buscar dados do usuário atribuído
+            const assignedUser = await fetchAssignedUser(conversation.assigned_to)
+
             return {
               ...conversation,
               last_message: lastMessage?.mensagem || conversation.last_message,
               last_message_at: lastMessage?.data_hora || conversation.last_message_at,
-              profile: (conversation as any).profile || null,
-              account: (conversation as any).account || null,
-              have_agent: (conversation as any).have_agent || false,
-              status_agent: (conversation as any).status_agent || null,
-              assigned_to: (conversation as any).assigned_to || null,
-              assigned_user: (conversation as any).assigned_user && !(conversation as any).assigned_user.error 
-                ? (conversation as any).assigned_user 
-                : null,
+              profile: conversation.profile || null,
+              account: conversation.account || null,
+              have_agent: conversation.have_agent || false,
+              status_agent: conversation.status_agent || null,
+              assigned_to: conversation.assigned_to || null,
+              assigned_user: assignedUser,
               unread_count: unreadCount || 0
-            }
+            } as Conversation
           } catch (error) {
             console.error('Erro ao processar conversa:', error)
             return {
               ...conversation,
               last_message: conversation.last_message,
               last_message_at: conversation.last_message_at,
-              profile: (conversation as any).profile || null,
-              account: (conversation as any).account || null,
-              have_agent: (conversation as any).have_agent || false,
-              status_agent: (conversation as any).status_agent || null,
-              assigned_to: (conversation as any).assigned_to || null,
+              profile: conversation.profile || null,
+              account: conversation.account || null,
+              have_agent: conversation.have_agent || false,
+              status_agent: conversation.status_agent || null,
+              assigned_to: conversation.assigned_to || null,
               assigned_user: null,
               unread_count: 0
-            }
+            } as Conversation
           }
         })
       )
@@ -364,7 +392,7 @@ export const useConversations = () => {
       })
 
       setConversations(sortedConversations)
-      console.log('Conversas processadas com mensagens:', sortedConversations)
+      console.log('Conversas processadas com mensagens:', sortedConversations.length)
       
     } catch (error) {
       console.error('Erro ao carregar conversas:', error)
@@ -468,15 +496,7 @@ export const useConversations = () => {
       if (error) throw error
       
       // Buscar dados do usuário atribuído
-      let assignedUser = null
-      if (userId) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .eq('id', userId)
-          .single()
-        assignedUser = data
-      }
+      const assignedUser = await fetchAssignedUser(userId)
       
       setConversations(prev => prev.map(conv => 
         conv.id === conversationId 
@@ -538,7 +558,8 @@ export const useConversations = () => {
       
       console.log('Conversa criada com sucesso:', data)
       console.log('Contato sincronizado:', syncedContact)
-      setConversations(prev => [{ 
+      
+      const newConversation: Conversation = { 
         ...data, 
         profile: (data as any).profile || null, 
         account: (data as any).account || null,
@@ -546,7 +567,9 @@ export const useConversations = () => {
         status_agent: (data as any).status_agent || null,
         assigned_to: (data as any).assigned_to || null,
         assigned_user: null
-      }, ...prev])
+      }
+      
+      setConversations(prev => [newConversation, ...prev])
       return data
     } catch (error) {
       console.error('Erro ao criar conversa:', error)
