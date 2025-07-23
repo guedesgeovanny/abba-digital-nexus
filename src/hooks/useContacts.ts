@@ -20,8 +20,15 @@ export interface Contact {
   source?: string
   agent_assigned?: string
   last_contact_date?: string
+  value?: number
   created_at: string
   updated_at: string
+}
+
+export interface Agent {
+  id: string
+  name: string
+  status: string
 }
 
 export interface ContactTag {
@@ -34,6 +41,7 @@ export interface ContactTag {
 
 export interface ContactWithTags extends Contact {
   tags: ContactTag[]
+  agent?: Agent
 }
 
 export const useContacts = () => {
@@ -57,6 +65,11 @@ export const useContacts = () => {
               color,
               created_at
             )
+          ),
+          agents (
+            id,
+            name,
+            status
           )
         `)
         .eq('user_id', user.id)
@@ -64,10 +77,11 @@ export const useContacts = () => {
 
       if (error) throw error
 
-      // Transform the data to include tags properly
+      // Transform the data to include tags and agent properly
       return data.map(contact => ({
         ...contact,
-        tags: contact.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || []
+        tags: contact.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || [],
+        agent: contact.agents || undefined
       })) as ContactWithTags[]
     },
     enabled: !!user?.id,

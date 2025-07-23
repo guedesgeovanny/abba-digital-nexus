@@ -220,6 +220,7 @@ export type Database = {
           status: Database["public"]["Enums"]["contact_status"]
           updated_at: string
           user_id: string
+          value: number | null
         }
         Insert: {
           address?: string | null
@@ -239,6 +240,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["contact_status"]
           updated_at?: string
           user_id: string
+          value?: number | null
         }
         Update: {
           address?: string | null
@@ -258,8 +260,17 @@ export type Database = {
           status?: Database["public"]["Enums"]["contact_status"]
           updated_at?: string
           user_id?: string
+          value?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contacts_agent_assigned_fkey"
+            columns: ["agent_assigned"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {

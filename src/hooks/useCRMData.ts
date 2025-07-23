@@ -52,15 +52,15 @@ export const useCRMData = () => {
     
     const transformedDeals: CRMDeal[] = contacts.map((contact: ContactWithTags) => {
       const stageName = STATUS_TO_STAGE_MAP[contact.status] || 'Novo Lead'
-      const agentName = contact.agent_assigned ? agentsMap.get(contact.agent_assigned) || 'Não atribuído' : 'Não atribuído'
+      const agentName = contact.agent?.name || 'Não atribuído'
       
       // Calculate days in stage
       const updatedAt = new Date(contact.updated_at)
       const now = new Date()
       const daysInStage = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24))
       
-      // Use real value from database or estimate based on status
-      const contactValue = (contact as any).value || getEstimatedValue(contact.status, contact.company)
+      // Use real value from database (now properly populated via migration)
+      const contactValue = contact.value || getEstimatedValue(contact.status, contact.company)
       
       // For Instagram channel, use instagram handle as name if available
       const displayName = contact.channel === 'instagram' && contact.instagram 
