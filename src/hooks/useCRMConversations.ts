@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 
+// Force cache invalidation - removed STAGE_COLORS constant
+
 export interface CRMConversation {
   id: string
   contact_name: string
