@@ -33,7 +33,8 @@ const CRM = () => {
     stages,
     stageColorsMap,
     isLoading,
-    updateConversationStatus
+    updateConversationStatus,
+    addCustomStage
   } = useCRMConversations()
 
   const [isAddingStage, setIsAddingStage] = useState(false)
@@ -110,10 +111,13 @@ const CRM = () => {
     console.log('Stage rename not implemented yet:', { oldName, newName })
   }
 
-  const handleAddStage = (stageName: string) => {
-    // Para implementação futura - por enquanto mantemos os estágios fixos
-    console.log('Add stage not implemented yet:', stageName)
-    setIsAddingStage(false)
+  const handleAddStage = async (stageName: string) => {
+    try {
+      await addCustomStage(stageName)
+      setIsAddingStage(false)
+    } catch (error) {
+      console.error('Error adding stage:', error)
+    }
   }
 
   const handleColorChange = (stage: string, color: string) => {
@@ -160,8 +164,8 @@ const CRM = () => {
           </div>
         </div>
         <div className="flex gap-6">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex-1 space-y-4">
+          {['Novo Lead', 'Em Andamento', 'Qualificado', 'Convertido', 'Perdido'].map((stage) => (
+            <div key={stage} className="flex-1 space-y-4">
               <Skeleton className="h-12 w-full bg-abba-gray" />
               <Skeleton className="h-32 w-full bg-abba-gray" />
               <Skeleton className="h-32 w-full bg-abba-gray" />
