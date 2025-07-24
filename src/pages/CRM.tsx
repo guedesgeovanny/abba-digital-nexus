@@ -21,8 +21,8 @@ import { AddStageDialog } from "@/components/AddStageDialog"
 import { StageColumn } from "@/components/StageColumn"
 import { LeadCard } from "@/components/LeadCard"
 import { ChatPopup } from "@/components/ChatPopup"
-import { LeadDetailsDialog } from "@/components/LeadDetailsDialog"
-import { useCRMData, CRMDeal } from "@/hooks/useCRMData"
+
+import { useCRMConversations, CRMConversation } from "@/hooks/useCRMConversations"
 import { ContactForm } from "@/components/ContactForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -33,25 +33,17 @@ const CRM = () => {
     stages,
     stageColorsMap,
     isLoading,
-    updateDealStatus,
-    getFilteredDeals,
-    getTotalValue,
-    getUniqueAgents,
-    getUniqueChannels,
-    getUniqueTags
-  } = useCRMData()
+    updateConversationStatus
+  } = useCRMConversations()
 
   const [isAddingStage, setIsAddingStage] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
-  const [selectedDeal, setSelectedDeal] = useState<CRMDeal | null>(null)
+  const [selectedConversation, setSelectedConversation] = useState<CRMConversation | null>(null)
   const [showChatPopup, setShowChatPopup] = useState(false)
   const [showLeadDetails, setShowLeadDetails] = useState(false)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   
-  // Filter states
-  const [filterAgent, setFilterAgent] = useState("")
-  const [filterChannel, setFilterChannel] = useState("")
-  const [filterTag, setFilterTag] = useState("")
+  // Simplify filters for now - remove complex filtering
   const [showFilters, setShowFilters] = useState(false)
 
   const sensors = useSensors(
@@ -65,11 +57,6 @@ const CRM = () => {
     })
   )
 
-  const filters = {
-    agent: filterAgent || undefined,
-    channel: filterChannel || undefined,
-    tag: filterTag || undefined
-  }
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragId(event.active.id as string)
@@ -84,13 +71,13 @@ const CRM = () => {
     const activeId = active.id as string
     const overId = over.id as string
 
-    // Find which stage the deal is moving from and to
+    // Find which stage the conversation is moving from and to
     let fromStage = ""
     let toStage = ""
 
     // Find the source stage
-    for (const [stage, stageDeals] of Object.entries(crmData)) {
-      if (stageDeals.find(deal => deal.id === activeId)) {
+    for (const [stage, conversations] of Object.entries(crmData)) {
+      if (conversations.find(conv => conv.id === activeId)) {
         fromStage = stage
         break
       }
@@ -100,9 +87,9 @@ const CRM = () => {
     if (stages.includes(overId)) {
       toStage = overId
     } else {
-      // Find which stage contains the target deal
-      for (const [stage, stageDeals] of Object.entries(crmData)) {
-        if (stageDeals.find(deal => deal.id === overId)) {
+      // Find which stage contains the target conversation
+      for (const [stage, conversations] of Object.entries(crmData)) {
+        if (conversations.find(conv => conv.id === overId)) {
           toStage = stage
           break
         }
@@ -111,9 +98,9 @@ const CRM = () => {
 
     if (fromStage && toStage && fromStage !== toStage) {
       try {
-        await updateDealStatus(activeId, toStage)
+        await updateConversationStatus(activeId, toStage)
       } catch (error) {
-        console.error('Error updating deal status:', error)
+        console.error('Error updating conversation status:', error)
       }
     }
   }
@@ -139,31 +126,29 @@ const CRM = () => {
     console.log('Remove stage not implemented yet:', stageToRemove)
   }
 
-  const handleCardClick = (deal: CRMDeal) => {
-    console.log('CRM: handleCardClick called', deal)
-    setSelectedDeal(deal)
+  const handleCardClick = (conversation: CRMConversation) => {
+    setSelectedConversation(conversation)
     setShowLeadDetails(true)
-    console.log('CRM: showLeadDetails set to true')
   }
 
   const handleCloseChatPopup = () => {
     setShowChatPopup(false)
-    setSelectedDeal(null)
+    setSelectedConversation(null)
   }
 
   const handleCloseLeadDetails = () => {
     setShowLeadDetails(false)
-    setSelectedDeal(null)
+    setSelectedConversation(null)
   }
 
-  const handleOpenChatFromDetails = (deal: CRMDeal) => {
-    setSelectedDeal(deal)
+  const handleOpenChatFromDetails = (conversation: CRMConversation) => {
+    setSelectedConversation(conversation)
     setShowChatPopup(true)
   }
 
-  // Get the currently dragging deal for overlay
-  const activeDeal = activeDragId ? 
-    Object.values(crmData).flat().find(deal => deal.id === activeDragId) : null
+  // Get the currently dragging conversation for overlay
+  const activeConversation = activeDragId ? 
+    Object.values(crmData).flat().find(conv => conv.id === activeDragId) : null
 
   if (isLoading) {
     return (
@@ -239,18 +224,7 @@ const CRM = () => {
         </div>
       </div>
 
-      <CRMFilters 
-        showFilters={showFilters}
-        filterAgent={filterAgent}
-        filterChannel={filterChannel}
-        filterTag={filterTag}
-        allAgents={getUniqueAgents()}
-        allChannels={getUniqueChannels()}
-        allTags={getUniqueTags()}
-        setFilterAgent={setFilterAgent}
-        setFilterChannel={setFilterChannel}
-        setFilterTag={setFilterTag}
-      />
+      {/* Filters temporarily disabled */}
 
       <AddStageDialog 
         isOpen={isAddingStage}
@@ -258,21 +232,7 @@ const CRM = () => {
         onAdd={handleAddStage}
       />
 
-      {/* Chat Popup */}
-      <ChatPopup 
-        isOpen={showChatPopup}
-        onClose={handleCloseChatPopup}
-        deal={selectedDeal}
-      />
-
-      {/* Lead Details Dialog */}
-      <LeadDetailsDialog
-        deal={selectedDeal}
-        isOpen={showLeadDetails}
-        onClose={handleCloseLeadDetails}
-        onOpenChat={handleOpenChatFromDetails}
-        stageColor={selectedDeal ? stageColorsMap[selectedDeal.status] || '#64748b' : '#64748b'}
-      />
+      {/* Temporarily disable popups while refactoring */}
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
       <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">
@@ -284,34 +244,25 @@ const CRM = () => {
         >
           <div className="flex gap-6 pb-6 min-w-max h-full">
             {stages.map((stage) => {
-              const stageDeals = crmData[stage] || []
-              const filteredStageDeals = getFilteredDeals(stageDeals, filters)
+              const conversations = crmData[stage] || []
               
               return (
                 <StageColumn
                   key={stage}
                   stage={stage}
-                  stageDeals={stageDeals}
-                  filteredStageDeals={filteredStageDeals}
+                  conversations={conversations}
                   stageColorsMap={stageColorsMap}
-                  stages={stages}
-                  getTotalValue={(deals) => getTotalValue(deals, filters)}
-                  onStageRename={handleStageRename}
-                  onColorChange={handleColorChange}
-                  onRemoveStage={removeStage}
                   onCardClick={handleCardClick}
-                  isDragActive={!!activeDragId}
                 />
               )
             })}
           </div>
           
           <DragOverlay>
-            {activeDeal ? (
+            {activeConversation ? (
               <div className="transform rotate-6 scale-105">
                 <LeadCard 
-                  deal={activeDeal} 
-                  stageColor={stageColorsMap[activeDeal.status] || '#64748b'}
+                  conversation={activeConversation} 
                   isDragOverlay={true}
                 />
               </div>

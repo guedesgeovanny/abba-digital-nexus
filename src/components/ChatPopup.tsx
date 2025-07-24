@@ -10,12 +10,10 @@ import { useMessages } from "@/hooks/useMessages"
 import { useConversations } from "@/hooks/useConversations"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { CRMDeal } from "@/hooks/useCRMData"
-
 interface ChatPopupProps {
   isOpen: boolean
   onClose: () => void
-  deal: CRMDeal | null
+  deal?: any | null  // Temporarily any while refactoring
 }
 
 export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
