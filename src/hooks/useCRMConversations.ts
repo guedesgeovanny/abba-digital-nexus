@@ -24,8 +24,12 @@ export interface CustomStage {
 
 // Map conversation status to basic CRM stages
 const STATUS_TO_STAGE_MAP = {
-  'aberta': 'Novo Lead',
-  'fechada': 'Convertido'
+  'novo': 'Novo Lead',
+  'aberta': 'Em Andamento', 
+  'qualificado': 'Qualificado',
+  'convertido': 'Convertido',
+  'fechada': 'Convertido',
+  'perdido': 'Perdido'
 } as const
 
 // Basic CRM stages with colors
@@ -103,29 +107,42 @@ export const useCRMConversations = () => {
   }
 
   const updateConversationStatus = async (conversationId: string, newStage: string) => {
-    // Check if it's a basic stage first
-    const statusKey = Object.keys(STATUS_TO_STAGE_MAP).find(
-      key => STATUS_TO_STAGE_MAP[key as keyof typeof STATUS_TO_STAGE_MAP] === newStage
-    ) as keyof typeof STATUS_TO_STAGE_MAP
+    // Optimistic update
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === conversationId 
+          ? { ...conv, status: getStatusForStage(newStage) }
+          : conv
+      )
+    )
 
-    if (statusKey) {
+    try {
+      // Check if it's a basic stage first
+      const statusKey = getStatusForStage(newStage)
+      
       const { error } = await supabase
         .from('conversations')
         .update({ status: statusKey })
         .eq('id', conversationId)
 
-      if (!error) {
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === conversationId 
-              ? { ...conv, status: statusKey }
-              : conv
-          )
-        )
+      if (error) {
+        console.error('Error updating conversation status:', error)
+        // Revert optimistic update on error
+        await fetchConversations()
       }
+    } catch (error) {
+      console.error('Error updating conversation status:', error)
+      // Revert optimistic update on error
+      await fetchConversations()
     }
-    // For custom stages, we would need additional logic to track stage assignments
-    // This could be implemented with a conversation_stages table if needed
+  }
+
+  // Helper function to get status for stage
+  const getStatusForStage = (stageName: string): string => {
+    const statusKey = Object.keys(STATUS_TO_STAGE_MAP).find(
+      key => STATUS_TO_STAGE_MAP[key as keyof typeof STATUS_TO_STAGE_MAP] === stageName
+    )
+    return statusKey || 'aberta' // fallback to 'aberta' if stage not found
   }
 
   // Combine basic stages and custom stages

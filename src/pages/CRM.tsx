@@ -240,9 +240,9 @@ const CRM = () => {
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
       <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">
-        <DndContext 
-          sensors={sensors} 
-          collisionDetection={pointerWithin}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
