@@ -21,6 +21,7 @@ import { AddStageDialog } from "@/components/AddStageDialog"
 import { StageColumn } from "@/components/StageColumn"
 import { LeadCard } from "@/components/LeadCard"
 import { ChatPopup } from "@/components/ChatPopup"
+import { LeadDetailsDialog } from "@/components/LeadDetailsDialog"
 import { useCRMData, CRMDeal } from "@/hooks/useCRMData"
 import { ContactForm } from "@/components/ContactForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -44,6 +45,7 @@ const CRM = () => {
   const [showNewLead, setShowNewLead] = useState(false)
   const [selectedDeal, setSelectedDeal] = useState<CRMDeal | null>(null)
   const [showChatPopup, setShowChatPopup] = useState(false)
+  const [showLeadDetails, setShowLeadDetails] = useState(false)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   
   // Filter states
@@ -140,13 +142,23 @@ const CRM = () => {
   const handleCardClick = (deal: CRMDeal) => {
     console.log('CRM: handleCardClick called', deal)
     setSelectedDeal(deal)
-    setShowChatPopup(true)
-    console.log('CRM: showChatPopup set to true')
+    setShowLeadDetails(true)
+    console.log('CRM: showLeadDetails set to true')
   }
 
   const handleCloseChatPopup = () => {
     setShowChatPopup(false)
     setSelectedDeal(null)
+  }
+
+  const handleCloseLeadDetails = () => {
+    setShowLeadDetails(false)
+    setSelectedDeal(null)
+  }
+
+  const handleOpenChatFromDetails = (deal: CRMDeal) => {
+    setSelectedDeal(deal)
+    setShowChatPopup(true)
   }
 
   // Get the currently dragging deal for overlay
@@ -251,6 +263,15 @@ const CRM = () => {
         isOpen={showChatPopup}
         onClose={handleCloseChatPopup}
         deal={selectedDeal}
+      />
+
+      {/* Lead Details Dialog */}
+      <LeadDetailsDialog
+        deal={selectedDeal}
+        isOpen={showLeadDetails}
+        onClose={handleCloseLeadDetails}
+        onOpenChat={handleOpenChatFromDetails}
+        stageColor={selectedDeal ? stageColorsMap[selectedDeal.status] || '#64748b' : '#64748b'}
       />
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
