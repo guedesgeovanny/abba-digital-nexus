@@ -24,6 +24,7 @@ import { ChatPopup } from "@/components/ChatPopup"
 
 import { useCRMConversations, CRMConversation } from "@/hooks/useCRMConversations"
 import { ContactForm } from "@/components/ContactForm"
+import { LeadDetailsDialog } from "@/components/LeadDetailsDialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -236,7 +237,26 @@ const CRM = () => {
         onAdd={handleAddStage}
       />
 
-      {/* Temporarily disable popups while refactoring */}
+      <LeadDetailsDialog
+        isOpen={showLeadDetails}
+        onClose={handleCloseLeadDetails}
+        conversation={selectedConversation}
+        onOpenChat={handleOpenChatFromDetails}
+      />
+
+      {showChatPopup && selectedConversation && (
+        <ChatPopup
+          isOpen={showChatPopup}
+          onClose={handleCloseChatPopup}
+          deal={{
+            name: selectedConversation.contact_name,
+            contact: '',
+            email: '',
+            instagram: '',
+            source: 'CRM'
+          }}
+        />
+      )}
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
       <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">

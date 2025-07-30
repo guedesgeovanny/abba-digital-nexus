@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client'
 export interface CRMConversation {
   id: string
   contact_name: string
+  contact_id?: string
   status: string
   created_at: string
   updated_at: string
@@ -54,7 +55,7 @@ export const useCRMConversations = () => {
     try {
       const { data, error } = await supabase
         .from('conversations')
-        .select('id, contact_name, status, created_at, updated_at')
+        .select('id, contact_name, contact_id, status, created_at, updated_at')
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -122,7 +123,7 @@ export const useCRMConversations = () => {
       
       const { error } = await supabase
         .from('conversations')
-        .update({ status: statusKey })
+        .update({ status: statusKey as any })
         .eq('id', conversationId)
 
       if (error) {
@@ -142,7 +143,7 @@ export const useCRMConversations = () => {
     const statusKey = Object.keys(STATUS_TO_STAGE_MAP).find(
       key => STATUS_TO_STAGE_MAP[key as keyof typeof STATUS_TO_STAGE_MAP] === stageName
     )
-    return statusKey || 'aberta' // fallback to 'aberta' if stage not found
+    return statusKey || 'novo' // fallback to 'novo' if stage not found
   }
 
   // Combine basic stages and custom stages
