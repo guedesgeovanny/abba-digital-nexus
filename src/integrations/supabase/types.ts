@@ -552,7 +552,13 @@ export type Database = {
         | "qualificado"
         | "convertido"
         | "perdido"
-      conversation_status: "aberta" | "fechada"
+      conversation_status:
+        | "aberta"
+        | "fechada"
+        | "novo"
+        | "qualificado"
+        | "convertido"
+        | "perdido"
       message_direction: "sent" | "received"
       message_type: "text" | "image" | "audio" | "document" | "file"
     }
@@ -702,7 +708,14 @@ export const Constants = {
         "convertido",
         "perdido",
       ],
-      conversation_status: ["aberta", "fechada"],
+      conversation_status: [
+        "aberta",
+        "fechada",
+        "novo",
+        "qualificado",
+        "convertido",
+        "perdido",
+      ],
       message_direction: ["sent", "received"],
       message_type: ["text", "image", "audio", "document", "file"],
     },
