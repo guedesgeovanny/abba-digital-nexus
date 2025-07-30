@@ -11,8 +11,11 @@ import { useConversations, Conversation } from "@/hooks/useConversations"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useLocation } from "react-router-dom"
+import { useEffect } from "react"
 
 const Chat = () => {
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState("geral")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedAccount, setSelectedAccount] = useState("all")
@@ -21,6 +24,16 @@ const Chat = () => {
   const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, assignConversation, isDeleting, refetch } = useConversations()
   const { user } = useAuth()
   const { toast } = useToast()
+
+  // Auto-select conversation if navigated from CRM
+  useEffect(() => {
+    if (location.state?.selectedConversationId && conversations.length > 0) {
+      const conversation = conversations.find(c => c.id === location.state.selectedConversationId)
+      if (conversation) {
+        setSelectedConversation(conversation)
+      }
+    }
+  }, [location.state, conversations])
 
   const filteredConversations = conversations.filter(conversation => {
     const matchesSearch = conversation.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||

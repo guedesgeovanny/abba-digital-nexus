@@ -48,18 +48,10 @@ export const LeadDetailsDialog = ({ isOpen, onClose, conversation, onOpenChat }:
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-abba-gray border-abba-gray max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle className="text-abba-text text-xl">
             Detalhes do Lead
           </DialogTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            className="text-abba-text hover:bg-abba-black"
-          >
-            <X className="w-4 h-4" />
-          </Button>
         </DialogHeader>
 
         {isLoading ? (

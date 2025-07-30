@@ -20,7 +20,7 @@ import { CRMFilters } from "@/components/CRMFilters"
 import { AddStageDialog } from "@/components/AddStageDialog"
 import { StageColumn } from "@/components/StageColumn"
 import { LeadCard } from "@/components/LeadCard"
-import { ChatPopup } from "@/components/ChatPopup"
+import { useNavigate } from "react-router-dom"
 
 import { useCRMConversations, CRMConversation } from "@/hooks/useCRMConversations"
 import { ContactForm } from "@/components/ContactForm"
@@ -41,9 +41,9 @@ const CRM = () => {
   const [isAddingStage, setIsAddingStage] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
   const [selectedConversation, setSelectedConversation] = useState<CRMConversation | null>(null)
-  const [showChatPopup, setShowChatPopup] = useState(false)
   const [showLeadDetails, setShowLeadDetails] = useState(false)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const navigate = useNavigate()
   
   // Simplify filters for now - remove complex filtering
   const [showFilters, setShowFilters] = useState(false)
@@ -136,19 +136,15 @@ const CRM = () => {
     setShowLeadDetails(true)
   }
 
-  const handleCloseChatPopup = () => {
-    setShowChatPopup(false)
-    setSelectedConversation(null)
-  }
-
   const handleCloseLeadDetails = () => {
     setShowLeadDetails(false)
     setSelectedConversation(null)
   }
 
-  const handleOpenChatFromDetails = (conversation: CRMConversation) => {
-    setSelectedConversation(conversation)
-    setShowChatPopup(true)
+  const handleOpenChatFromDetails = () => {
+    if (selectedConversation) {
+      navigate('/chat', { state: { selectedConversationId: selectedConversation.id } })
+    }
   }
 
   // Get the currently dragging conversation for overlay
@@ -243,20 +239,6 @@ const CRM = () => {
         conversation={selectedConversation}
         onOpenChat={handleOpenChatFromDetails}
       />
-
-      {showChatPopup && selectedConversation && (
-        <ChatPopup
-          isOpen={showChatPopup}
-          onClose={handleCloseChatPopup}
-          deal={{
-            name: selectedConversation.contact_name,
-            contact: '',
-            email: '',
-            instagram: '',
-            source: 'CRM'
-          }}
-        />
-      )}
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
       <div className="h-[calc(100vh-180px)] overflow-x-auto overflow-y-hidden">
