@@ -78,8 +78,8 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-border p-4">
         <div className="flex items-center gap-3">
           <img 
-            src="/lovable-uploads/fb0eee38-84d5-47c6-b95f-cb80e02e53d3.png" 
-            alt="Abba Digital" 
+            src="/lovable-uploads/ac4a1d02-c454-4a67-b422-71008557e1d9.png" 
+            alt="NP Digital" 
             className="w-8 h-8"
           />
           <div className="flex flex-col">
