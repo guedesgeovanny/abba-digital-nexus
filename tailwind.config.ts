@@ -26,8 +26,8 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#8ED93C',
-					foreground: '#000000'
+					DEFAULT: '#1976D2',
+					foreground: '#FFFFFF'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -63,13 +63,16 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Abba brand colors
-				'abba-green': '#8ED93C',
-				'abba-green-light': '#A6FF59',
-				'abba-green-dark': '#56C236',
-				'abba-black': '#000000',
-				'abba-gray': '#111111',
-				'abba-text': '#F7FAFC'
+				// Client brand colors
+				'abba-blue': '#1976D2',
+				'abba-blue-light': '#42A5F5',
+				'abba-blue-dark': '#1565C0',
+				'abba-green': '#43A047',
+				'abba-green-light': '#66BB6A',
+				'abba-green-dark': '#2E7D33',
+				'abba-black': '#FFFFFF',
+				'abba-gray': '#F5F5F5',
+				'abba-text': '#191919'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -80,7 +83,8 @@ export default {
 				sans: ['Inter', 'sans-serif'],
 			},
 			backgroundImage: {
-				'abba-gradient': 'linear-gradient(135deg, #A6FF59 0%, #56C236 100%)',
+				'abba-gradient': 'linear-gradient(135deg, #42A5F5 0%, #43A047 100%)',
+				'client-gradient': 'linear-gradient(135deg, #1976D2 0%, #43A047 100%)',
 			},
 			keyframes: {
 				'accordion-down': {

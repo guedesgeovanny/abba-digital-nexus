@@ -15,17 +15,17 @@
     --popover: 255 255 255;
     --popover-foreground: 30 41 59;
 
-    --primary: 82 83% 52%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 207 68% 47%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 241 245 249;
-    --secondary-foreground: 30 41 59;
+    --secondary-foreground: 0 0% 10%;
 
     --muted: 241 245 249;
     --muted-foreground: 100 116 139;
 
     --accent: 241 245 249;
-    --accent-foreground: 30 41 59;
+    --accent-foreground: 0 0% 10%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 255 255 255;
@@ -38,20 +38,23 @@
 
     --sidebar-background: 255 255 255;
     --sidebar-foreground: 30 41 59;
-    --sidebar-primary: 82 83% 52%;
-    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-primary: 207 68% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 241 245 249;
     --sidebar-accent-foreground: 30 41 59;
     --sidebar-border: 226 232 240;
-    --sidebar-ring: 82 83% 52%;
+    --sidebar-ring: 207 68% 47%;
 
     /* Light theme custom colors */
-    --abba-green: #8ED93C;
-    --abba-green-light: #A6FF59;
-    --abba-green-dark: #56C236;
+    --abba-blue: #1976D2;
+    --abba-blue-light: #42A5F5;
+    --abba-blue-dark: #1565C0;
+    --abba-green: #43A047;
+    --abba-green-light: #66BB6A;
+    --abba-green-dark: #2E7D33;
     --abba-black: #FFFFFF;
-    --abba-gray: #F1F5F9;
-    --abba-text: #1E293B;
+    --abba-gray: #F5F5F5;
+    --abba-text: #191919;
   }
 
   .dark {
@@ -64,8 +67,8 @@
     --popover: 0 0% 0%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 82 83% 52%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 207 68% 47%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 6.7%;
     --secondary-foreground: 210 40% 98%;
@@ -81,24 +84,27 @@
 
     --border: 0 0% 6.7%;
     --input: 0 0% 6.7%;
-    --ring: 82 83% 52%;
+    --ring: 207 68% 47%;
 
     --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 82 83% 52%;
-    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-primary: 207 68% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 6.7%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 0 0% 6.7%;
-    --sidebar-ring: 82 83% 52%;
+    --sidebar-ring: 207 68% 47%;
 
     /* Dark theme custom colors */
-    --abba-green: #8ED93C;
-    --abba-green-light: #A6FF59;
-    --abba-green-dark: #56C236;
-    --abba-black: #000000;
-    --abba-gray: #111111;
-    --abba-text: #F7FAFC;
+    --abba-blue: #42A5F5;
+    --abba-blue-light: #64B5F6;
+    --abba-blue-dark: #1976D2;
+    --abba-green: #66BB6A;
+    --abba-green-light: #81C784;
+    --abba-green-dark: #43A047;
+    --abba-black: #191919;
+    --abba-gray: #2C2C2C;
+    --abba-text: #FFFFFF;
   }
 }
 
@@ -123,12 +129,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #8ED93C;
+  background: #43A047;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A6FF59;
+  background: #66BB6A;
 }
 
 /* Code editor styles */
