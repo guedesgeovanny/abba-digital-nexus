@@ -74,7 +74,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="border-r border-border bg-background">
+    <Sidebar className="border-r border-border bg-card">
       <SidebarHeader className="border-b border-border p-4">
         <div className="flex items-center gap-3">
           <img 
@@ -89,7 +89,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="bg-background">
+      <SidebarContent className="bg-card">
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground text-xs uppercase tracking-wider">
             Menu Principal
