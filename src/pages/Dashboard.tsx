@@ -74,25 +74,25 @@ const Dashboard = () => {
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#111" />
-              <XAxis dataKey="name" stroke="#8ED93C" />
-              <YAxis stroke="#8ED93C" />
+              <XAxis dataKey="name" stroke="#43A047" />
+              <YAxis stroke="#43A047" />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: '#000', 
-                  border: '1px solid #8ED93C',
+                  backgroundColor: '#FFFFFF', 
+                  border: '1px solid #43A047',
                   borderRadius: '8px'
                 }}
               />
               <Area 
                 type="monotone" 
                 dataKey="tokens" 
-                stroke="#8ED93C" 
+                stroke="#43A047"
                 fill="url(#gradient)" 
               />
               <defs>
                 <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8ED93C" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#8ED93C" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#43A047" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#43A047" stopOpacity={0}/>
                 </linearGradient>
               </defs>
             </AreaChart>

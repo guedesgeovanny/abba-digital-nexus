@@ -34,9 +34,9 @@ export function ThemeToggle() {
       className="fixed top-4 right-4 z-50 bg-background/80 backdrop-blur-sm border border-border hover:bg-accent"
     >
       {isDark ? (
-        <Sun className="h-4 w-4 text-yellow-500" />
+        <Sun className="h-4 w-4 text-abba-blue" />
       ) : (
-        <Moon className="h-4 w-4 text-slate-700" />
+        <Moon className="h-4 w-4 text-abba-text" />
       )}
       <span className="sr-only">Alternar tema</span>
     </Button>

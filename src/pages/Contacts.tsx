@@ -77,7 +77,7 @@ const Contacts = () => {
       case "qualificado":
         return "bg-green-600"
       case "em_andamento":
-        return "bg-yellow-600"
+        return "bg-abba-blue"
       case "novo":
         return "bg-blue-600"
       case "convertido":

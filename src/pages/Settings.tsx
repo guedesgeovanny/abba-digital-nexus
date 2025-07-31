@@ -114,7 +114,7 @@ const Settings = () => {
       case 'active':
         return <CheckCircle className="w-4 h-4 text-green-500" />
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />
+        return <Clock className="w-4 h-4 text-abba-blue" />
       default:
         return <AlertCircle className="w-4 h-4 text-red-500" />
     }
@@ -265,7 +265,7 @@ const Settings = () => {
                             {getStatusIcon(user.status)}
                             <Badge 
                               className={user.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500' : 
-                                        user.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500' : 'bg-red-500/20 text-red-400 border-red-500'}
+                                        user.status === 'pending' ? 'bg-abba-blue/20 text-abba-blue border-abba-blue' : 'bg-red-500/20 text-red-400 border-red-500'}
                               variant="outline"
                             >
                               {getStatusLabel(user.status)}

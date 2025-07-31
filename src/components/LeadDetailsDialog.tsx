@@ -31,7 +31,7 @@ const statusLabels = {
 
 const statusColors = {
   'novo': 'bg-blue-500',
-  'em_andamento': 'bg-yellow-500',
+  'em_andamento': 'bg-abba-blue',
   'qualificado': 'bg-green-500',
   'convertido': 'bg-emerald-600',
   'perdido': 'bg-red-500'

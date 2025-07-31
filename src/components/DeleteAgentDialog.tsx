@@ -85,7 +85,7 @@ export const DeleteAgentDialog = ({
             Tem certeza que deseja excluir o agente "{agent?.name}"? 
             Esta ação não pode ser desfeita e todos os dados relacionados serão perdidos.
             {agent?.whatsapp_contact && (
-              <span className="block mt-2 text-yellow-400">
+              <span className="block mt-2 text-orange-400">
                 O WhatsApp conectado também será desconectado automaticamente.
               </span>
             )}
