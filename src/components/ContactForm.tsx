@@ -22,6 +22,7 @@ interface ContactFormData {
   channel?: Contact['channel']
   source: string
   agent_assigned: string
+  value: number
 }
 
 interface ContactFormProps {
@@ -47,6 +48,7 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
     channel: contact?.channel || undefined,
     source: contact?.source || '',
     agent_assigned: contact?.agent_assigned || '',
+    value: contact?.value || 0,
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -91,6 +93,7 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
         channel: undefined,
         source: '',
         agent_assigned: '',
+        value: 0,
       })
     }
   }
@@ -235,6 +238,20 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
                 value={formData.agent_assigned}
                 onChange={(e) => setFormData(prev => ({ ...prev, agent_assigned: e.target.value }))}
                 className="bg-abba-gray border-abba-gray text-abba-text"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="value" className="text-abba-text">Valor Estimado (R$)</Label>
+              <Input
+                id="value"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.value}
+                onChange={(e) => setFormData(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                className="bg-abba-gray border-abba-gray text-abba-text"
+                placeholder="0,00"
               />
             </div>
           </div>

@@ -8,6 +8,7 @@ import { CRMConversation } from "@/hooks/useCRMConversations"
 import { useContactDetails } from "@/hooks/useContactDetails"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChatArea } from "@/components/ChatArea"
+import { ContactForm } from "@/components/ContactForm"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Conversation } from "@/hooks/useConversations"
@@ -156,14 +157,19 @@ export const LeadDetailsDialog = ({ isOpen, onClose, conversation, onOpenChat }:
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-black"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Editar
-                      </Button>
+                      <ContactForm
+                        trigger={
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-black"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </Button>
+                        }
+                        contact={contact}
+                      />
                       {conversation && (
                         <Button
                           onClick={handleOpenChat}
