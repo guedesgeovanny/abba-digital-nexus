@@ -21,7 +21,7 @@ export const useContactDetails = (contactId: string | null) => {
               created_at
             )
           ),
-          agents (
+          agents!contacts_agent_assigned_fkey (
             id,
             name,
             status
