@@ -60,7 +60,7 @@ export const CRMFilters = ({
               <SelectValue placeholder="Canal" />
             </SelectTrigger>
             <SelectContent className="bg-abba-gray border-abba-gray">
-              <SelectItem value="" className="text-abba-text">Todos os canais</SelectItem>
+              <SelectItem value="all" className="text-abba-text">Todos os canais</SelectItem>
               {allChannels.map((channel) => (
                 <SelectItem key={channel} value={channel} className="text-abba-text">
                   <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export const CRMFilters = ({
                 <SelectValue placeholder="Valor do Lead" />
               </SelectTrigger>
               <SelectContent className="bg-abba-gray border-abba-gray">
-                <SelectItem value="" className="text-abba-text">Todos os valores</SelectItem>
+                <SelectItem value="all" className="text-abba-text">Todos os valores</SelectItem>
                 <SelectItem value="até-5000" className="text-abba-text">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-3 h-3" />
@@ -114,7 +114,7 @@ export const CRMFilters = ({
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent className="bg-abba-gray border-abba-gray">
-              <SelectItem value="" className="text-abba-text">Todos os períodos</SelectItem>
+              <SelectItem value="all" className="text-abba-text">Todos os períodos</SelectItem>
               <SelectItem value="7-dias" className="text-abba-text">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-3 h-3" />
@@ -142,7 +142,7 @@ export const CRMFilters = ({
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="bg-abba-gray border-abba-gray">
-              <SelectItem value="" className="text-abba-text">Todos os status</SelectItem>
+              <SelectItem value="all" className="text-abba-text">Todos os status</SelectItem>
               <SelectItem value="aberta" className="text-abba-text">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="w-3 h-3" />

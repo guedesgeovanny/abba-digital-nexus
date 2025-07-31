@@ -53,10 +53,10 @@ export const useCRMConversations = () => {
   const [isLoading, setIsLoading] = useState(true)
   
   // Filter states
-  const [filterChannel, setFilterChannel] = useState<string>('')
-  const [filterValueRange, setFilterValueRange] = useState<string>('')
-  const [filterPeriod, setFilterPeriod] = useState<string>('')
-  const [filterStatus, setFilterStatus] = useState<string>('')
+  const [filterChannel, setFilterChannel] = useState<string>('all')
+  const [filterValueRange, setFilterValueRange] = useState<string>('all')
+  const [filterPeriod, setFilterPeriod] = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
   useEffect(() => {
     Promise.all([fetchConversations(), fetchCustomStages()])
@@ -198,12 +198,12 @@ export const useCRMConversations = () => {
   // Filter conversations based on active filters
   const filteredConversations = conversations.filter(conversation => {
     // Channel filter
-    if (filterChannel && conversation.channel !== filterChannel) {
+    if (filterChannel && filterChannel !== 'all' && conversation.channel !== filterChannel) {
       return false
     }
     
     // Value range filter
-    if (filterValueRange && conversation.value !== null && conversation.value !== undefined) {
+    if (filterValueRange && filterValueRange !== 'all' && conversation.value !== null && conversation.value !== undefined) {
       const value = conversation.value
       switch (filterValueRange) {
         case 'até-5000':
@@ -222,7 +222,7 @@ export const useCRMConversations = () => {
     }
     
     // Period filter
-    if (filterPeriod) {
+    if (filterPeriod && filterPeriod !== 'all') {
       const createdDate = new Date(conversation.created_at)
       const now = new Date()
       const daysDiff = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
@@ -241,7 +241,7 @@ export const useCRMConversations = () => {
     }
     
     // Status filter
-    if (filterStatus) {
+    if (filterStatus && filterStatus !== 'all') {
       switch (filterStatus) {
         case 'aberta':
           if (!['novo', 'aberta', 'qualificado'].includes(conversation.status)) return false
@@ -275,10 +275,10 @@ export const useCRMConversations = () => {
   
   // Clear filters function
   const clearFilters = () => {
-    setFilterChannel('')
-    setFilterValueRange('')
-    setFilterPeriod('')
-    setFilterStatus('')
+    setFilterChannel('all')
+    setFilterValueRange('all')
+    setFilterPeriod('all')
+    setFilterStatus('all')
   }
 
   return {
