@@ -141,12 +141,6 @@ const CRM = () => {
     setSelectedConversation(null)
   }
 
-  const handleOpenChatFromDetails = () => {
-    if (selectedConversation) {
-      navigate('/chat', { state: { selectedConversationId: selectedConversation.id } })
-    }
-  }
-
   // Get the currently dragging conversation for overlay
   const activeConversation = activeDragId ? 
     Object.values(crmData).flat().find(conv => conv.id === activeDragId) : null
@@ -237,7 +231,6 @@ const CRM = () => {
         isOpen={showLeadDetails}
         onClose={handleCloseLeadDetails}
         conversation={selectedConversation}
-        onOpenChat={handleOpenChatFromDetails}
       />
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}
