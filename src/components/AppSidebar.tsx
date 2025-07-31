@@ -74,8 +74,8 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="border-r border-abba-gray bg-abba-black">
-      <SidebarHeader className="border-b border-abba-gray p-4">
+    <Sidebar className="border-r border-border bg-background">
+      <SidebarHeader className="border-b border-border p-4">
         <div className="flex items-center gap-3">
           <img 
             src="/lovable-uploads/fb0eee38-84d5-47c6-b95f-cb80e02e53d3.png" 
@@ -83,15 +83,15 @@ export function AppSidebar() {
             className="w-8 h-8"
           />
           <div className="flex flex-col">
-            <span className="font-semibold text-abba-text text-sm">Abba Digital</span>
-            <span className="text-xs text-gray-400">Manager</span>
+            <span className="font-semibold text-foreground text-sm">Abba Digital</span>
+            <span className="text-xs text-muted-foreground">Manager</span>
           </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="bg-abba-black">
+      <SidebarContent className="bg-background">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-400 text-xs uppercase tracking-wider">
+          <SidebarGroupLabel className="text-muted-foreground text-xs uppercase tracking-wider">
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -101,9 +101,9 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild
                     className={`
-                      data-[active=true]:bg-abba-green data-[active=true]:text-abba-black
-                      hover:bg-abba-gray hover:text-abba-green transition-all duration-200
-                      ${location.pathname === item.url ? 'bg-abba-green text-abba-black' : 'text-abba-text'}
+                      data-[active=true]:bg-abba-green data-[active=true]:text-white
+                      hover:bg-muted hover:text-abba-green transition-all duration-200
+                      ${location.pathname === item.url ? 'bg-abba-green text-white' : 'text-foreground'}
                     `}
                   >
                     <a href={item.url}>
@@ -121,22 +121,22 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-border p-4 space-y-3">
         {loading ? (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-abba-gray rounded-full animate-pulse"></div>
+            <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
             <div className="flex flex-col gap-1">
-              <div className="w-16 h-3 bg-abba-gray rounded animate-pulse"></div>
-              <div className="w-24 h-2 bg-abba-gray rounded animate-pulse"></div>
+              <div className="w-16 h-3 bg-muted rounded animate-pulse"></div>
+              <div className="w-24 h-2 bg-muted rounded animate-pulse"></div>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
-              <span className="text-abba-black font-semibold text-sm">
+              <span className="text-white font-semibold text-sm">
                 {getFirstName().charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-abba-text">{getFirstName()}</span>
-              <span className="text-xs text-gray-400">{userProfile?.email}</span>
+              <span className="text-sm font-medium text-foreground">{getFirstName()}</span>
+              <span className="text-xs text-muted-foreground">{userProfile?.email}</span>
             </div>
           </div>
         )}
