@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CRMConversation } from '@/hooks/useCRMConversations'
+import { Phone, Mail, Building, DollarSign, MessageCircle, Instagram } from 'lucide-react'
 
 interface LeadCardProps {
   conversation: CRMConversation
@@ -34,6 +35,35 @@ export const LeadCard = ({ conversation, onCardClick, isDragOverlay = false }: L
     onCardClick?.(conversation)
   }
 
+  const formatValue = (value?: number) => {
+    if (!value) return null
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
+
+  const formatPhone = (phone?: string) => {
+    if (!phone) return null
+    // Simple phone formatting for Brazilian numbers
+    const cleaned = phone.replace(/\D/g, '')
+    if (cleaned.length === 11) {
+      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`
+    }
+    return phone
+  }
+
+  const getChannelIcon = (channel?: string) => {
+    switch (channel?.toLowerCase()) {
+      case 'whatsapp':
+        return <MessageCircle className="w-3 h-3" />
+      case 'instagram':
+        return <Instagram className="w-3 h-3" />
+      default:
+        return <MessageCircle className="w-3 h-3" />
+    }
+  }
+
   return (
     <Card 
       ref={setNodeRef} 
@@ -48,8 +78,51 @@ export const LeadCard = ({ conversation, onCardClick, isDragOverlay = false }: L
         ${isDragOverlay ? 'shadow-2xl shadow-abba-green/40 border-abba-green' : ''}
       `}
     >
-      <CardContent className="p-4">
-        <h4 className="font-medium text-abba-text">{conversation.contact_name}</h4>
+      <CardContent className="p-4 space-y-2">
+        <h4 className="font-medium text-abba-text truncate">{conversation.contact_name}</h4>
+        
+        {/* Channel and Value */}
+        {(conversation.channel || conversation.value) && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            {conversation.channel && (
+              <div className="flex items-center gap-1">
+                {getChannelIcon(conversation.channel)}
+                <span className="capitalize">{conversation.channel}</span>
+              </div>
+            )}
+            {conversation.value && (
+              <div className="flex items-center gap-1 text-green-600">
+                <DollarSign className="w-3 h-3" />
+                <span className="font-medium">{formatValue(conversation.value)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Phone or Email */}
+        {(conversation.phone || conversation.email) && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            {conversation.phone ? (
+              <>
+                <Phone className="w-3 h-3" />
+                <span className="truncate">{formatPhone(conversation.phone)}</span>
+              </>
+            ) : conversation.email ? (
+              <>
+                <Mail className="w-3 h-3" />
+                <span className="truncate">{conversation.email}</span>
+              </>
+            ) : null}
+          </div>
+        )}
+
+        {/* Company */}
+        {conversation.company && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Building className="w-3 h-3" />
+            <span className="truncate">{conversation.company}</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

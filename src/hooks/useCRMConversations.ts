@@ -10,6 +10,11 @@ export interface CRMConversation {
   status: string
   created_at: string
   updated_at: string
+  phone?: string
+  email?: string
+  company?: string
+  value?: number
+  channel?: string
 }
 
 export interface CRMStageData {
@@ -55,11 +60,35 @@ export const useCRMConversations = () => {
     try {
       const { data, error } = await supabase
         .from('conversations')
-        .select('id, contact_name, contact_id, status, created_at, updated_at')
+        .select(`
+          id, contact_name, contact_id, status, created_at, updated_at,
+          contacts!conversations_contact_id_fkey (
+            phone,
+            email,
+            company,
+            value,
+            channel
+          )
+        `)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setConversations(data || [])
+      
+      const formattedData = data?.map(conv => ({
+        id: conv.id,
+        contact_name: conv.contact_name,
+        contact_id: conv.contact_id,
+        status: conv.status,
+        created_at: conv.created_at,
+        updated_at: conv.updated_at,
+        phone: conv.contacts?.phone,
+        email: conv.contacts?.email,
+        company: conv.contacts?.company,
+        value: conv.contacts?.value,
+        channel: conv.contacts?.channel
+      })) || []
+      
+      setConversations(formattedData)
     } catch (error) {
       console.error('Error fetching conversations:', error)
     }
