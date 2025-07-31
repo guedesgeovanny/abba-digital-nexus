@@ -9,9 +9,17 @@ interface LeadCardProps {
   conversation: CRMConversation
   onCardClick?: (conversation: CRMConversation) => void
   isDragOverlay?: boolean
+  isAdmin?: boolean
+  currentUserId?: string
 }
 
-export const LeadCard = ({ conversation, onCardClick, isDragOverlay = false }: LeadCardProps) => {
+export const LeadCard = ({ 
+  conversation, 
+  onCardClick, 
+  isDragOverlay = false,
+  isAdmin = false,
+  currentUserId
+}: LeadCardProps) => {
   const {
     attributes,
     listeners,
@@ -73,6 +81,25 @@ export const LeadCard = ({ conversation, onCardClick, isDragOverlay = false }: L
     }).format(date)
   }
 
+  const getOwnershipBadge = () => {
+    if (!isAdmin) return null
+    
+    if (conversation.user_id === currentUserId) {
+      return (
+        <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full">
+          Minha
+        </span>
+      )
+    } else if (conversation.assigned_to === currentUserId) {
+      return (
+        <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+          Atribuída
+        </span>
+      )
+    }
+    return null
+  }
+
   return (
     <Card 
       ref={setNodeRef} 
@@ -88,7 +115,10 @@ export const LeadCard = ({ conversation, onCardClick, isDragOverlay = false }: L
       `}
     >
       <CardContent className="p-4 space-y-2">
-        <h4 className="font-medium text-abba-text truncate">{conversation.contact_name}</h4>
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium text-abba-text truncate">{conversation.contact_name}</h4>
+          {getOwnershipBadge()}
+        </div>
         
         {/* Channel and Value */}
         {(conversation.channel || conversation.value) && (

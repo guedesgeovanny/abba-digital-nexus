@@ -49,7 +49,10 @@ const CRM = () => {
     allChannels,
     hasValueData,
     totalLeads,
-    filteredLeadsCount
+    filteredLeadsCount,
+    // User role information
+    isAdmin,
+    currentUserId
   } = useCRMConversations()
 
   const [isAddingStage, setIsAddingStage] = useState(false)
@@ -282,6 +285,8 @@ const CRM = () => {
                   conversations={conversations}
                   stageColorsMap={stageColorsMap}
                   onCardClick={handleCardClick}
+                  isAdmin={isAdmin}
+                  currentUserId={currentUserId}
                 />
               )
             })}
@@ -293,6 +298,8 @@ const CRM = () => {
                 <LeadCard 
                   conversation={activeConversation} 
                   isDragOverlay={true}
+                  isAdmin={isAdmin}
+                  currentUserId={currentUserId}
                 />
               </div>
             ) : null}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Force cache invalidation - removed STAGE_COLORS constant
 
@@ -10,6 +11,8 @@ export interface CRMConversation {
   status: string
   created_at: string
   updated_at: string
+  user_id?: string
+  assigned_to?: string
   phone?: string
   email?: string
   company?: string
@@ -48,9 +51,12 @@ const BASIC_STAGES = [
 ] as const
 
 export const useCRMConversations = () => {
+  const { user, userProfile } = useAuth()
   const [conversations, setConversations] = useState<CRMConversation[]>([])
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  
+  const isAdmin = userProfile?.role === 'admin'
   
   // Filter states
   const [filterChannel, setFilterChannel] = useState<string>('all')
@@ -59,15 +65,18 @@ export const useCRMConversations = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all')
 
   useEffect(() => {
-    Promise.all([fetchConversations(), fetchCustomStages()])
-  }, [])
+    if (user) {
+      Promise.all([fetchConversations(), fetchCustomStages()])
+        .finally(() => setIsLoading(false))
+    }
+  }, [user, isAdmin])
 
   const fetchConversations = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('conversations')
         .select(`
-          id, contact_name, contact_id, status, created_at, updated_at,
+          id, contact_name, contact_id, status, created_at, updated_at, user_id, assigned_to,
           contacts!conversations_contact_id_fkey (
             phone,
             email,
@@ -78,6 +87,13 @@ export const useCRMConversations = () => {
         `)
         .order('created_at', { ascending: false })
 
+      // Apply role-based filtering - same as Chat tab
+      if (!isAdmin && user?.id) {
+        query = query.or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
+      }
+
+      const { data, error } = await query
+
       if (error) throw error
       
       const formattedData = data?.map(conv => ({
@@ -87,6 +103,8 @@ export const useCRMConversations = () => {
         status: conv.status,
         created_at: conv.created_at,
         updated_at: conv.updated_at,
+        user_id: conv.user_id,
+        assigned_to: conv.assigned_to,
         phone: conv.contacts?.phone,
         email: conv.contacts?.email,
         company: conv.contacts?.company,
@@ -111,8 +129,6 @@ export const useCRMConversations = () => {
       setCustomStages(data || [])
     } catch (error) {
       console.error('Error fetching custom stages:', error)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -303,6 +319,9 @@ export const useCRMConversations = () => {
     allChannels,
     hasValueData,
     totalLeads: conversations.length,
-    filteredLeadsCount: filteredConversations.length
+    filteredLeadsCount: filteredConversations.length,
+    // User role information  
+    isAdmin,
+    currentUserId: user?.id
   }
 }

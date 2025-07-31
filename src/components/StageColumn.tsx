@@ -10,13 +10,17 @@ interface StageColumnProps {
   conversations: CRMConversation[]
   stageColorsMap: Record<string, string>
   onCardClick?: (conversation: CRMConversation) => void
+  isAdmin?: boolean
+  currentUserId?: string
 }
 
 export const StageColumn = ({
   stage,
   conversations,
   stageColorsMap,
-  onCardClick
+  onCardClick,
+  isAdmin,
+  currentUserId
 }: StageColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: stage,
@@ -58,6 +62,8 @@ export const StageColumn = ({
               key={conversation.id} 
               conversation={conversation}
               onCardClick={onCardClick}
+              isAdmin={isAdmin}
+              currentUserId={currentUserId}
             />
           ))}
         </SortableContext>
