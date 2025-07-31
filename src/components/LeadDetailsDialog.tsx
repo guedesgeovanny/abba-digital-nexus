@@ -325,10 +325,10 @@ export const LeadDetailsDialog = ({ isOpen, onClose, conversation, onOpenChat }:
                       </div>
                     )}
 
-                    {contact.agent && (
+                    {contact.user && (
                       <div>
-                        <p>Agente responsável</p>
-                        <p className="text-abba-text">{contact.agent.name}</p>
+                        <p>Usuário responsável</p>
+                        <p className="text-abba-text">{contact.user.full_name}</p>
                       </div>
                     )}
                   </div>

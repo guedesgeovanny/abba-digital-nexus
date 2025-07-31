@@ -8,7 +8,8 @@ export const useContactDetails = (contactId: string | null) => {
     queryFn: async () => {
       if (!contactId) return null
       
-      const { data, error } = await supabase
+      // First get the contact with tags
+      const { data: contactData, error } = await supabase
         .from('contacts')
         .select(`
           *,
@@ -20,11 +21,6 @@ export const useContactDetails = (contactId: string | null) => {
               color,
               created_at
             )
-          ),
-          agents!contacts_agent_assigned_fkey (
-            id,
-            name,
-            status
           )
         `)
         .eq('id', contactId)
@@ -32,11 +28,18 @@ export const useContactDetails = (contactId: string | null) => {
 
       if (error) throw error
 
-      // Transform the data to include tags and agent properly
+      // Then get the user profile
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('id', contactData.user_id)
+        .single()
+
+      // Transform the data to include tags and user properly
       return {
-        ...data,
-        tags: data.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || [],
-        agent: data.agents || undefined
+        ...contactData,
+        tags: contactData.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || [],
+        user: userData || undefined
       } as ContactWithTags
     },
     enabled: !!contactId,
