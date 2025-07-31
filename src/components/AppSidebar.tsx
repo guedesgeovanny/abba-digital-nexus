@@ -118,7 +118,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="border-t border-abba-gray p-4 space-y-3">
+      <SidebarFooter className="border-t border-border p-4 space-y-3">
         {loading ? (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-abba-gray rounded-full animate-pulse"></div>
