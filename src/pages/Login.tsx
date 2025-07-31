@@ -136,16 +136,16 @@ const Login = () => {
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/lovable-uploads/a7cf582e-5718-4f64-912a-e05c747864bf.png" 
-              alt="Abba Digital" 
+              src="/lovable-uploads/ac4a1d02-c454-4a67-b422-71008557e1d9.png" 
+              alt="NP Digital" 
               className="w-16 h-16"
             />
           </div>
           <CardTitle className="text-2xl font-bold text-abba-text">
-            Abba Digital Manager
+            Marcas & Patentes - BRASIL
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Entre na sua conta para gerenciar seus agentes digitais
+            Entre na sua conta para gerenciar o seu atendimento
           </CardDescription>
         </CardHeader>
         
