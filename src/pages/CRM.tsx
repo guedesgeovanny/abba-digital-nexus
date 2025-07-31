@@ -35,7 +35,21 @@ const CRM = () => {
     stageColorsMap,
     isLoading,
     updateConversationStatus,
-    addCustomStage
+    addCustomStage,
+    // Filter states and functions
+    filterChannel,
+    filterValueRange,
+    filterPeriod,
+    filterStatus,
+    setFilterChannel,
+    setFilterValueRange,
+    setFilterPeriod,
+    setFilterStatus,
+    clearFilters,
+    allChannels,
+    hasValueData,
+    totalLeads,
+    filteredLeadsCount
   } = useCRMConversations()
 
   const [isAddingStage, setIsAddingStage] = useState(false)
@@ -219,7 +233,23 @@ const CRM = () => {
         </div>
       </div>
 
-      {/* Filters temporarily disabled */}
+      {/* Filters */}
+      <CRMFilters
+        showFilters={showFilters}
+        filterChannel={filterChannel}
+        filterValueRange={filterValueRange}
+        filterPeriod={filterPeriod}
+        filterStatus={filterStatus}
+        allChannels={allChannels}
+        hasValueData={hasValueData}
+        setFilterChannel={setFilterChannel}
+        setFilterValueRange={setFilterValueRange}
+        setFilterPeriod={setFilterPeriod}
+        setFilterStatus={setFilterStatus}
+        clearFilters={clearFilters}
+        filteredLeadsCount={filteredLeadsCount}
+        totalLeads={totalLeads}
+      />
 
       <AddStageDialog 
         isOpen={isAddingStage}

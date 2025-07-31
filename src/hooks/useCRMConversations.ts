@@ -51,6 +51,12 @@ export const useCRMConversations = () => {
   const [conversations, setConversations] = useState<CRMConversation[]>([])
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  
+  // Filter states
+  const [filterChannel, setFilterChannel] = useState<string>('')
+  const [filterValueRange, setFilterValueRange] = useState<string>('')
+  const [filterPeriod, setFilterPeriod] = useState<string>('')
+  const [filterStatus, setFilterStatus] = useState<string>('')
 
   useEffect(() => {
     Promise.all([fetchConversations(), fetchCustomStages()])
@@ -189,7 +195,67 @@ export const useCRMConversations = () => {
     return acc
   }, {} as Record<string, string>)
 
-  // Group conversations by stage
+  // Filter conversations based on active filters
+  const filteredConversations = conversations.filter(conversation => {
+    // Channel filter
+    if (filterChannel && conversation.channel !== filterChannel) {
+      return false
+    }
+    
+    // Value range filter
+    if (filterValueRange && conversation.value !== null && conversation.value !== undefined) {
+      const value = conversation.value
+      switch (filterValueRange) {
+        case 'até-5000':
+          if (value > 5000) return false
+          break
+        case '5001-10000':
+          if (value <= 5000 || value > 10000) return false
+          break
+        case '10001-20000':
+          if (value <= 10000 || value > 20000) return false
+          break
+        case 'acima-20000':
+          if (value <= 20000) return false
+          break
+      }
+    }
+    
+    // Period filter
+    if (filterPeriod) {
+      const createdDate = new Date(conversation.created_at)
+      const now = new Date()
+      const daysDiff = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
+      
+      switch (filterPeriod) {
+        case '7-dias':
+          if (daysDiff > 7) return false
+          break
+        case '30-dias':
+          if (daysDiff > 30) return false
+          break
+        case '90-dias':
+          if (daysDiff > 90) return false
+          break
+      }
+    }
+    
+    // Status filter
+    if (filterStatus) {
+      switch (filterStatus) {
+        case 'aberta':
+          if (!['novo', 'aberta', 'qualificado'].includes(conversation.status)) return false
+          break
+        case 'fechada':
+          if (!['convertido', 'fechada', 'perdido'].includes(conversation.status)) return false
+          break
+      }
+    }
+    
+    return true
+  })
+
+  // Group filtered conversations by stage
   const crmData: CRMStageData = {}
   
   // Initialize all stages (basic + custom)
@@ -197,11 +263,23 @@ export const useCRMConversations = () => {
     crmData[stage] = []
   })
 
-  // Group conversations by their mapped stage (only basic stages for now)
-  conversations.forEach(conversation => {
+  // Group filtered conversations by their mapped stage (only basic stages for now)
+  filteredConversations.forEach(conversation => {
     const stageName = STATUS_TO_STAGE_MAP[conversation.status as keyof typeof STATUS_TO_STAGE_MAP] || 'Novo Lead'
     crmData[stageName].push(conversation)
   })
+
+  // Get unique values for filter options
+  const allChannels = [...new Set(conversations.map(c => c.channel).filter(Boolean))]
+  const hasValueData = conversations.some(c => c.value !== null && c.value !== undefined)
+  
+  // Clear filters function
+  const clearFilters = () => {
+    setFilterChannel('')
+    setFilterValueRange('')
+    setFilterPeriod('')
+    setFilterStatus('')
+  }
 
   return {
     crmData,
@@ -211,6 +289,20 @@ export const useCRMConversations = () => {
     updateConversationStatus,
     addCustomStage,
     customStages,
-    basicStages: BASIC_STAGES.map(s => s.name)
+    basicStages: BASIC_STAGES.map(s => s.name),
+    // Filter states and functions
+    filterChannel,
+    filterValueRange,
+    filterPeriod,
+    filterStatus,
+    setFilterChannel,
+    setFilterValueRange,
+    setFilterPeriod,
+    setFilterStatus,
+    clearFilters,
+    allChannels,
+    hasValueData,
+    totalLeads: conversations.length,
+    filteredLeadsCount: filteredConversations.length
   }
 }
