@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CRMConversation } from '@/hooks/useCRMConversations'
-import { Phone, Mail, Building, DollarSign, MessageCircle, Instagram } from 'lucide-react'
+import { Phone, Mail, Building, DollarSign, MessageCircle, Instagram, Calendar } from 'lucide-react'
 
 interface LeadCardProps {
   conversation: CRMConversation
@@ -62,6 +62,15 @@ export const LeadCard = ({ conversation, onCardClick, isDragOverlay = false }: L
       default:
         return <MessageCircle className="w-3 h-3" />
     }
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date)
   }
 
   return (
@@ -123,6 +132,12 @@ export const LeadCard = ({ conversation, onCardClick, isDragOverlay = false }: L
             <span className="truncate">{conversation.company}</span>
           </div>
         )}
+
+        {/* Created Date */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Calendar className="w-3 h-3" />
+          <span>Criado em {formatDate(conversation.created_at)}</span>
+        </div>
       </CardContent>
     </Card>
   )
