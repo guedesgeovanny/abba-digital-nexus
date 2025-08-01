@@ -30,6 +30,7 @@ const items = [{
   url: "/settings",
   icon: Settings
 }];
+
 export function AppSidebar() {
   const location = useLocation();
   const {
@@ -37,6 +38,7 @@ export function AppSidebar() {
     userProfile,
     loading
   } = useAuth();
+  
   const handleLogout = async () => {
     try {
       await signOut();
@@ -45,6 +47,7 @@ export function AppSidebar() {
       console.error("Erro ao fazer logout:", error);
     }
   };
+  
   const getFirstName = () => {
     if (userProfile?.full_name) {
       return userProfile.full_name.split(' ')[0];
@@ -54,64 +57,73 @@ export function AppSidebar() {
     }
     return 'Usuário';
   };
-  return <Sidebar className="border-r border-border">
-      <SidebarHeader className="border-b border-border p-4">
+  
+  return (
+    <Sidebar className="border-r border-sidebar-border bg-sidebar">
+      <SidebarHeader className="border-b border-sidebar-border p-4 bg-sidebar">
         <div className="flex items-center gap-3">
           <img src="/lovable-uploads/ac4a1d02-c454-4a67-b422-71008557e1d9.png" alt="NP Digital" className="w-8 h-8" />
           <div className="flex flex-col">
-            <span className="font-semibold text-foreground text-sm">Marcas & Patentes </span>
-            <span className="text-xs text-muted-foreground">Manager</span>
+            <span className="font-semibold text-sidebar-foreground text-sm">Marcas & Patentes </span>
+            <span className="text-xs text-sidebar-accent-foreground">Manager</span>
           </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="bg-background">
+      <SidebarContent className="bg-sidebar">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground text-xs uppercase tracking-wider">
+          <SidebarGroupLabel className="text-sidebar-accent-foreground text-xs uppercase tracking-wider">
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map(item => <SidebarMenuItem key={item.title}>
+              {items.map(item => (
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className={`
                       data-[active=true]:bg-abba-green data-[active=true]:text-white
-                      hover:bg-muted hover:text-abba-green transition-all duration-200
-                      ${location.pathname === item.url ? 'bg-abba-green text-white' : 'text-foreground'}
+                      hover:bg-sidebar-accent hover:text-abba-green transition-all duration-200
+                      ${location.pathname === item.url ? 'bg-abba-green text-white' : 'text-sidebar-foreground'}
                     `}>
                     <a href={item.url}>
                       <item.icon className="w-4 h-4" />
                       <span className="font-medium">{item.title}</span>
                     </a>
                   </SidebarMenuButton>
-                </SidebarMenuItem>)}
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="border-t border-border p-4 space-y-3">
-        {loading ? <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
+      <SidebarFooter className="border-t border-sidebar-border p-4 space-y-3 bg-sidebar">
+        {loading ? (
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-sidebar-accent rounded-full animate-pulse"></div>
             <div className="flex flex-col gap-1">
-              <div className="w-16 h-3 bg-muted rounded animate-pulse"></div>
-              <div className="w-24 h-2 bg-muted rounded animate-pulse"></div>
+              <div className="w-16 h-3 bg-sidebar-accent rounded animate-pulse"></div>
+              <div className="w-24 h-2 bg-sidebar-accent rounded animate-pulse"></div>
             </div>
-          </div> : <div className="flex items-center gap-3">
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
               <span className="text-white font-semibold text-sm">
                 {getFirstName().charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">{getFirstName()}</span>
-              <span className="text-xs text-muted-foreground">{userProfile?.email}</span>
+              <span className="text-sm font-medium text-sidebar-foreground">{getFirstName()}</span>
+              <span className="text-xs text-sidebar-accent-foreground">{userProfile?.email}</span>
             </div>
-          </div>}
+          </div>
+        )}
         
         <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-400/10">
           <LogOut className="w-4 h-4 mr-2" />
           Sair
         </Button>
       </SidebarFooter>
-    </Sidebar>;
+    </Sidebar>
+  );
 }
