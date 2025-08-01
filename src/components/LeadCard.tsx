@@ -124,14 +124,6 @@ export const LeadCard = ({
           </div>
           {getOwnershipBadge()}
         </div>
-
-        {/* Attachments */}
-        {attachments.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Paperclip className="w-3 h-3" />
-            <span>{attachments.length} anexo{attachments.length > 1 ? 's' : ''}</span>
-          </div>
-        )}
         
         {/* Channel and Value */}
         {(conversation.channel || conversation.value) && (
@@ -173,6 +165,14 @@ export const LeadCard = ({
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Building className="w-3 h-3" />
             <span className="truncate">{conversation.company}</span>
+          </div>
+        )}
+
+        {/* Attachments */}
+        {attachments.length > 0 && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Paperclip className="w-3 h-3" />
+            <span>{attachments.length} anexo{attachments.length > 1 ? 's' : ''}</span>
           </div>
         )}
 
