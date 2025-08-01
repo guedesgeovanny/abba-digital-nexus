@@ -211,12 +211,14 @@ export const FileUploadDialog: React.FC<FileUploadDialogProps> = ({
               variant="outline"
               onClick={handleClose}
               disabled={isUploading}
+              className="hover:bg-primary hover:text-primary-foreground"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleUpload}
               disabled={!selectedFile || isUploading}
+              className="hover:bg-primary hover:text-primary-foreground"
             >
               {isUploading ? 'Enviando...' : 'Anexar'}
             </Button>
