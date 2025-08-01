@@ -65,7 +65,7 @@ export function AppSidebar() {
           <img src="/lovable-uploads/ac4a1d02-c454-4a67-b422-71008557e1d9.png" alt="NP Digital" className="w-8 h-8" />
           <div className="flex flex-col">
             <span className="font-semibold text-sidebar-foreground text-sm">Marcas & Patentes </span>
-            <span className="text-xs text-sidebar-accent-foreground">Manager</span>
+            <span className="text-xs text-sidebar-accent-foreground">Brasil</span>
           </div>
         </div>
       </SidebarHeader>
