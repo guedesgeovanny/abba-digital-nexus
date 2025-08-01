@@ -106,112 +106,93 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Paperclip className="h-5 w-5" />
-            <span>Anexos</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground">Carregando anexos...</div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-3">
+        <Paperclip className="w-4 h-4 text-abba-green" />
+        <div>
+          <p className="text-sm font-medium text-gray-400">Anexos</p>
+          <p className="text-sm text-abba-text">Carregando anexos...</p>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-2">
-            <Paperclip className="h-5 w-5" />
-            <span>Anexos</span>
-            {attachments.length > 0 && (
-              <Badge variant="secondary">{attachments.length}</Badge>
-            )}
-          </CardTitle>
+    <div className="flex items-start gap-3">
+      <Paperclip className="w-4 h-4 text-abba-green flex-shrink-0 mt-0.5" />
+      <div className="flex-1">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-gray-400">
+            Anexos {attachments.length > 0 && <span className="text-abba-text">({attachments.length})</span>}
+          </p>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={onUploadClick}
+            className="h-6 px-2 text-xs"
           >
-            <Paperclip className="h-4 w-4 mr-2" />
+            <Paperclip className="h-3 w-3 mr-1" />
             Anexar
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0">
+        
         {attachments.length === 0 ? (
-          <div className="text-center py-6">
-            <Paperclip className="mx-auto h-12 w-12 text-muted-foreground/50 mb-2" />
-            <p className="text-sm text-muted-foreground">Nenhum anexo encontrado</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Clique em "Anexar" para adicionar arquivos
-            </p>
-          </div>
+          <p className="text-sm text-abba-text">Nenhum anexo</p>
         ) : (
-          <div className="space-y-3">
-            {attachments.map((attachment, index) => (
-              <div key={attachment.id}>
-                {index > 0 && <Separator className="my-3" />}
-                <div className="flex items-start space-x-3">
-                  {renderFilePreview(attachment) || (
-                    <div className="text-muted-foreground mt-1 flex-shrink-0">
-                      {getFileIcon(attachment.media_file.mimetype)}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium truncate">
-                        {attachment.media_file.original_filename || attachment.media_file.filename}
-                      </p>
-                      <div className="flex items-center space-x-1 ml-2">
-                        {attachment.media_file.mimetype.startsWith('image/') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setPreviewFile(attachment)}
-                            title="Visualizar imagem"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(attachment)}
-                          title="Baixar arquivo"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(attachment.id)}
-                          disabled={isDeleting}
-                          title="Remover anexo"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(attachment.media_file.size_bytes)}
-                      </p>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(attachment.created_at)}
-                      </p>
-                    </div>
+          <div className="space-y-2">
+            {attachments.map((attachment) => (
+              <div key={attachment.id} className="flex items-center gap-2 p-2 rounded-lg border bg-background/50">
+                {renderFilePreview(attachment) || (
+                  <div className="text-muted-foreground flex-shrink-0">
+                    {getFileIcon(attachment.media_file.mimetype)}
                   </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate text-abba-text">
+                    {attachment.media_file.original_filename || attachment.media_file.filename}
+                  </p>
+                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                    <span>{formatFileSize(attachment.media_file.size_bytes)}</span>
+                    <span>•</span>
+                    <span>{formatDate(attachment.created_at)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1">
+                  {attachment.media_file.mimetype.startsWith('image/') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPreviewFile(attachment)}
+                      className="h-6 w-6 p-0"
+                      title="Visualizar imagem"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownload(attachment)}
+                    className="h-6 w-6 p-0"
+                    title="Baixar arquivo"
+                  >
+                    <Download className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(attachment.id)}
+                    disabled={isDeleting}
+                    className="h-6 w-6 p-0"
+                    title="Remover anexo"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </CardContent>
+      </div>
 
       {/* Preview Dialog for Images */}
       <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
@@ -262,6 +243,6 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   )
 }
