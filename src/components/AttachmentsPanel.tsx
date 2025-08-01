@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { useConversationAttachments, ConversationAttachment } from '@/hooks/useConversationAttachments'
 import { Badge } from '@/components/ui/badge'
 
@@ -45,6 +46,7 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
 }) => {
   const { attachments, isLoading, deleteAttachment, isDeleting } = useConversationAttachments(conversationId)
   const [previewFile, setPreviewFile] = useState<ConversationAttachment | null>(null)
+  const [deleteAttachmentId, setDeleteAttachmentId] = useState<string | null>(null)
 
   const handleDownload = async (attachment: ConversationAttachment) => {
     try {
@@ -67,8 +69,13 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
   }
 
   const handleDelete = (attachmentId: string) => {
-    if (confirm('Tem certeza que deseja remover este anexo?')) {
-      deleteAttachment(attachmentId)
+    setDeleteAttachmentId(attachmentId)
+  }
+
+  const confirmDelete = () => {
+    if (deleteAttachmentId) {
+      deleteAttachment(deleteAttachmentId)
+      setDeleteAttachmentId(null)
     }
   }
 
@@ -237,6 +244,24 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteAttachmentId} onOpenChange={() => setDeleteAttachmentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover este anexo? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }
