@@ -44,9 +44,6 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
 
 const App = () => {
   // Apply dark mode
-  useEffect(() => {
-    document.documentElement.classList.add('dark');
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

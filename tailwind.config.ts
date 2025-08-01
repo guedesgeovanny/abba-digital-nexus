@@ -71,6 +71,7 @@ export default {
 				'abba-green-light': 'hsl(var(--abba-green-light))',
 				'abba-green-dark': 'hsl(var(--abba-green-dark))',
 				'abba-black': 'hsl(var(--abba-black))',
+				'abba-light': 'hsl(var(--abba-light))',
 				'abba-gray': 'hsl(var(--abba-gray))',
 				'abba-text': 'hsl(var(--abba-text))'
 			},

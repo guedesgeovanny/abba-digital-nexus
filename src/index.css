@@ -52,7 +52,8 @@
     --abba-green: 122 39% 49%;
     --abba-green-light: 122 40% 60%;
     --abba-green-dark: 122 55% 35%;
-    --abba-black: 0 0% 100%;
+    --abba-black: 0 0% 10%;
+    --abba-light: 0 0% 100%;
     --abba-gray: 0 0% 96%;
     --abba-text: 0 0% 10%;
   }
@@ -114,8 +115,12 @@
   }
 
   body {
-    @apply bg-abba-black text-abba-text font-sans;
+    @apply bg-abba-light text-abba-text font-sans;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .dark body {
+    @apply bg-abba-black text-abba-text;
   }
 }
 
