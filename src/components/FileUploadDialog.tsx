@@ -107,7 +107,7 @@ export const FileUploadDialog: React.FC<FileUploadDialogProps> = ({
                 Arraste um arquivo aqui ou clique para selecionar
               </p>
               <input type="file" accept={ALLOWED_TYPES.join(',')} onChange={handleFileInput} className="hidden" id="file-upload" />
-              <Button variant="outline" onClick={() => document.getElementById('file-upload')?.click()} className="mt-2">
+              <Button variant="outline" onClick={() => document.getElementById('file-upload')?.click()} className="mt-2 bg-abba-green text-abba-black border-abba-green hover:bg-abba-green hover:text-abba-black">
                 Selecionar Arquivo
               </Button>
             </div> : <div className="flex items-center space-x-3 p-4 border rounded-lg">
