@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CRMConversation } from '@/hooks/useCRMConversations'
-import { Phone, Mail, Building, DollarSign, MessageCircle, Instagram, Calendar } from 'lucide-react'
+import { Phone, Mail, Building, DollarSign, MessageCircle, Instagram, Calendar, Paperclip } from 'lucide-react'
+import { useConversationAttachments } from '@/hooks/useConversationAttachments'
 
 interface LeadCardProps {
   conversation: CRMConversation
@@ -31,6 +32,8 @@ export const LeadCard = ({
     id: conversation.id,
     disabled: isDragOverlay
   })
+
+  const { attachments } = useConversationAttachments(conversation.id)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -116,7 +119,15 @@ export const LeadCard = ({
     >
       <CardContent className="p-4 space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="font-medium text-abba-text truncate">{conversation.contact_name}</h4>
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <h4 className="font-medium text-abba-text truncate">{conversation.contact_name}</h4>
+            {attachments.length > 0 && (
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Paperclip className="w-3 h-3" />
+                <span className="text-xs">{attachments.length}</span>
+              </div>
+            )}
+          </div>
           {getOwnershipBadge()}
         </div>
         

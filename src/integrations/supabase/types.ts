@@ -272,6 +272,45 @@ export type Database = {
           },
         ]
       }
+      conversation_attachments: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          media_file_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          media_file_id: string
+          uploaded_by: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          media_file_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_conversation_attachments_conversation"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_conversation_attachments_media_file"
+            columns: ["media_file_id"]
+            isOneToOne: false
+            referencedRelation: "media_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           account: string | null

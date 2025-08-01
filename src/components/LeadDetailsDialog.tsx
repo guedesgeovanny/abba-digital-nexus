@@ -9,6 +9,9 @@ import { useContactDetails } from "@/hooks/useContactDetails"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChatArea } from "@/components/ChatArea"
 import { ContactForm } from "@/components/ContactForm"
+import { AttachmentsPanel } from "@/components/AttachmentsPanel"
+import { FileUploadDialog } from "@/components/FileUploadDialog"
+import { useConversationAttachments } from "@/hooks/useConversationAttachments"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Conversation } from "@/hooks/useConversations"
@@ -50,7 +53,9 @@ const channelLabels = {
 export const LeadDetailsDialog = ({ isOpen, onClose, conversation, onOpenChat }: LeadDetailsDialogProps) => {
   const { data: contact, isLoading } = useContactDetails(conversation?.contact_id || null)
   const [chatMode, setChatMode] = useState(false)
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const { toast } = useToast()
+  const { uploadAttachment, isUploading } = useConversationAttachments(conversation?.id || null)
 
   // Convert CRMConversation to Conversation format for ChatArea
   const convertToConversation = (crmConv: CRMConversation): Conversation => ({
@@ -96,6 +101,13 @@ export const LeadDetailsDialog = ({ isOpen, onClose, conversation, onOpenChat }:
 
   const handleBackToDetails = () => {
     setChatMode(false)
+  }
+
+  const handleFileUpload = (file: File) => {
+    if (conversation?.id) {
+      uploadAttachment({ file, conversationId: conversation.id })
+      setUploadDialogOpen(false)
+    }
   }
 
   return (
@@ -182,6 +194,16 @@ export const LeadDetailsDialog = ({ isOpen, onClose, conversation, onOpenChat }:
                       )}
                     </div>
                   </div>
+
+                  <Separator className="bg-abba-black" />
+
+                  {/* Attachments Panel */}
+                  {conversation && (
+                    <AttachmentsPanel
+                      conversationId={conversation.id}
+                      onUploadClick={() => setUploadDialogOpen(true)}
+                    />
+                  )}
 
                   <Separator className="bg-abba-black" />
 
@@ -343,6 +365,14 @@ export const LeadDetailsDialog = ({ isOpen, onClose, conversation, onOpenChat }:
               )}
             </div>
         )}
+        
+        {/* File Upload Dialog */}
+        <FileUploadDialog
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+          onUpload={handleFileUpload}
+          isUploading={isUploading}
+        />
       </DialogContent>
     </Dialog>
   )
