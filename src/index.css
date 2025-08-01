@@ -124,6 +124,44 @@
     --abba-gray: 0 0% 17%;
     --abba-text: 0 0% 100%;
   }
+
+  /* 
+   * SCROLLBAR - TEMA CLARO
+   * ======================
+   * Personalização de scrollbar para modo claro
+   * Cores podem ser controladas dinamicamente via API
+   */
+  ::-webkit-scrollbar-track {
+    @apply bg-abba-gray;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-abba-green-light;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-abba-green;
+  }
+
+  /* 
+   * SCROLLBAR - TEMA ESCURO
+   * =======================
+   * Personalização de scrollbar para modo escuro
+   * Cores podem ser controladas dinamicamente via API
+   */
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-abba-black;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-abba-green;
+    border-radius: 4px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-abba-green-light;
+  }
 }
 
 @layer base {
@@ -141,22 +179,9 @@
   }
 }
 
-/* Custom scrollbar */
+/* Largura global da scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-abba-black;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-abba-green;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-abba-green-light;
 }
 
 /* Code editor styles */
