@@ -17,12 +17,8 @@ export function ThemeToggle() {
     
     if (newTheme) {
       document.documentElement.classList.add('dark')
-      document.body.style.backgroundColor = '#000000'
-      document.body.style.color = '#F7FAFC'
     } else {
       document.documentElement.classList.remove('dark')
-      document.body.style.backgroundColor = '#FFFFFF'
-      document.body.style.color = '#1E293B'
     }
   }
 

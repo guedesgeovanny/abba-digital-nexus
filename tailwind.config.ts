@@ -26,8 +26,8 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#1976D2',
-					foreground: '#FFFFFF'
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -64,15 +64,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				// Client brand colors
-				'abba-blue': '#1976D2',
-				'abba-blue-light': '#42A5F5',
-				'abba-blue-dark': '#1565C0',
-				'abba-green': '#43A047',
-				'abba-green-light': '#66BB6A',
-				'abba-green-dark': '#2E7D33',
-				'abba-black': '#FFFFFF',
-				'abba-gray': '#F5F5F5',
-				'abba-text': '#191919'
+				'abba-blue': 'hsl(var(--abba-blue))',
+				'abba-blue-light': 'hsl(var(--abba-blue-light))',
+				'abba-blue-dark': 'hsl(var(--abba-blue-dark))',
+				'abba-green': 'hsl(var(--abba-green))',
+				'abba-green-light': 'hsl(var(--abba-green-light))',
+				'abba-green-dark': 'hsl(var(--abba-green-dark))',
+				'abba-black': 'hsl(var(--abba-black))',
+				'abba-gray': 'hsl(var(--abba-gray))',
+				'abba-text': 'hsl(var(--abba-text))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -83,8 +83,8 @@ export default {
 				sans: ['Inter', 'sans-serif'],
 			},
 			backgroundImage: {
-				'abba-gradient': 'linear-gradient(135deg, #42A5F5 0%, #43A047 100%)',
-				'client-gradient': 'linear-gradient(135deg, #1976D2 0%, #43A047 100%)',
+				'abba-gradient': 'linear-gradient(135deg, hsl(var(--abba-blue-light)) 0%, hsl(var(--abba-green)) 100%)',
+				'client-gradient': 'linear-gradient(135deg, hsl(var(--abba-blue)) 0%, hsl(var(--abba-green)) 100%)',
 			},
 			keyframes: {
 				'accordion-down': {
