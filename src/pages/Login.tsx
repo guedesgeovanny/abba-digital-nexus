@@ -130,7 +130,7 @@ const Login = () => {
           <div className="flex justify-center mb-4">
             <img src="/lovable-uploads/ac4a1d02-c454-4a67-b422-71008557e1d9.png" alt="NP Digital" className="w-16 h-16" />
           </div>
-          <CardTitle className="text-2xl font-bold text-abba-text">
+          <CardTitle className="text-2xl font-bold text-abba-text text-slate-50">
             Marcas & Patentes - BRASIL
           </CardTitle>
           <CardDescription className="text-gray-400">
