@@ -63,12 +63,12 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-4 bg-sidebar">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-abba-green flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-semibold text-sm">A</span>
+            <span className="text-white font-semibold text-sm">M</span>
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-sidebar-foreground text-sm truncate">Abba Digital</span>
-              <span className="text-xs text-sidebar-accent-foreground truncate">Platform</span>
+              <span className="font-semibold text-sidebar-foreground text-sm truncate">Marcas & Patentes</span>
+              <span className="text-xs text-sidebar-accent-foreground truncate">Brasil</span>
             </div>
           )}
         </div>
