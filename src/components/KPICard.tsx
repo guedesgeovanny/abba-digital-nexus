@@ -15,9 +15,9 @@ interface KPICardProps {
 
 export function KPICard({ title, value, icon: Icon, trend, description }: KPICardProps) {
   return (
-    <Card className="bg-abba-black border-abba-gray hover:border-abba-green transition-all duration-200">
+    <Card className="bg-card border-border hover:border-abba-green transition-all duration-200">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-abba-text">
+        <CardTitle className="text-sm font-medium text-card-foreground">
           {title}
         </CardTitle>
         <Icon className="h-4 w-4 text-abba-green" />
@@ -32,7 +32,7 @@ export function KPICard({ title, value, icon: Icon, trend, description }: KPICar
           </p>
         )}
         {description && (
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {description}
           </p>
         )}

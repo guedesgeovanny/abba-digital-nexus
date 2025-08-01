@@ -111,7 +111,7 @@ export const LeadCard = ({
       {...(!isDragOverlay ? listeners : {})}
       onClick={handleCardClick}
       className={`
-        bg-abba-gray border-abba-gray transition-all duration-200 cursor-pointer
+        bg-card border-border transition-all duration-200 cursor-pointer
         hover:border-abba-green hover:shadow-lg hover:shadow-abba-green/20 hover:scale-[1.02]
         ${isDragging && !isDragOverlay ? 'opacity-50' : ''}
         ${isDragOverlay ? 'shadow-2xl shadow-abba-green/40 border-abba-green' : ''}
@@ -120,7 +120,7 @@ export const LeadCard = ({
       <CardContent className="p-4 space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <h4 className="font-medium text-abba-text truncate">{conversation.contact_name}</h4>
+            <h4 className="font-medium text-card-foreground truncate">{conversation.contact_name}</h4>
           </div>
           {getOwnershipBadge()}
         </div>

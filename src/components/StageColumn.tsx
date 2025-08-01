@@ -32,21 +32,21 @@ export const StageColumn = ({
     <div 
       ref={setNodeRef}
       className={`
-        flex-shrink-0 w-80 bg-abba-black rounded-lg border transition-colors duration-200
-        ${isOver ? 'border-abba-green bg-abba-green/5 shadow-lg shadow-abba-green/20' : 'border-abba-gray'}
+        flex-shrink-0 w-80 bg-card rounded-lg border transition-colors duration-200
+        ${isOver ? 'border-abba-green bg-abba-green/5 shadow-lg shadow-abba-green/20' : 'border-border'}
       `}
     >
       {/* Header do estágio */}
-      <div className="p-4 border-b border-abba-gray">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2 mb-2">
           <div 
             className="w-3 h-3 rounded-full" 
             style={{ backgroundColor: stageColor }}
           />
-          <h3 className="font-medium text-abba-text">{stage}</h3>
+          <h3 className="font-medium text-card-foreground">{stage}</h3>
         </div>
         
-        <Badge variant="outline" className="border-gray-600">
+        <Badge variant="outline" className="border-border">
           {conversations.length} conversas
         </Badge>
       </div>
@@ -71,9 +71,9 @@ export const StageColumn = ({
         {conversations.length === 0 && (
           <div className={`
             text-center py-12 border-2 border-dashed rounded-lg transition-colors duration-200
-            ${isOver ? 'border-abba-green bg-abba-green/10' : 'border-gray-600'}
+            ${isOver ? 'border-abba-green bg-abba-green/10' : 'border-border'}
           `}>
-            <div className="text-gray-400">
+            <div className="text-muted-foreground">
               {isOver ? (
                 <div className="animate-pulse">
                   <div className="text-abba-green font-medium mb-1">Solte aqui</div>

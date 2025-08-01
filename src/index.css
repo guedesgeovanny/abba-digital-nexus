@@ -170,12 +170,8 @@
   }
 
   body {
-    @apply bg-abba-light text-abba-text font-sans;
+    @apply bg-background text-foreground font-sans;
     transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  .dark body {
-    @apply bg-abba-black text-abba-text;
   }
 }
 

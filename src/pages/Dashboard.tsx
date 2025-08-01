@@ -18,7 +18,7 @@ const Dashboard = () => {
   console.log('Dashboard: Component rendered');
   
   return (
-    <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
+    <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
       {/* Watermark */}
       <div className="fixed bottom-4 right-4 opacity-10 pointer-events-none">
         <img 
@@ -30,8 +30,8 @@ const Dashboard = () => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-abba-text">Dashboard</h2>
-          <p className="text-gray-400">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h2>
+          <p className="text-muted-foreground">
             Visão geral dos seus agentes digitais
           </p>
         </div>
@@ -63,10 +63,10 @@ const Dashboard = () => {
       </div>
 
       {/* Tokens Usage Chart */}
-      <Card className="bg-abba-black border-abba-gray">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-abba-text">Uso de Tokens</CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardTitle className="text-card-foreground">Uso de Tokens</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Consumo mensal de tokens por agente
           </CardDescription>
         </CardHeader>
@@ -101,19 +101,19 @@ const Dashboard = () => {
       </Card>
 
       {/* Recent Activity */}
-      <Card className="bg-abba-black border-abba-gray">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-abba-text flex items-center gap-2">
+          <CardTitle className="text-card-foreground flex items-center gap-2">
             <Activity className="w-5 h-5 text-abba-green" />
             Atividade Recente
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-muted-foreground">
             Últimas interações dos seus agentes
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center p-8">
-            <div className="text-gray-400">Nenhuma atividade recente</div>
+            <div className="text-muted-foreground">Nenhuma atividade recente</div>
           </div>
         </CardContent>
       </Card>

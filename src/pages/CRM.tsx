@@ -164,19 +164,19 @@ const CRM = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
+      <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-abba-text">CRM</h2>
-            <p className="text-gray-400">Pipeline de vendas e controle de leads</p>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">CRM</h2>
+            <p className="text-muted-foreground">Pipeline de vendas e controle de leads</p>
           </div>
         </div>
         <div className="flex gap-6">
           {['Novo Lead', 'Em Andamento', 'Qualificado', 'Convertido', 'Perdido'].map((stage) => (
             <div key={stage} className="flex-1 space-y-4">
-              <Skeleton className="h-12 w-full bg-abba-gray" />
-              <Skeleton className="h-32 w-full bg-abba-gray" />
-              <Skeleton className="h-32 w-full bg-abba-gray" />
+              <Skeleton className="h-12 w-full bg-muted" />
+              <Skeleton className="h-32 w-full bg-muted" />
+              <Skeleton className="h-32 w-full bg-muted" />
             </div>
           ))}
         </div>
@@ -185,7 +185,7 @@ const CRM = () => {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
+    <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
       {/* Watermark */}
       <div className="fixed bottom-4 right-4 opacity-10 pointer-events-none">
         <img 
@@ -197,8 +197,8 @@ const CRM = () => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-abba-text">CRM</h2>
-          <p className="text-gray-400">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">CRM</h2>
+          <p className="text-muted-foreground">
             Pipeline de vendas e controle de leads
           </p>
         </div>
@@ -206,7 +206,7 @@ const CRM = () => {
           <Button 
             onClick={() => setShowFilters(!showFilters)}
             variant="outline" 
-            className="border-abba-gray text-abba-text"
+            className="border-border text-foreground"
           >
             <Filter className="w-4 h-4 mr-2" />
             Filtros
@@ -214,7 +214,7 @@ const CRM = () => {
           <Button 
             onClick={() => setIsAddingStage(true)}
             variant="outline" 
-            className="border-abba-green text-abba-green"
+            className="border-abba-green text-abba-green hover:bg-abba-green hover:text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nova Etapa
@@ -226,9 +226,9 @@ const CRM = () => {
                 Novo Lead
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-abba-gray border-abba-gray">
+            <DialogContent className="bg-card border-border">
               <DialogHeader>
-                <DialogTitle className="text-abba-text">Criar Novo Lead</DialogTitle>
+                <DialogTitle className="text-card-foreground">Criar Novo Lead</DialogTitle>
               </DialogHeader>
               <ContactForm onClose={() => setShowNewLead(false)} />
             </DialogContent>
