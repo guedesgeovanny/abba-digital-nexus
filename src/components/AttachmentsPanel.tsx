@@ -105,7 +105,7 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
           <p className="text-sm font-medium text-gray-400">
             Anexos {attachments.length > 0 && <span className="text-abba-text">({attachments.length})</span>}
           </p>
-          <Button variant="ghost" size="sm" onClick={onUploadClick} className="h-6 px-2 text-xs text-zinc-950 bg-gray-500 hover:bg-gray-400">
+          <Button variant="outline" size="sm" onClick={onUploadClick} className="h-6 px-2 text-xs border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-text">
             <Paperclip className="h-3 w-3 mr-1" />
             Anexar
           </Button>
