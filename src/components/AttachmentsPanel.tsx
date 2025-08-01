@@ -1,8 +1,9 @@
-import React from 'react'
-import { Paperclip, Download, Trash2, FileText, Image, Video, Music, File } from 'lucide-react'
+import React, { useState } from 'react'
+import { Paperclip, Download, Trash2, FileText, Image, Video, Music, File, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useConversationAttachments, ConversationAttachment } from '@/hooks/useConversationAttachments'
 import { Badge } from '@/components/ui/badge'
 
@@ -43,6 +44,7 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
   onUploadClick,
 }) => {
   const { attachments, isLoading, deleteAttachment, isDeleting } = useConversationAttachments(conversationId)
+  const [previewFile, setPreviewFile] = useState<ConversationAttachment | null>(null)
 
   const handleDownload = async (attachment: ConversationAttachment) => {
     try {
@@ -68,6 +70,31 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
     if (confirm('Tem certeza que deseja remover este anexo?')) {
       deleteAttachment(attachmentId)
     }
+  }
+
+  const handlePreview = (attachment: ConversationAttachment) => {
+    if (attachment.media_file.mimetype.startsWith('image/')) {
+      setPreviewFile(attachment)
+    } else {
+      handleDownload(attachment)
+    }
+  }
+
+  const renderFilePreview = (attachment: ConversationAttachment) => {
+    if (!attachment.media_file.mimetype.startsWith('image/')) return null
+    
+    return (
+      <div className="w-12 h-12 rounded overflow-hidden bg-muted flex-shrink-0">
+        <img 
+          src={attachment.media_file.url} 
+          alt={attachment.media_file.original_filename || 'Preview'}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none'
+          }}
+        />
+      </div>
+    )
   }
 
   if (isLoading) {
@@ -122,15 +149,27 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
               <div key={attachment.id}>
                 {index > 0 && <Separator className="my-3" />}
                 <div className="flex items-start space-x-3">
-                  <div className="text-muted-foreground mt-1">
-                    {getFileIcon(attachment.media_file.mimetype)}
-                  </div>
+                  {renderFilePreview(attachment) || (
+                    <div className="text-muted-foreground mt-1 flex-shrink-0">
+                      {getFileIcon(attachment.media_file.mimetype)}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium truncate">
                         {attachment.media_file.original_filename || attachment.media_file.filename}
                       </p>
                       <div className="flex items-center space-x-1 ml-2">
+                        {attachment.media_file.mimetype.startsWith('image/') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPreviewFile(attachment)}
+                            title="Visualizar imagem"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -166,6 +205,38 @@ export const AttachmentsPanel: React.FC<AttachmentsPanelProps> = ({
           </div>
         )}
       </CardContent>
+
+      {/* Preview Dialog for Images */}
+      <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+        <DialogContent className="max-w-4xl w-[90vw] h-[90vh] p-0">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="flex items-center justify-between">
+              <span className="truncate">{previewFile?.media_file.original_filename || previewFile?.media_file.filename}</span>
+              <div className="flex items-center space-x-2 ml-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => previewFile && handleDownload(previewFile)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar
+                </Button>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 p-4 pt-0 overflow-hidden">
+            {previewFile && (
+              <div className="w-full h-full flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
+                <img 
+                  src={previewFile.media_file.url} 
+                  alt={previewFile.media_file.original_filename || 'Preview'}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
