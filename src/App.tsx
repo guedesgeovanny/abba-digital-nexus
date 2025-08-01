@@ -26,7 +26,7 @@ const queryClient = new QueryClient();
 // Layout component for authenticated pages
 const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
   <SidebarProvider>
-    <div className="min-h-screen flex w-full bg-abba-black">
+    <div className="min-h-screen flex w-full bg-background">
       <AppSidebar />
       <main className="flex-1 flex flex-col">
         <Header />
