@@ -153,7 +153,7 @@ export const LeadDetailsDialog = ({
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <ContactForm trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-black bg-zinc-500 hover:bg-zinc-400">
+                      <ContactForm trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-black">
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
                           </Button>} contact={contact} />
