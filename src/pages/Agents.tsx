@@ -132,24 +132,16 @@ const Agents = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
+      <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
         <div className="flex items-center justify-center h-64">
-          <div className="text-abba-text">Carregando agentes...</div>
+          <div className="text-foreground">Carregando agentes...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
-      {/* Watermark */}
-      <div className="fixed bottom-4 right-4 opacity-10 pointer-events-none">
-        <img 
-          src="/lovable-uploads/a7cf582e-5718-4f64-912a-e05c747864bf.png" 
-          alt="Abba Digital" 
-          className="w-16 h-16"
-        />
-      </div>
+    <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
 
       <AgentsPageHeader onCreateAgent={openCreateDialog} />
 

@@ -1,8 +1,9 @@
 import { Home, Bot, BarChart3, Settings, Users, Contact, Trello, LogOut, MessageSquare } from "lucide-react";
-import { useLocation } from "react-router-dom";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
+import { useLocation, Link } from "react-router-dom";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 // Menu items
 const items = [{
@@ -33,11 +34,8 @@ const items = [{
 
 export function AppSidebar() {
   const location = useLocation();
-  const {
-    signOut,
-    userProfile,
-    loading
-  } = useAuth();
+  const { signOut, userProfile, loading } = useAuth();
+  const { state } = useSidebar();
   
   const handleLogout = async () => {
     try {
@@ -58,36 +56,47 @@ export function AppSidebar() {
     return 'Usuário';
   };
   
+  const isCollapsed = state === "collapsed";
+  
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar">
+    <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="border-b border-sidebar-border p-4 bg-sidebar">
         <div className="flex items-center gap-3">
-          <img src="/lovable-uploads/ac4a1d02-c454-4a67-b422-71008557e1d9.png" alt="NP Digital" className="w-8 h-8" />
-          <div className="flex flex-col">
-            <span className="font-semibold text-sidebar-foreground text-sm">Marcas & Patentes </span>
-            <span className="text-xs text-sidebar-accent-foreground">Brasil</span>
+          <div className="w-8 h-8 rounded-full bg-abba-green flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-semibold text-sm">A</span>
           </div>
+          {!isCollapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-sidebar-foreground text-sm truncate">Abba Digital</span>
+              <span className="text-xs text-sidebar-accent-foreground truncate">Platform</span>
+            </div>
+          )}
         </div>
       </SidebarHeader>
       
       <SidebarContent className="bg-sidebar">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-accent-foreground text-xs uppercase tracking-wider">
-            Menu Principal
-          </SidebarGroupLabel>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-sidebar-accent-foreground text-xs uppercase tracking-wider">
+              Menu Principal
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map(item => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className={`
-                      data-[active=true]:bg-abba-green data-[active=true]:text-white
-                      hover:bg-sidebar-accent hover:text-abba-green transition-all duration-200
-                      ${location.pathname === item.url ? 'bg-abba-green text-white' : 'text-sidebar-foreground'}
-                    `}>
-                    <a href={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span className="font-medium">{item.title}</span>
-                    </a>
+                  <SidebarMenuButton 
+                    asChild 
+                    tooltip={isCollapsed ? item.title : undefined}
+                    className={cn(
+                      "data-[active=true]:bg-abba-green data-[active=true]:text-white hover:bg-sidebar-accent hover:text-abba-green transition-all duration-200",
+                      location.pathname === item.url ? 'bg-abba-green text-white' : 'text-sidebar-foreground'
+                    )}
+                  >
+                    <Link to={item.url}>
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      {!isCollapsed && <span className="font-medium">{item.title}</span>}
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -99,29 +108,42 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-4 space-y-3 bg-sidebar">
         {loading ? (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-sidebar-accent rounded-full animate-pulse"></div>
-            <div className="flex flex-col gap-1">
-              <div className="w-16 h-3 bg-sidebar-accent rounded animate-pulse"></div>
-              <div className="w-24 h-2 bg-sidebar-accent rounded animate-pulse"></div>
-            </div>
+            <div className="w-8 h-8 bg-sidebar-accent rounded-full animate-pulse flex-shrink-0"></div>
+            {!isCollapsed && (
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="w-16 h-3 bg-sidebar-accent rounded animate-pulse"></div>
+                <div className="w-24 h-2 bg-sidebar-accent rounded animate-pulse"></div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white font-semibold text-sm">
                 {getFirstName().charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-sidebar-foreground">{getFirstName()}</span>
-              <span className="text-xs text-sidebar-accent-foreground">{userProfile?.email}</span>
-            </div>
+            {!isCollapsed && (
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium text-sidebar-foreground truncate">{getFirstName()}</span>
+                <span className="text-xs text-sidebar-accent-foreground truncate">{userProfile?.email}</span>
+              </div>
+            )}
           </div>
         )}
         
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-400/10">
-          <LogOut className="w-4 h-4 mr-2" />
-          Sair
+        <Button 
+          variant="ghost" 
+          size={isCollapsed ? "icon" : "sm"} 
+          onClick={handleLogout} 
+          className={cn(
+            "text-red-400 hover:text-red-300 hover:bg-red-400/10",
+            isCollapsed ? "w-8 h-8 p-0" : "w-full justify-start"
+          )}
+          title={isCollapsed ? "Sair" : undefined}
+        >
+          <LogOut className="w-4 h-4" />
+          {!isCollapsed && <span className="ml-2">Sair</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>

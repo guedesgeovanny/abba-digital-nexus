@@ -40,11 +40,11 @@ const ProfileSettings = () => {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
+    <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-abba-text">Configurações do Perfil</h2>
-          <p className="text-gray-400">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Configurações do Perfil</h2>
+          <p className="text-muted-foreground">
             Gerencie suas informações pessoais
           </p>
         </div>

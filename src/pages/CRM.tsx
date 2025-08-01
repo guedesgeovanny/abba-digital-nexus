@@ -186,14 +186,6 @@ const CRM = () => {
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
-      {/* Watermark */}
-      <div className="fixed bottom-4 right-4 opacity-10 pointer-events-none">
-        <img 
-          src="/lovable-uploads/fb0eee38-84d5-47c6-b95f-cb80e02e53d3.png" 
-          alt="Abba Digital" 
-          className="w-16 h-16"
-        />
-      </div>
 
       <div className="flex items-center justify-between">
         <div>

@@ -1,7 +1,9 @@
 
-import { User } from "lucide-react"
+import { User, Menu } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 
 export const Header = () => {
   const { userProfile, loading } = useAuth()
@@ -37,6 +39,11 @@ export const Header = () => {
   return (
     <header className="bg-background border-b border-border px-6 py-3 flex justify-between items-center">
       <div className="flex items-center gap-3">
+        <SidebarTrigger asChild>
+          <Button variant="ghost" size="icon" className="text-abba-green hover:bg-accent">
+            <Menu className="h-4 w-4" />
+          </Button>
+        </SidebarTrigger>
         <div className="w-8 h-8 rounded-full bg-abba-green flex items-center justify-center">
           <span className="text-white font-semibold text-sm">
             {getFirstName().charAt(0).toUpperCase()}

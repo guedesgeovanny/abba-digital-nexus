@@ -136,9 +136,9 @@ const Settings = () => {
   // Se ainda está carregando o perfil, mostrar loading
   if (profileLoading) {
     return (
-      <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
+      <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
         <div className="flex items-center justify-center p-8">
-          <div className="flex items-center gap-2 text-abba-text">
+          <div className="flex items-center gap-2 text-foreground">
             <RefreshCw className="w-4 h-4 animate-spin" />
             Carregando perfil...
           </div>
@@ -148,34 +148,25 @@ const Settings = () => {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-abba-black min-h-screen">
-      {/* Watermark */}
-      <div className="fixed bottom-4 right-4 opacity-10 pointer-events-none">
-        <img 
-          src="/lovable-uploads/a7cf582e-5718-4f64-912a-e05c747864bf.png" 
-          alt="Abba Digital" 
-          className="w-16 h-16"
-        />
-      </div>
-
+    <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-abba-text">Configurações</h2>
-          <p className="text-gray-400">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Configurações</h2>
+          <p className="text-muted-foreground">
             Gerencie sua conta e preferências
           </p>
         </div>
       </div>
 
       <Tabs defaultValue={isAdmin ? "users" : "security"} className="space-y-4">
-        <TabsList className="bg-abba-gray border-abba-gray">
+        <TabsList className="bg-card border-border">
           {isAdmin && (
-            <TabsTrigger value="users" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
+            <TabsTrigger value="users" className="data-[state=active]:bg-abba-green data-[state=active]:text-white">
               <Users className="w-4 h-4 mr-2" />
               Usuários ({users.length})
             </TabsTrigger>
           )}
-          <TabsTrigger value="security" className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black">
+          <TabsTrigger value="security" className="data-[state=active]:bg-abba-green data-[state=active]:text-white">
             <Shield className="w-4 h-4 mr-2" />
             Segurança
           </TabsTrigger>
@@ -183,12 +174,12 @@ const Settings = () => {
 
         {isAdmin && (
           <TabsContent value="users" className="space-y-4">
-            <Card className="bg-abba-black border-abba-gray">
+            <Card className="bg-card border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-abba-text">Usuários & Permissões</CardTitle>
-                    <CardDescription className="text-gray-400">
+                    <CardTitle className="text-card-foreground">Usuários & Permissões</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Gerencie quem tem acesso à plataforma. {users.length > 0 ? `${users.length} usuários encontrados` : 'Nenhum usuário encontrado'}
                     </CardDescription>
                   </div>
@@ -198,7 +189,7 @@ const Settings = () => {
                       size="sm"
                       onClick={refetch}
                       disabled={loading}
-                      className="border-abba-gray text-abba-text hover:bg-abba-gray/20"
+                      className="border-border text-foreground hover:bg-accent"
                     >
                       <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                       Atualizar
@@ -211,17 +202,17 @@ const Settings = () => {
                 <div className="space-y-4">
                   {loading ? (
                     <div className="flex items-center justify-center p-8">
-                      <div className="flex items-center gap-2 text-abba-text">
+                      <div className="flex items-center gap-2 text-foreground">
                         <RefreshCw className="w-4 h-4 animate-spin" />
                         Carregando usuários...
                       </div>
                     </div>
                   ) : users.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 space-y-4">
-                      <AlertCircle className="w-8 h-8 text-gray-400" />
+                      <AlertCircle className="w-8 h-8 text-muted-foreground" />
                       <div className="text-center">
-                        <div className="text-gray-400 mb-2">Nenhum usuário encontrado</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-muted-foreground mb-2">Nenhum usuário encontrado</div>
+                        <div className="text-sm text-muted-foreground">
                           Clique em "Novo Usuário" para adicionar o primeiro usuário ao sistema.
                         </div>
                       </div>
@@ -229,7 +220,7 @@ const Settings = () => {
                     </div>
                   ) : (
                     users.map((user) => (
-                      <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-abba-gray hover:bg-opacity-50 transition-all duration-200">
+                      <div key={user.id} className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-accent transition-all duration-200 border border-border">
                         <div className="flex items-center space-x-4">
                           <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center relative">
                             {user.avatar_url ? (
@@ -240,16 +231,16 @@ const Settings = () => {
                               />
                             ) : (
                               <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
-                                <span className="text-abba-black font-semibold text-sm">
+                                <span className="text-white font-semibold text-sm">
                                   {user.full_name ? getInitials(user.full_name) : user.email[0].toUpperCase()}
                                 </span>
                               </div>
                             )}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-abba-text">{user.full_name || 'Sem nome'}</p>
-                            <p className="text-xs text-gray-400">{user.email}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm font-medium text-card-foreground">{user.full_name || 'Sem nome'}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                            <p className="text-xs text-muted-foreground">
                               Criado em: {formatDate(user.created_at)}
                             </p>
                           </div>
@@ -315,13 +306,13 @@ const Settings = () => {
 
         {!isAdmin && (
           <TabsContent value="users" className="space-y-4">
-            <Card className="bg-abba-black border-abba-gray">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-abba-text flex items-center gap-2">
+                <CardTitle className="text-card-foreground flex items-center gap-2">
                   <Lock className="w-5 h-5" />
                   Acesso Restrito
                 </CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardDescription className="text-muted-foreground">
                   Você não tem permissão para gerenciar usuários. Entre em contato com um administrador.
                 </CardDescription>
               </CardHeader>
@@ -330,41 +321,41 @@ const Settings = () => {
         )}
 
         <TabsContent value="security" className="space-y-4">
-          <Card className="bg-abba-black border-abba-gray">
+          <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-abba-text">Configurações de Segurança</CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardTitle className="text-card-foreground">Configurações de Segurança</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 Gerencie suas configurações de segurança
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="new-password" className="text-abba-text">Nova Senha</Label>
+                  <Label htmlFor="new-password" className="text-card-foreground">Nova Senha</Label>
                   <Input
                     id="new-password"
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                    className="bg-background border-border text-foreground focus:border-abba-green"
                     placeholder="Digite sua nova senha"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="confirm-password" className="text-abba-text">Confirmar Nova Senha</Label>
+                  <Label htmlFor="confirm-password" className="text-card-foreground">Confirmar Nova Senha</Label>
                   <Input
                     id="confirm-password"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                    className="bg-background border-border text-foreground focus:border-abba-green"
                     placeholder="Confirme sua nova senha"
                   />
                 </div>
                 <Button 
                   onClick={handlePasswordChange}
                   disabled={isChangingPassword}
-                  className="bg-abba-gradient hover:opacity-90 text-abba-black"
+                  className="bg-abba-green hover:bg-abba-green-light text-white"
                 >
                   {isChangingPassword ? "Alterando..." : "Alterar Senha"}
                 </Button>

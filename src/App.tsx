@@ -30,9 +30,6 @@ const AuthenticatedLayout = ({ children }: { children: React.ReactNode }) => (
       <AppSidebar />
       <main className="flex-1 flex flex-col">
         <Header />
-        <div className="lg:hidden p-4 border-b border-abba-gray">
-          <SidebarTrigger className="text-abba-green" />
-        </div>
         <ThemeToggle />
         <div className="flex-1">
           {children}
