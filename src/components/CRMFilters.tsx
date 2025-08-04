@@ -48,7 +48,7 @@ export const CRMFilters = ({
   if (!showFilters) return null
 
   return (
-    <Card className="bg-abba-black border-abba-gray">
+    <Card className="bg-card border-abba-gray">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-abba-text flex items-center gap-2">
