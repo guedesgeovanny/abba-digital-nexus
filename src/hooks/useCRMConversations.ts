@@ -55,6 +55,7 @@ export const useCRMConversations = () => {
   const [conversations, setConversations] = useState<CRMConversation[]>([])
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [allUsers, setAllUsers] = useState<Array<{id: string, full_name: string, email: string}>>([])
   
   const isAdmin = userProfile?.role === 'admin'
   
@@ -63,10 +64,15 @@ export const useCRMConversations = () => {
   const [filterValueRange, setFilterValueRange] = useState<string>('all')
   const [filterPeriod, setFilterPeriod] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [filterUser, setFilterUser] = useState<string>('all')
 
   useEffect(() => {
     if (user) {
-      Promise.all([fetchConversations(), fetchCustomStages()])
+      const promises = [fetchConversations(), fetchCustomStages()]
+      if (isAdmin) {
+        promises.push(fetchAllUsers())
+      }
+      Promise.all(promises)
         .finally(() => setIsLoading(false))
     }
   }, [user, isAdmin])
@@ -129,6 +135,20 @@ export const useCRMConversations = () => {
       setCustomStages(data || [])
     } catch (error) {
       console.error('Error fetching custom stages:', error)
+    }
+  }
+
+  const fetchAllUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .order('full_name', { ascending: true })
+
+      if (error) throw error
+      setAllUsers(data || [])
+    } catch (error) {
+      console.error('Error fetching users:', error)
     }
   }
 
@@ -213,6 +233,13 @@ export const useCRMConversations = () => {
 
   // Filter conversations based on active filters
   const filteredConversations = conversations.filter(conversation => {
+    // User filter (only for admins)
+    if (filterUser && filterUser !== 'all' && isAdmin) {
+      if (conversation.user_id !== filterUser && conversation.assigned_to !== filterUser) {
+        return false
+      }
+    }
+    
     // Channel filter
     if (filterChannel && filterChannel !== 'all' && conversation.channel !== filterChannel) {
       return false
@@ -295,6 +322,7 @@ export const useCRMConversations = () => {
     setFilterValueRange('all')
     setFilterPeriod('all')
     setFilterStatus('all')
+    setFilterUser('all')
   }
 
   return {
@@ -311,13 +339,16 @@ export const useCRMConversations = () => {
     filterValueRange,
     filterPeriod,
     filterStatus,
+    filterUser,
     setFilterChannel,
     setFilterValueRange,
     setFilterPeriod,
     setFilterStatus,
+    setFilterUser,
     clearFilters,
     allChannels,
     hasValueData,
+    allUsers,
     totalLeads: conversations.length,
     filteredLeadsCount: filteredConversations.length,
     // User role information  

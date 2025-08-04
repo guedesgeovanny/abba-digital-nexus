@@ -41,13 +41,16 @@ const CRM = () => {
     filterValueRange,
     filterPeriod,
     filterStatus,
+    filterUser,
     setFilterChannel,
     setFilterValueRange,
     setFilterPeriod,
     setFilterStatus,
+    setFilterUser,
     clearFilters,
     allChannels,
     hasValueData,
+    allUsers,
     totalLeads,
     filteredLeadsCount,
     // User role information
@@ -235,12 +238,16 @@ const CRM = () => {
         filterValueRange={filterValueRange}
         filterPeriod={filterPeriod}
         filterStatus={filterStatus}
+        filterUser={filterUser}
         allChannels={allChannels}
         hasValueData={hasValueData}
+        allUsers={allUsers}
+        isAdmin={isAdmin}
         setFilterChannel={setFilterChannel}
         setFilterValueRange={setFilterValueRange}
         setFilterPeriod={setFilterPeriod}
         setFilterStatus={setFilterStatus}
+        setFilterUser={setFilterUser}
         clearFilters={clearFilters}
         filteredLeadsCount={filteredLeadsCount}
         totalLeads={totalLeads}

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Filter, DollarSign, Calendar, MessageCircle, BarChart3 } from "lucide-react"
+import { Filter, DollarSign, Calendar, MessageCircle, BarChart3, User } from "lucide-react"
 
 interface CRMFiltersProps {
   showFilters: boolean
@@ -10,12 +10,16 @@ interface CRMFiltersProps {
   filterValueRange: string
   filterPeriod: string
   filterStatus: string
+  filterUser?: string
   allChannels: string[]
   hasValueData: boolean
+  allUsers?: Array<{id: string, full_name: string, email: string}>
+  isAdmin?: boolean
   setFilterChannel: (value: string) => void
   setFilterValueRange: (value: string) => void
   setFilterPeriod: (value: string) => void
   setFilterStatus: (value: string) => void
+  setFilterUser?: (value: string) => void
   clearFilters: () => void
   filteredLeadsCount: number
   totalLeads: number
@@ -27,12 +31,16 @@ export const CRMFilters = ({
   filterValueRange,
   filterPeriod,
   filterStatus,
+  filterUser,
   allChannels,
   hasValueData,
+  allUsers = [],
+  isAdmin = false,
   setFilterChannel,
   setFilterValueRange,
   setFilterPeriod,
   setFilterStatus,
+  setFilterUser,
   clearFilters,
   filteredLeadsCount,
   totalLeads,
@@ -54,6 +62,28 @@ export const CRMFilters = ({
       </CardHeader>
       <CardContent>
         <div className="flex gap-4 flex-wrap">
+          {/* User Filter - Only for admins */}
+          {isAdmin && (
+            <Select value={filterUser} onValueChange={setFilterUser}>
+              <SelectTrigger className="w-[200px] bg-abba-gray border-abba-gray text-abba-text">
+                <SelectValue placeholder="Usuário" />
+              </SelectTrigger>
+              <SelectContent className="bg-abba-gray border-abba-gray">
+                <SelectItem value="all" className="text-abba-text">Todos os usuários</SelectItem>
+                {allUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id} className="text-abba-text">
+                    <div className="flex items-center gap-2">
+                      <User className="w-3 h-3" />
+                      <span className="truncate">
+                        {user.full_name} ({user.email})
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
           {/* Channel Filter */}
           <Select value={filterChannel} onValueChange={setFilterChannel}>
             <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
