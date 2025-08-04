@@ -125,61 +125,34 @@ export const LeadCard = ({
           {getOwnershipBadge()}
         </div>
         
-        {/* Channel and Value */}
-        {(conversation.channel || conversation.value) && (
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            {conversation.channel && (
-              <div className="flex items-center gap-1">
-                {getChannelIcon(conversation.channel)}
-                <span className="capitalize">{conversation.channel}</span>
-              </div>
-            )}
-            {conversation.value && (
-              <div className="flex items-center gap-1 text-green-600">
-                <DollarSign className="w-3 h-3" />
-                <span className="font-medium">{formatValue(conversation.value)}</span>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Channel - Always display */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          {getChannelIcon(conversation.channel || 'whatsapp')}
+          <span className="capitalize">{conversation.channel || 'WhatsApp'}</span>
+        </div>
 
-        {/* Phone or Email */}
-        {(conversation.phone || conversation.email) && (
+        {/* Phone - Only when available */}
+        {conversation.phone && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            {conversation.phone ? (
-              <>
-                <Phone className="w-3 h-3" />
-                <span className="truncate">{formatPhone(conversation.phone)}</span>
-              </>
-            ) : conversation.email ? (
-              <>
-                <Mail className="w-3 h-3" />
-                <span className="truncate">{conversation.email}</span>
-              </>
-            ) : null}
+            <Phone className="w-3 h-3" />
+            <span className="truncate">{formatPhone(conversation.phone)}</span>
           </div>
         )}
 
-        {/* Company */}
-        {conversation.company && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Building className="w-3 h-3" />
-            <span className="truncate">{conversation.company}</span>
-          </div>
-        )}
-
-        {/* Attachments */}
-        {attachments.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Paperclip className="w-3 h-3" />
-            <span>{attachments.length} anexo{attachments.length > 1 ? 's' : ''}</span>
-          </div>
-        )}
-
-        {/* Created Date */}
+        {/* Created Date - Always display */}
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="w-3 h-3" />
           <span>Criado em {formatDate(conversation.created_at)}</span>
+        </div>
+
+        {/* Value - Always display */}
+        <div className="flex items-center gap-1 text-xs">
+          <DollarSign className="w-3 h-3 text-muted-foreground" />
+          {conversation.value && conversation.value > 0 ? (
+            <span className="font-medium text-green-600">{formatValue(conversation.value)}</span>
+          ) : (
+            <span className="text-muted-foreground">Não Informado</span>
+          )}
         </div>
       </CardContent>
     </Card>
