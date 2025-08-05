@@ -25,9 +25,9 @@ serve(async (req) => {
       throw new Error('Instance name is required');
     }
 
-    // Buscar o QR code uma única vez no endpoint de dados da instância
-    console.log('Fetching QR code from dados-da-instancia...');
-    const qrUrl = new URL('https://webhook.abbadigital.com.br/webhook/dados-da-instancia');
+    // Buscar o QR code uma única vez no endpoint correto
+    console.log('Fetching QR code from conecta-mp-brasil...');
+    const qrUrl = new URL('https://webhook.abbadigital.com.br/webhook/conecta-mp-brasil');
     qrUrl.searchParams.append('instanceName', instanceName);
     
     const qrResponse = await fetch(qrUrl.toString(), {
