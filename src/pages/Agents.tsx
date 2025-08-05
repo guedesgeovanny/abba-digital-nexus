@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ const Agents = () => {
   const connections = [
     {
       id: 1,
-      name: "Agente de IA",
+      name: "Agente-de-IA",
       subtitle: "João Silva - Atendimento Geral",
       phone: "556211999887766",
       status: "connected",
@@ -17,7 +18,7 @@ const Agents = () => {
     },
     {
       id: 2,
-      name: "Atendimento Humano", 
+      name: "Atendimento-Humano", 
       subtitle: "Maria Santos - Suporte Técnico",
       phone: "556211888776655",
       status: "disconnected",
