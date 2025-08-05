@@ -58,7 +58,7 @@ serve(async (req) => {
         try {
           console.log(`Polling attempt ${attempts + 1}/${maxAttempts} for instance: ${instanceName}`);
           
-          const pollResponse = await fetch('https://webhook.abbadigital.com.br/webhook/dados-da-instancia', {
+          const pollResponse = await fetch('https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
