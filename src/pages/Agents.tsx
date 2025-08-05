@@ -7,21 +7,23 @@ const Agents = () => {
   const connections = [
     {
       id: 1,
-      name: "WhatsApp Principal",
-      description: "Conexão principal para atendimento automático",
+      name: "Principal",
+      subtitle: "João Silva - Atendimento Geral",
+      phone: "556211999887766",
       status: "connected",
-      phone: "+55 11 99999-9999",
-      messages: 127,
-      lastActivity: "2 minutos atrás"
+      createdAt: "02/08/2025, 10:19",
+      lastActivity: "02/08/2025, 10:19",
+      avatar: "https://i.pravatar.cc/150?img=1"
     },
     {
       id: 2,
-      name: "WhatsApp Secundário",
-      description: "Conexão secundária para overflow e backup",
+      name: "Secundário", 
+      subtitle: "Maria Santos - Suporte Técnico",
+      phone: "556211888776655",
       status: "disconnected",
-      phone: null,
-      messages: 0,
-      lastActivity: "Nunca"
+      createdAt: "01/08/2025, 14:30",
+      lastActivity: "01/08/2025, 16:45",
+      avatar: "https://i.pravatar.cc/150?img=2"
     }
   ];
 
@@ -31,6 +33,12 @@ const Agents = () => {
 
   const getStatusText = (status: string) => {
     return status === "connected" ? "Conectado" : "Desconectado";
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    return status === "connected" 
+      ? "bg-green-500 text-white hover:bg-green-600" 
+      : "bg-gray-500 text-white hover:bg-gray-600";
   };
 
   const handleConnect = (connectionId: number) => {
@@ -65,85 +73,78 @@ const Agents = () => {
       </div>
 
       {/* Conexões WhatsApp */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
         {connections.map((connection) => (
-          <Card key={connection.id} className="hover:shadow-lg transition-shadow h-full">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-green-500/10">
-                    <Smartphone className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{connection.name}</CardTitle>
-                    <CardDescription className="text-sm">
-                      {connection.description}
-                    </CardDescription>
-                  </div>
+          <Card key={connection.id} className="w-full max-w-md border border-border rounded-lg">
+            <CardContent className="p-6">
+              {/* Header com Avatar e Info */}
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                  <img 
+                    src={connection.avatar} 
+                    alt={connection.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <Badge variant={getStatusColor(connection.status)}>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-semibold text-foreground mb-1">
+                    {connection.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {connection.subtitle}
+                  </p>
+                  <p className="text-sm text-muted-foreground font-mono">
+                    {connection.phone}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-sm text-muted-foreground">Status:</span>
+                <Badge className={getStatusBadgeClass(connection.status)}>
+                  <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
                   {getStatusText(connection.status)}
                 </Badge>
               </div>
-            </CardHeader>
 
-            <CardContent className="space-y-4 flex-1 flex flex-col">
-              {connection.status === "connected" ? (
-                <div className="space-y-4 flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-muted-foreground">Telefone:</span>
-                    <span className="font-medium">{connection.phone}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm flex-1">
-                    <div>
-                      <span className="text-muted-foreground">Mensagens hoje:</span>
-                      <div className="font-semibold text-lg">{connection.messages}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Última atividade:</span>
-                      <div className="font-medium">{connection.lastActivity}</div>
-                    </div>
-                  </div>
+              {/* Informações de Data */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Criado em:</span>
+                  <span className="text-sm text-foreground">{connection.createdAt}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Última atividade:</span>
+                  <span className="text-sm text-foreground">{connection.lastActivity}</span>
+                </div>
+              </div>
 
-                  <div className="flex gap-2 mt-auto">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDisconnect(connection.id)}
-                      className="flex-1"
-                    >
+              {/* Botão de Ação */}
+              <Button
+                variant="outline"
+                onClick={() => connection.status === "connected" 
+                  ? handleDisconnect(connection.id) 
+                  : handleConnect(connection.id)
+                }
+                className="w-full"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {connection.status === "connected" ? (
+                    <>
+                      <div className="w-4 h-4 flex items-center justify-center">
+                        <div className="w-3 h-3 border-2 border-current rounded-sm"></div>
+                      </div>
                       Desconectar
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                    >
-                      Configurar
-                    </Button>
-                  </div>
+                    </>
+                  ) : (
+                    <>
+                      <Smartphone className="h-4 w-4" />
+                      Conectar
+                    </>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-4 flex-1 flex flex-col">
-                  <div className="text-center py-8 flex-1 flex flex-col justify-center">
-                    <QrCode className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Esta conexão não está configurada.
-                      <br />
-                      Clique em "Conectar" para configurar.
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={() => handleConnect(connection.id)}
-                    className="w-full mt-auto"
-                  >
-                    <Smartphone className="h-4 w-4 mr-2" />
-                    Conectar WhatsApp
-                  </Button>
-                </div>
-              )}
+              </Button>
             </CardContent>
           </Card>
         ))}
