@@ -198,11 +198,11 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
   }
 
   const defaultTrigger = isEditing ? (
-    <Button variant="ghost" size="sm" className="text-abba-green hover:bg-abba-green/10">
+    <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
       <Edit className="h-4 w-4" />
     </Button>
   ) : (
-    <Button className="bg-abba-gradient hover:opacity-90 text-abba-black">
+    <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
       <Plus className="mr-2 h-4 w-4" />
       Adicionar Usuário
     </Button>
@@ -213,25 +213,25 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="bg-abba-black border-abba-gray max-w-md z-50">
+      <DialogContent className="bg-card border-border max-w-md z-50">
         <DialogHeader>
-          <DialogTitle className="text-abba-text">
+          <DialogTitle className="text-foreground">
             {isEditing ? 'Editar Usuário' : 'Adicionar Usuário'}
           </DialogTitle>
         </DialogHeader>
         
         {/* Informações do usuário logado */}
-        <div className="flex items-center gap-3 p-3 bg-abba-gray/20 rounded-lg">
-          <div className="w-10 h-10 rounded-full bg-abba-green flex items-center justify-center">
-            <span className="text-abba-black font-semibold text-sm">
+        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-semibold text-sm">
               {currentUserProfile?.full_name?.split(' ')[0]?.[0] || currentUserProfile?.email?.[0]?.toUpperCase() || 'U'}
             </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-abba-text font-medium text-sm">
+            <span className="text-foreground font-medium text-sm">
               {currentUserProfile?.full_name?.split(' ')[0] || currentUserProfile?.email?.split('@')[0] || 'Usuário'}
             </span>
-            <span className="text-abba-text/70 text-xs">
+            <span className="text-muted-foreground text-xs">
               {currentUserProfile?.email}
             </span>
           </div>
@@ -249,8 +249,8 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
-                    <span className="text-abba-black font-semibold text-lg">
+                  <div className="w-full h-full bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary-foreground font-semibold text-lg">
                       {getInitials(formData.full_name) || (formData.email?.[0]?.toUpperCase() || '?')}
                     </span>
                   </div>
@@ -274,7 +274,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className="border-abba-gray text-abba-text hover:bg-abba-gray/10 hover:text-white"
+                className="border-border text-foreground hover:bg-muted"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {avatarPreview ? 'Alterar Foto' : 'Adicionar Foto'}
@@ -290,14 +290,14 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
           </div>
 
           <div>
-            <Label htmlFor="email" className="text-abba-text">Email</Label>
+            <Label htmlFor="email" className="text-foreground">Email</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               disabled={isEditing}
-              className={`bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green ${formErrors.email ? 'border-red-500' : ''}`}
+              className={`bg-background border-border text-foreground focus:border-primary ${formErrors.email ? 'border-red-500' : ''}`}
               placeholder="usuario@email.com"
             />
             {formErrors.email && (
@@ -306,12 +306,12 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
           </div>
 
           <div>
-            <Label htmlFor="full_name" className="text-abba-text">Nome Completo</Label>
+            <Label htmlFor="full_name" className="text-foreground">Nome Completo</Label>
             <Input
               id="full_name"
               value={formData.full_name}
               onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-              className={`bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green ${formErrors.full_name ? 'border-red-500' : ''}`}
+              className={`bg-background border-border text-foreground focus:border-primary ${formErrors.full_name ? 'border-red-500' : ''}`}
               placeholder="Nome do usuário"
             />
             {formErrors.full_name && (
@@ -321,13 +321,13 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
 
           {!isEditing && (
             <div>
-              <Label htmlFor="password" className="text-abba-text">Senha</Label>
+              <Label htmlFor="password" className="text-foreground">Senha</Label>
               <Input
                 id="password"
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                className={`bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green ${formErrors.password ? 'border-red-500' : ''}`}
+                className={`bg-background border-border text-foreground focus:border-primary ${formErrors.password ? 'border-red-500' : ''}`}
                 placeholder="Senha do usuário"
               />
               {formErrors.password && (
@@ -337,23 +337,23 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
           )}
 
           <div>
-            <Label className="text-abba-text">Função</Label>
+            <Label className="text-foreground">Função</Label>
             <Select 
               value={formData.role} 
               onValueChange={(value: 'admin' | 'editor' | 'viewer') => 
                 setFormData(prev => ({ ...prev, role: value }))}
             >
-              <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green">
+              <SelectTrigger className="bg-background border-border text-foreground focus:border-primary">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-abba-dark border-abba-gray z-50">
-                <SelectItem value="admin" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="admin" className="text-foreground hover:bg-muted focus:bg-muted">
                   Administrador
                 </SelectItem>
-                <SelectItem value="editor" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
+                <SelectItem value="editor" className="text-foreground hover:bg-muted focus:bg-muted">
                   Editor
                 </SelectItem>
-                <SelectItem value="viewer" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
+                <SelectItem value="viewer" className="text-foreground hover:bg-muted focus:bg-muted">
                   Visualizador
                 </SelectItem>
               </SelectContent>
@@ -361,23 +361,23 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
           </div>
 
           <div>
-            <Label className="text-abba-text">Status</Label>
+            <Label className="text-foreground">Status</Label>
             <Select 
               value={formData.status} 
               onValueChange={(value: 'active' | 'pending' | 'inactive') => 
                 setFormData(prev => ({ ...prev, status: value }))}
             >
-              <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green">
+              <SelectTrigger className="bg-background border-border text-foreground focus:border-primary">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-abba-dark border-abba-gray z-50">
-                <SelectItem value="active" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="active" className="text-foreground hover:bg-muted focus:bg-muted">
                   Ativo
                 </SelectItem>
-                <SelectItem value="pending" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
+                <SelectItem value="pending" className="text-foreground hover:bg-muted focus:bg-muted">
                   Pendente
                 </SelectItem>
-                <SelectItem value="inactive" className="text-abba-text hover:bg-abba-gray focus:bg-abba-gray">
+                <SelectItem value="inactive" className="text-foreground hover:bg-muted focus:bg-muted">
                   Inativo
                 </SelectItem>
               </SelectContent>
@@ -388,14 +388,14 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
             <Button 
               variant="outline" 
               onClick={() => setOpen(false)}
-              className="flex-1 border-abba-gray text-abba-text hover:bg-abba-gray/10 hover:text-white"
+              className="flex-1"
             >
               Cancelar
             </Button>
             <Button 
               onClick={handleSave}
               disabled={loading}
-              className="flex-1 bg-abba-gradient hover:opacity-90 text-abba-black"
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {loading ? 'Salvando...' : isEditing ? 'Atualizar' : 'Criar'}
             </Button>
