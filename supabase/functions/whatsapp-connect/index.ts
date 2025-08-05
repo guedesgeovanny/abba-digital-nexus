@@ -25,16 +25,16 @@ serve(async (req) => {
       throw new Error('Instance name is required');
     }
 
-    // Fazer a requisição POST para o webhook externo
-    console.log('Making POST request to external webhook...');
-    const response = await fetch('https://webhook.abbadigital.com.br/webhook/conecta-mp-brasil', {
-      method: 'POST',
+    // Fazer a requisição GET para o webhook externo
+    console.log('Making GET request to external webhook...');
+    const url = new URL('https://webhook.abbadigital.com.br/webhook/conecta-mp-brasil');
+    url.searchParams.append('instanceName', instanceName);
+    
+    const response = await fetch(url.toString(), {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        instanceName: instanceName
-      })
+      }
     });
 
     console.log('External webhook response status:', response.status);
