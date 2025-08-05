@@ -44,7 +44,7 @@ export const ConversationList = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-400">Carregando conversas...</div>
+        <div className="text-muted-foreground">Carregando conversas...</div>
       </div>
     )
   }
@@ -52,7 +52,7 @@ export const ConversationList = ({
   if (conversations.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-gray-400">Nenhuma conversa encontrada</div>
+        <div className="text-muted-foreground">Nenhuma conversa encontrada</div>
       </div>
     )
   }
@@ -146,8 +146,8 @@ export const ConversationList = ({
         <div
           key={conversation.id}
           className={`
-            flex items-center p-3 cursor-pointer hover:bg-abba-gray transition-colors group
-            ${selectedConversation?.id === conversation.id ? 'bg-abba-gray border-r-2 border-abba-green' : ''}
+            flex items-center p-3 cursor-pointer hover:bg-muted transition-colors group
+            ${selectedConversation?.id === conversation.id ? 'bg-muted border-r-2 border-abba-green' : ''}
           `}
         >
           <div className="relative" onClick={() => onSelectConversation(conversation)}>
@@ -161,10 +161,10 @@ export const ConversationList = ({
 
           <div className="ml-3 flex-1 min-w-0" onClick={() => onSelectConversation(conversation)}>
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-medium text-abba-text truncate">
+              <h3 className="text-sm font-medium text-foreground truncate">
                 {conversation.contact_name}
               </h3>
-              <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
+              <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                 {formatTime(conversation.last_message_at)}
               </span>
             </div>
@@ -175,7 +175,7 @@ export const ConversationList = ({
             </div>
             
             <div className="flex items-center justify-between mt-1">
-              <p className="text-sm text-gray-400 truncate">
+              <p className="text-sm text-muted-foreground truncate">
                 {conversation.last_message || 'Nenhuma mensagem'}
               </p>
               {conversation.unread_count > 0 && (
@@ -202,7 +202,7 @@ export const ConversationList = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-500"
                   title={conversation.status === 'aberta' ? 'Fechar Conversa' : 'Abrir Conversa'}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -247,7 +247,7 @@ export const ConversationList = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
                   title="Excluir Conversa"
                   onClick={(e) => e.stopPropagation()}
                 >

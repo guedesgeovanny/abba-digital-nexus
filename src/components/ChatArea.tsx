@@ -217,7 +217,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   return (
     <div className="flex flex-col h-full">
       {/* Header da conversa */}
-      <div className="flex items-center justify-between p-4 border-b border-abba-gray bg-abba-black">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
@@ -227,8 +227,8 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
           </Avatar>
           
           <div>
-            <h3 className="font-semibold text-abba-text">{conversation.contact_name}</h3>
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <h3 className="font-semibold text-foreground">{conversation.contact_name}</h3>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span>{getChannelIcon(conversation.channel)} {conversation.channel || 'Chat'}</span>
               {getAccountBadge(conversation.account)}
             </div>
@@ -262,15 +262,15 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       </div>
 
       {/* Área das mensagens */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 bg-abba-black">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 bg-background">
         <div className="p-4 space-y-4">
           {isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[200px]">
-              <div className="text-gray-400">Carregando mensagens...</div>
+              <div className="text-muted-foreground">Carregando mensagens...</div>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex items-center justify-center h-full min-h-[200px]">
-              <div className="text-gray-400">Nenhuma mensagem ainda</div>
+              <div className="text-muted-foreground">Nenhuma mensagem ainda</div>
             </div>
           ) : (
             messages.map((message) => (
@@ -284,7 +284,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                       ? 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100'
                       : message.direcao === 'sent'
                         ? 'bg-abba-green text-abba-black'
-                        : 'bg-abba-gray text-abba-text'
+                        : 'bg-muted text-foreground'
                   }`}
                 >
                   {(() => {
@@ -327,13 +327,13 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       </ScrollArea>
 
       {/* Campo de entrada de mensagem */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-abba-gray bg-abba-black">
+      <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-card">
         <div className="flex space-x-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Digite sua mensagem..."
-            className="flex-1 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+            className="flex-1 bg-background border-border text-foreground focus:border-abba-green"
             disabled={isSending || conversation.status === 'fechada'}
           />
           <Button 
@@ -345,7 +345,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
           </Button>
         </div>
         {conversation.status === 'fechada' && (
-          <p className="text-xs text-gray-400 mt-2">Esta conversa está fechada. Reabra-a para enviar mensagens.</p>
+          <p className="text-xs text-muted-foreground mt-2">Esta conversa está fechada. Reabra-a para enviar mensagens.</p>
         )}
       </form>
     </div>

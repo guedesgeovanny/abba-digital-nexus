@@ -180,21 +180,21 @@ const Chat = () => {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-full bg-abba-black">
-        <p className="text-gray-400">Você precisa estar logado para ver as conversas</p>
+      <div className="flex items-center justify-center h-full bg-background">
+        <p className="text-muted-foreground">Você precisa estar logado para ver as conversas</p>
       </div>
     )
   }
 
   return (
-    <div className="h-screen bg-abba-black text-abba-text overflow-hidden">
+    <div className="h-screen bg-background text-foreground overflow-hidden">
       <div className="flex h-full">
         {/* Sidebar de conversas */}
-        <div className="w-96 bg-abba-black border-r border-abba-gray flex flex-col">
+        <div className="w-96 bg-card border-r border-border flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-abba-gray">
+          <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-abba-text">Chat</h2>
+              <h2 className="text-xl font-semibold text-foreground">Chat</h2>
               {conversations.length === 0 && !isLoading && (
                 <Button
                   onClick={createSampleConversations}
@@ -213,12 +213,12 @@ const Chat = () => {
             
             {/* Campo de busca */}
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Pesquisar"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-abba-gray border-abba-gray text-abba-text focus:border-abba-green"
+                className="pl-10 bg-background border-border text-foreground focus:border-abba-green"
               />
             </div>
 
@@ -232,22 +232,22 @@ const Chat = () => {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-abba-gray">
+              <TabsList className="grid w-full grid-cols-3 bg-muted">
                 <TabsTrigger 
                   value="geral" 
-                  className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
+                  className="text-foreground data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
                 >
                   Geral
                 </TabsTrigger>
                 <TabsTrigger 
                   value="aberto"
-                  className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
+                  className="text-foreground data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
                 >
                   Em Aberto
                 </TabsTrigger>
                 <TabsTrigger 
                   value="fechado"
-                  className="data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
+                  className="text-foreground data-[state=active]:bg-abba-green data-[state=active]:text-abba-black"
                 >
                   Fechadas
                 </TabsTrigger>
@@ -278,8 +278,8 @@ const Chat = () => {
               onUpdateAgentStatus={handleUpdateAgentStatus}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-abba-black">
-              <p className="text-gray-400">
+            <div className="flex-1 flex items-center justify-center bg-background">
+              <p className="text-muted-foreground">
                 {isLoading ? 'Carregando conversas...' : 'Selecione uma conversa para começar'}
               </p>
             </div>
