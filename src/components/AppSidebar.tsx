@@ -63,10 +63,19 @@ export function AppSidebar() {
     <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="border-b border-sidebar-border p-4 bg-sidebar">
         <div className="flex items-center gap-3">
-          <Avatar className="w-8 h-8 flex-shrink-0">
-            <AvatarImage src={userProfile?.avatar_url || undefined} alt="Company logo" />
-            <AvatarFallback className="bg-abba-green text-white font-semibold text-sm">M</AvatarFallback>
-          </Avatar>
+          <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center relative">
+            {userProfile?.avatar_url ? (
+              <img 
+                src={userProfile.avatar_url} 
+                alt="Company logo" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">M</span>
+              </div>
+            )}
+          </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-sidebar-foreground text-sm truncate">Marcas & Patentes</span>
@@ -120,12 +129,21 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8 flex-shrink-0">
-              <AvatarImage src={userProfile?.avatar_url || undefined} alt={getFirstName()} />
-              <AvatarFallback className="bg-abba-green text-white font-semibold text-sm">
-                {getFirstName().charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center relative">
+              {userProfile?.avatar_url ? (
+                <img 
+                  src={userProfile.avatar_url} 
+                  alt={getFirstName()} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm">
+                    {getFirstName().charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-medium text-sidebar-foreground truncate">{getFirstName()}</span>
