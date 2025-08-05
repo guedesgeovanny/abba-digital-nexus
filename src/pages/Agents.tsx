@@ -1,210 +1,161 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Bot, Smartphone, QrCode, CheckCircle } from "lucide-react";
-import { useState } from "react";
-import { WhatsAppConnection } from "@/components/WhatsAppConnection";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react"
+import { useAgents } from "@/hooks/useAgents"
+import { useAgentCreation } from "@/hooks/useAgentCreation"
+import { AgentsPageHeader } from "@/components/AgentsPageHeader"
+import { AgentsList } from "@/components/AgentsList"
+import { EmptyAgentsState } from "@/components/EmptyAgentsState"
+import { CreateAgentDialog } from "@/components/CreateAgentDialog"
+import { AgentForm } from "@/components/AgentForm"
+import { Tables } from "@/integrations/supabase/types"
+import { useToast } from "@/hooks/use-toast"
+import { Skeleton } from "@/components/ui/skeleton"
+
+type Agent = Tables<'agents'>
 
 const Agents = () => {
-  const [connectingAgent, setConnectingAgent] = useState<number | null>(null);
-  
-  const connections = [
-    {
-      id: 1,
-      name: "Agente-de-IA",
-      subtitle: "João Silva - Atendimento Geral",
-      phone: "556211999887766",
-      status: "connected",
-      createdAt: "02/08/2025, 10:19",
-      lastActivity: "02/08/2025, 10:19",
-      avatar: "https://i.pravatar.cc/150?img=1"
-    },
-    {
-      id: 2,
-      name: "Atendimento-Humano", 
-      subtitle: "Maria Santos - Suporte Técnico",
-      phone: "556211888776655",
-      status: "disconnected",
-      createdAt: "01/08/2025, 14:30",
-      lastActivity: "01/08/2025, 16:45",
-      avatar: "https://i.pravatar.cc/150?img=2"
-    }
-  ];
+  const { 
+    agents, 
+    isLoading, 
+    createAgent, 
+    updateAgent, 
+    deleteAgent, 
+    isCreating,
+    isUpdating,
+    isDeleting 
+  } = useAgents()
 
-  const getStatusColor = (status: string) => {
-    return status === "connected" ? "default" : "secondary";
-  };
+  const {
+    createdAgentId,
+    isDialogOpen,
+    openDialog,
+    closeDialog,
+    setAgentId
+  } = useAgentCreation()
 
-  const getStatusText = (status: string) => {
-    return status === "connected" ? "Conectado" : "Desconectado";
-  };
+  const { toast } = useToast()
+  const [editingAgent, setEditingAgent] = useState<Agent | null>(null)
 
-  const getStatusBadgeClass = (status: string) => {
-    return status === "connected" 
-      ? "bg-green-500 text-white hover:bg-green-600" 
-      : "bg-gray-500 text-white hover:bg-gray-600";
-  };
-
-  const handleConnect = (connectionId: number) => {
-    setConnectingAgent(connectionId);
-  };
-
-  const handleDisconnect = (connectionId: number) => {
-    console.log("Desconectar WhatsApp:", connectionId);
-    // Aqui seria implementada a lógica de desconexão
-  };
-
-  const makeConnectionRequest = async (connectionName: string) => {
+  const handleCreateAgent = async (agentData: Omit<Agent, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
-      console.log('Fazendo requisição para edge function com:', connectionName);
-      
-      const { data, error } = await supabase.functions.invoke('whatsapp-connect', {
-        body: {
-          instanceName: connectionName
-        }
-      });
-
-      if (error) {
-        console.error('Erro na edge function:', error);
-        throw error;
-      }
-
-      console.log('Resposta da edge function:', data);
-      return data;
+      createAgent(agentData)
+      toast({
+        title: "Agente criado",
+        description: "O agente foi criado com sucesso."
+      })
+      closeDialog()
     } catch (error) {
-      console.error('Erro na requisição:', error);
-      throw error;
+      console.error('Erro ao criar agente:', error)
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao criar o agente.",
+        variant: "destructive"
+      })
     }
-  };
+  }
+
+  const handleEditAgent = (agent: Agent) => {
+    setEditingAgent(agent)
+  }
+
+  const handleUpdateAgent = async (agentData: Partial<Agent>) => {
+    if (!editingAgent) return
+    
+    try {
+      updateAgent({ id: editingAgent.id, ...agentData })
+      toast({
+        title: "Agente atualizado",
+        description: "O agente foi atualizado com sucesso."
+      })
+      setEditingAgent(null)
+    } catch (error) {
+      console.error('Erro ao atualizar agente:', error)
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao atualizar o agente.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDeleteAgent = async (id: string) => {
+    try {
+      deleteAgent(id)
+      toast({
+        title: "Agente excluído",
+        description: "O agente foi excluído com sucesso."
+      })
+    } catch (error) {
+      console.error('Erro ao excluir agente:', error)
+      toast({
+        title: "Erro", 
+        description: "Ocorreu um erro ao excluir o agente.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleToggleStatus = async (id: string, newStatus: 'active' | 'inactive') => {
+    try {
+      updateAgent({ id, status: newStatus })
+      toast({
+        title: "Status atualizado",
+        description: `Agente ${newStatus === 'active' ? 'ativado' : 'desativado'} com sucesso.`
+      })
+    } catch (error) {
+      console.error('Erro ao alterar status:', error)
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao alterar o status do agente.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-64 w-full" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
-      {/* Header */}
-      <div className="border-b border-border bg-background">
-        <div className="pb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Bot className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold text-foreground">Conexões</h1>
-                <p className="text-sm text-muted-foreground">
-                  Gerencie suas conexões WhatsApp para atendimento automático
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal de Conexão WhatsApp */}
-      {connectingAgent && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Conectar WhatsApp</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setConnectingAgent(null)}
-              >
-                ✕
-              </Button>
-            </div>
-            <WhatsAppConnection
-              onConnect={() => makeConnectionRequest(
-                connections.find(c => c.id === connectingAgent)?.name || ""
-              )}
-              instanceName={connections.find(c => c.id === connectingAgent)?.name || ""}
-              onConnectionSuccess={() => {
-                setConnectingAgent(null);
-                // Aqui você pode atualizar o status da conexão
-              }}
-            />
-          </div>
-        </div>
+      <AgentsPageHeader onCreateAgent={openDialog} />
+      
+      {agents.length === 0 ? (
+        <EmptyAgentsState 
+          hasAgents={false} 
+          onCreateAgent={openDialog} 
+        />
+      ) : (
+        <AgentsList
+          agents={agents}
+          onEdit={handleEditAgent}
+          onDelete={handleDeleteAgent}
+          onToggleStatus={handleToggleStatus}
+          isDeleting={isDeleting}
+          isUpdating={isUpdating}
+        />
       )}
 
-      {/* Conexões WhatsApp */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-        {connections.map((connection) => (
-          <Card key={connection.id} className="w-full max-w-md border border-border rounded-lg">
-            <CardContent className="p-6">
-              {/* Header com Avatar e Info */}
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-                  <img 
-                    src={connection.avatar} 
-                    alt={connection.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-semibold text-foreground mb-1">
-                    {connection.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {connection.subtitle}
-                  </p>
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {connection.phone}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-sm text-muted-foreground">Status:</span>
-                <Badge className={getStatusBadgeClass(connection.status)}>
-                  <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
-                  {getStatusText(connection.status)}
-                </Badge>
-              </div>
-
-              {/* Informações de Data */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Criado em:</span>
-                  <span className="text-sm text-foreground">{connection.createdAt}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Última atividade:</span>
-                  <span className="text-sm text-foreground">{connection.lastActivity}</span>
-                </div>
-              </div>
-
-              {/* Botão de Ação */}
-              <Button
-                variant="outline"
-                onClick={() => connection.status === "connected" 
-                  ? handleDisconnect(connection.id) 
-                  : handleConnect(connection.id)
-                }
-                className="w-full"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  {connection.status === "connected" ? (
-                    <>
-                      <div className="w-4 h-4 flex items-center justify-center">
-                        <div className="w-3 h-3 border-2 border-current rounded-sm"></div>
-                      </div>
-                      Desconectar
-                    </>
-                  ) : (
-                    <>
-                      <Smartphone className="h-4 w-4" />
-                      Conectar
-                    </>
-                  )}
-                </div>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Create Agent Dialog */}
+      <CreateAgentDialog
+        isOpen={isDialogOpen}
+        onClose={closeDialog}
+        onCreateAgent={handleCreateAgent}
+        isCreating={isCreating}
+        createdAgentId={createdAgentId}
+      />
     </div>
   );
 };
