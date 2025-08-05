@@ -65,12 +65,15 @@ const Agents = () => {
   const handleWhatsAppConnect = async () => {
     if (!connectingModule) return { success: false }
 
+    const module = modules.find(m => m.id === connectingModule)
+    if (!module) return { success: false }
+
     try {
-      console.log('🔗 Iniciando conexão WhatsApp para módulo:', connectingModule)
+      console.log('🔗 Iniciando conexão WhatsApp para módulo:', module.name)
       
       const { data, error } = await supabase.functions.invoke('whatsapp-connect', {
         body: { 
-          instanceName: connectingModule,
+          instanceName: module.name, // Enviando o nome exato: "Agente-de-IA" ou "Atendimento-Humano"
           action: 'connect'
         }
       })
@@ -94,16 +97,17 @@ const Agents = () => {
   }
 
   const handleConnectionSuccess = (profileData: { profileName: string, contact: string, profilePictureUrl: string, profilePictureData?: string }) => {
-    console.log('🎉 Conexão WhatsApp bem-sucedida para módulo:', connectingModule, profileData)
+    const module = modules.find(m => m.id === connectingModule)
+    console.log('🎉 Conexão WhatsApp bem-sucedida para módulo:', module?.name, profileData)
     
     setConnectingModule(null)
     toast({
       title: "WhatsApp conectado!",
-      description: `Módulo ${connectingModule} conectado com sucesso.`,
+      description: `Módulo ${module?.name} conectado com sucesso.`,
     })
 
-    // Aqui você pode salvar os dados de perfil no localStorage ou estado global se necessário
-    localStorage.setItem(`whatsapp_profile_${connectingModule}`, JSON.stringify(profileData))
+    // Salvar dados de perfil com o nome do módulo
+    localStorage.setItem(`whatsapp_profile_${module?.name}`, JSON.stringify(profileData))
   }
 
   const getModuleIcon = (type: string) => {
