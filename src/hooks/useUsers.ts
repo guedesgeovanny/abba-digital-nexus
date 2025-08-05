@@ -276,6 +276,48 @@ export const useUsers = () => {
     }
   }
 
+  const resetUserPassword = async (userId: string, newPassword: string) => {
+    if (!isAdmin) {
+      toast({
+        title: 'Erro',
+        description: 'Apenas administradores podem redefinir senhas',
+        variant: 'destructive'
+      })
+      return false
+    }
+
+    try {
+      console.log('Admin redefinindo senha do usuário:', userId)
+
+      // Usar Admin API para redefinir senha
+      const { data, error } = await supabase.auth.admin.updateUserById(userId, {
+        password: newPassword
+      })
+
+      if (error) {
+        console.error('Erro ao redefinir senha:', error)
+        throw error
+      }
+
+      console.log('Senha redefinida com sucesso:', data)
+
+      toast({
+        title: 'Sucesso',
+        description: 'Senha redefinida com sucesso'
+      })
+
+      return true
+    } catch (error: any) {
+      console.error('Erro ao redefinir senha:', error)
+      toast({
+        title: 'Erro',
+        description: error.message || 'Não foi possível redefinir a senha',
+        variant: 'destructive'
+      })
+      return false
+    }
+  }
+
   const deleteUser = async (userId: string) => {
     console.log('=== INÍCIO DELETE USER ===')
     console.log('userId:', userId)
@@ -347,6 +389,7 @@ export const useUsers = () => {
     loading,
     createUser,
     updateUser,
+    resetUserPassword,
     deleteUser,
     refetch: fetchUsers,
     isAdmin

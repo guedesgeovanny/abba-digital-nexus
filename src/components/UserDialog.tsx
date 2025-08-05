@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Edit, Upload, X } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Plus, Edit, Upload, X, Key } from 'lucide-react'
 import { User } from '@/hooks/useUsers'
 import { useAuth } from '@/contexts/AuthContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -13,14 +14,16 @@ import { useToast } from '@/hooks/use-toast'
 interface UserDialogProps {
   user?: User
   onSave: (userData: any) => Promise<boolean>
+  onResetPassword?: (userId: string, newPassword: string) => Promise<boolean>
   trigger?: React.ReactNode
 }
 
-export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
+export const UserDialog = ({ user, onSave, onResetPassword, trigger }: UserDialogProps) => {
   const { userProfile: currentUserProfile } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null)
+  const [resetPassword, setResetPassword] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   
@@ -28,6 +31,7 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
     email: user?.email || '',
     full_name: user?.full_name || '',
     password: '',
+    newPassword: '',
     role: (user?.role || 'viewer') as 'admin' | 'editor' | 'viewer',
     status: (user?.status || 'active') as 'active' | 'pending' | 'inactive',
     avatar_url: user?.avatar_url || ''
@@ -36,10 +40,12 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
   const [formErrors, setFormErrors] = useState({
     email: false,
     full_name: false,
-    password: false
+    password: false,
+    newPassword: false
   })
 
   const isEditing = !!user
+  const isAdmin = currentUserProfile?.role === 'admin'
 
   useEffect(() => {
     if (open) {
@@ -49,11 +55,13 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
           email: '',
           full_name: '',
           password: '',
+          newPassword: '',
           role: 'viewer',
           status: 'active',
           avatar_url: ''
         })
         setAvatarPreview(null)
+        setResetPassword(false)
         if (fileInputRef.current) {
           fileInputRef.current.value = ''
         }
@@ -62,18 +70,21 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
           email: user?.email || '',
           full_name: user?.full_name || '',
           password: '',
+          newPassword: '',
           role: (user?.role || 'viewer') as 'admin' | 'editor' | 'viewer',
           status: (user?.status || 'active') as 'active' | 'pending' | 'inactive',
           avatar_url: user?.avatar_url || ''
         })
         setAvatarPreview(user?.avatar_url || null)
+        setResetPassword(false)
       }
       
       // Reset form errors
       setFormErrors({
         email: false,
         full_name: false,
-        password: false
+        password: false,
+        newPassword: false
       })
     }
   }, [open, user, isEditing])
@@ -131,7 +142,8 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
     const errors = {
       email: !formData.email || !/\S+@\S+\.\S+/.test(formData.email),
       full_name: !formData.full_name || formData.full_name.trim().length < 2,
-      password: !isEditing && (!formData.password || formData.password.length < 6)
+      password: !isEditing && (!formData.password || formData.password.length < 6),
+      newPassword: isEditing && resetPassword && (!formData.newPassword || formData.newPassword.length < 6)
     }
     
     setFormErrors(errors)
@@ -165,6 +177,19 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
       const success = await onSave(userData)
       
       if (success) {
+        // Se for edição e admin quiser redefinir senha
+        if (isEditing && resetPassword && formData.newPassword && onResetPassword && user) {
+          console.log("Redefinindo senha do usuário...")
+          const passwordSuccess = await onResetPassword(user.id, formData.newPassword)
+          if (!passwordSuccess) {
+            toast({
+              title: 'Aviso',
+              description: 'Usuário atualizado, mas houve erro ao redefinir a senha',
+              variant: 'destructive'
+            })
+          }
+        }
+        
         console.log("Usuário salvo com sucesso, fechando diálogo")
         setOpen(false)
         // Limpar formulário ao criar apenas
@@ -173,11 +198,13 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
             email: '',
             full_name: '',
             password: '',
+            newPassword: '',
             role: 'viewer',
             status: 'active',
             avatar_url: ''
           })
           setAvatarPreview(null)
+          setResetPassword(false)
           if (fileInputRef.current) {
             fileInputRef.current.value = ''
           }
@@ -332,6 +359,45 @@ export const UserDialog = ({ user, onSave, trigger }: UserDialogProps) => {
               />
               {formErrors.password && (
                 <p className="text-red-500 text-xs mt-1">A senha deve ter pelo menos 6 caracteres</p>
+              )}
+            </div>
+          )}
+
+          {/* Redefinir senha para admins em edição */}
+          {isEditing && isAdmin && user?.id !== currentUserProfile?.id && (
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="resetPassword"
+                  checked={resetPassword}
+                  onCheckedChange={(checked) => {
+                    setResetPassword(checked as boolean)
+                    if (!checked) {
+                      setFormData(prev => ({ ...prev, newPassword: '' }))
+                    }
+                  }}
+                />
+                <Label htmlFor="resetPassword" className="text-foreground flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  Redefinir senha do usuário
+                </Label>
+              </div>
+              
+              {resetPassword && (
+                <div>
+                  <Label htmlFor="newPassword" className="text-foreground">Nova Senha</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={formData.newPassword}
+                    onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    className={`bg-background border-border text-foreground focus:border-primary ${formErrors.newPassword ? 'border-red-500' : ''}`}
+                    placeholder="Digite a nova senha"
+                  />
+                  {formErrors.newPassword && (
+                    <p className="text-red-500 text-xs mt-1">A nova senha deve ter pelo menos 6 caracteres</p>
+                  )}
+                </div>
               )}
             </div>
           )}

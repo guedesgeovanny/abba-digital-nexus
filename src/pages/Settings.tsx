@@ -24,7 +24,7 @@ const Settings = () => {
   const { userProfile: currentUserProfile, loading: profileLoading } = useAuth()
   
   // Hook para gerenciar usuários - agora com verificação de admin interna
-  const { users, loading, createUser, updateUser, deleteUser, refetch, isAdmin } = useUsers()
+  const { users, loading, createUser, updateUser, resetUserPassword, deleteUser, refetch, isAdmin } = useUsers()
 
   console.log('Current user profile:', currentUserProfile)
   console.log('Is admin:', isAdmin)
@@ -269,10 +269,11 @@ const Settings = () => {
                           
                           {isAdmin && (
                             <>
-                              <UserDialog 
-                                user={user} 
-                                onSave={(userData) => updateUser(user.id, userData)}
-                              />
+                            <UserDialog
+                              user={user}
+                              onSave={(userData) => updateUser(user.id, userData)}
+                              onResetPassword={resetUserPassword}
+                            />
                               
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
