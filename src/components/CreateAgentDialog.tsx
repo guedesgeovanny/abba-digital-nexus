@@ -204,7 +204,8 @@ export const CreateAgentDialog = ({
       contact: profileData.contact,
       hasProfilePicture: !!profileData.profilePictureUrl,
       hasProfilePictureData: !!profileData.profilePictureData,
-      createdAgentId
+      createdAgentId,
+      hasCreatedAgentId: !!createdAgentId
     })
     
     // Atualizar estado com os dados do perfil
@@ -219,9 +220,15 @@ export const CreateAgentDialog = ({
       }
     }))
     
+    // Se temos um agentId criado, incluir na descrição do toast
+    const hasAgentId = createdAgentId && createdAgentId.trim() !== ''
+    const description = hasAgentId 
+      ? `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Os dados foram salvos no agente automaticamente.`
+      : `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Complete a criação do agente para salvar os dados.`
+    
     toast({
       title: "WhatsApp Conectado!",
-      description: `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Os dados foram salvos no agente automaticamente.`,
+      description,
     })
   }
 

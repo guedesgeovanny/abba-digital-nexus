@@ -75,6 +75,7 @@ export const useWhatsAppConnection = ({
     isActive: !!qrCodeData && !connectionResult && !profileData && !isExpired && isPopupActive,
     onProfileReceived: (receivedProfileData: ProfileData & { profilePictureData?: string }) => {
       console.log('✅ Perfil recebido via polling:', receivedProfileData)
+      console.log('🔍 AgentId no momento do sucesso:', agentId)
       setProfileData(receivedProfileData)
       setConnectionResult("WhatsApp conectado com sucesso!")
       

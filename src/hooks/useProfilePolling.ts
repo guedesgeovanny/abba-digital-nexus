@@ -59,9 +59,9 @@ export const useProfilePolling = ({
           profilePictureData: profilePictureData
         }
         
-        // Salvar no banco se temos um agentId válido (UUID real)
-        if (agentId && agentId.length === 36 && agentId.includes('-')) {
-          console.log('💾 Salvando dados do perfil no banco para agente:', agentId)
+        // Salvar no banco se temos um agentId válido
+        if (agentId && agentId.trim() !== '') {
+          console.log('💾 Iniciando salvamento dos dados do perfil no banco para agente:', agentId)
           console.log('💾 Dados a serem salvos:', {
             profileName: profileData.profilename,
             contact: profileData.contato,
@@ -69,24 +69,43 @@ export const useProfilePolling = ({
             hasProfilePictureData: !!profilePictureData
           })
           
-          try {
-            await updateAgentWhatsAppProfile({
-              agentId,
-              profileName: profileData.profilename,
-              contact: profileData.contato,
-              profilePictureUrl: profileData.fotodoperfil,
-              profilePictureData: profilePictureData
-            })
+          // Tentativa com retry automático
+          let saveAttempts = 0
+          const maxAttempts = 3
+          
+          while (saveAttempts < maxAttempts) {
+            try {
+              saveAttempts++
+              console.log(`💾 Tentativa ${saveAttempts}/${maxAttempts} de salvar no banco`)
+              
+              await updateAgentWhatsAppProfile({
+                agentId,
+                profileName: profileData.profilename,
+                contact: profileData.contato,
+                profilePictureUrl: profileData.fotodoperfil,
+                profilePictureData: profilePictureData
+              })
 
-            console.log('✅ Dados do perfil WhatsApp salvos no banco com sucesso!')
-          } catch (error) {
-            console.error('❌ Erro ao salvar perfil WhatsApp no banco:', error)
-            // Mesmo com erro no salvamento, continuamos o fluxo para não bloquear a UI
+              console.log('✅ Dados do perfil WhatsApp salvos no banco com sucesso!')
+              break // Saiu do loop se salvou com sucesso
+              
+            } catch (error) {
+              console.error(`❌ Erro na tentativa ${saveAttempts} ao salvar perfil WhatsApp no banco:`, error)
+              
+              if (saveAttempts === maxAttempts) {
+                console.error('❌ Falha definitiva após todas as tentativas de salvamento')
+                // Mesmo com erro no salvamento, continuamos o fluxo para não bloquear a UI
+              } else {
+                // Aguardar 2 segundos antes da próxima tentativa
+                await new Promise(resolve => setTimeout(resolve, 2000))
+              }
+            }
           }
         } else {
           console.log('⚠️ AgentId inválido ou não disponível para salvamento:', {
             agentId,
-            isValid: agentId && agentId.length === 36 && agentId.includes('-')
+            agentIdType: typeof agentId,
+            agentIdLength: agentId?.length
           })
         }
         
@@ -115,7 +134,13 @@ export const useProfilePolling = ({
 
     setIsPolling(true)
     console.log(`🔄 Iniciando polling do perfil a cada 3 segundos para: ${instanceName}`)
-    console.log('🔍 AgentId para salvar no banco:', agentId)
+    console.log('🔍 AgentId para salvar no banco:', {
+      agentId,
+      agentIdType: typeof agentId,
+      agentIdLength: agentId?.length,
+      agentIdTrimmed: agentId?.trim(),
+      isEmpty: !agentId || agentId.trim() === ''
+    })
 
     // Fazer primeira chamada imediatamente
     pollProfile()
