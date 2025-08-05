@@ -5,6 +5,7 @@ import { useConnectionState } from "./useConnectionState"
 import { useProfilePolling } from "./useProfilePolling"
 import { sendInstanceData, deleteInstanceConnection } from "@/services/webhookService"
 import { processQRCodeResponse } from "@/utils/qrCodeProcessor"
+import { useState, useEffect } from "react"
 
 interface UseWhatsAppConnectionProps {
   onConnect: () => Promise<WhatsAppResponse>
@@ -25,6 +26,7 @@ export const useWhatsAppConnection = ({
   onConnectionSuccess 
 }: UseWhatsAppConnectionProps) => {
   const { toast } = useToast()
+  const [isPopupActive, setIsPopupActive] = useState(true)
   
   const {
     isConnecting,
@@ -41,7 +43,7 @@ export const useWhatsAppConnection = ({
     isDeleting,
     setIsDeleting,
     resetState,
-    handleNewConnection,
+    handleNewConnection: originalHandleNewConnection,
     handleImageError,
     handleImageLoad,
     retryQrCode
@@ -66,11 +68,11 @@ export const useWhatsAppConnection = ({
     isActive: !!qrCodeData && !connectionResult && !profileData
   })
 
-  // Polling para buscar dados do perfil - só ativo enquanto o timer não expirou
+  // Polling para buscar dados do perfil - só ativo enquanto popup estiver aberto e timer não expirou
   const { isPolling } = useProfilePolling({
     instanceName: storedInstanceName,
     agentId,
-    isActive: !!qrCodeData && !connectionResult && !profileData && !isExpired,
+    isActive: !!qrCodeData && !connectionResult && !profileData && !isExpired && isPopupActive,
     onProfileReceived: (receivedProfileData: ProfileData & { profilePictureData?: string }) => {
       console.log('✅ Perfil recebido via polling:', receivedProfileData)
       setProfileData(receivedProfileData)
@@ -91,7 +93,16 @@ export const useWhatsAppConnection = ({
     }
   })
 
+  // Cleanup effect - para quando o hook é desmontado
+  useEffect(() => {
+    return () => {
+      console.log('🛑 WhatsApp connection hook desmontado - parando polling')
+      setIsPopupActive(false)
+    }
+  }, [])
+
   const handleConnect = async () => {
+    setIsPopupActive(true) // Ativar popup ao conectar
     setIsConnecting(true)
     resetState()
 
@@ -147,6 +158,7 @@ export const useWhatsAppConnection = ({
   const handleDeleteConnection = async () => {
     if (!storedInstanceName) return
 
+    setIsPopupActive(false) // Desativar popup ao deletar
     setIsDeleting(true)
     
     try {
@@ -178,6 +190,20 @@ export const useWhatsAppConnection = ({
     }
   }
 
+  // Função para parar o polling manualmente (quando popup fecha)
+  const stopPolling = () => {
+    console.log('🛑 Parando polling - popup fechado')
+    setIsPopupActive(false)
+  }
+
+  // Wrapper para handleNewConnection que também para o polling
+  const handleNewConnection = () => {
+    console.log('🔄 Nova conexão - parando polling atual')
+    setIsPopupActive(false)
+    originalHandleNewConnection()
+    setIsPopupActive(true) // Reativar para nova conexão
+  }
+
   return {
     isConnecting,
     qrCodeData,
@@ -190,11 +216,13 @@ export const useWhatsAppConnection = ({
     timeLeft,
     isExpired,
     formattedTime,
+    isPopupActive,
     handleConnect,
     handleNewConnection,
     handleDeleteConnection,
     handleImageError,
     handleImageLoad,
-    retryQrCode
+    retryQrCode,
+    stopPolling
   }
 }
