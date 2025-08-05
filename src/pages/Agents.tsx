@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bot, Smartphone, QrCode, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { WhatsAppConnection } from "@/components/WhatsAppConnection";
+import { supabase } from "@/integrations/supabase/client";
 
 const Agents = () => {
   const [connectingAgent, setConnectingAgent] = useState<number | null>(null);
@@ -56,17 +57,26 @@ const Agents = () => {
   };
 
   const makeConnectionRequest = async (connectionName: string) => {
-    const response = await fetch('https://webhook.abbadigital.com.br/webhook/conecta-mp-brasil', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        instanceName: connectionName
-      })
-    });
-    
-    return response.json();
+    try {
+      console.log('Fazendo requisição para edge function com:', connectionName);
+      
+      const { data, error } = await supabase.functions.invoke('whatsapp-connect', {
+        body: {
+          instanceName: connectionName
+        }
+      });
+
+      if (error) {
+        console.error('Erro na edge function:', error);
+        throw error;
+      }
+
+      console.log('Resposta da edge function:', data);
+      return data;
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+      throw error;
+    }
   };
 
   return (
