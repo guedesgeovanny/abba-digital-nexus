@@ -48,26 +48,23 @@ serve(async (req) => {
       responseData = { status: 'success', message: 'Request sent successfully' };
     }
 
-    // Buscar o QR code no endpoint de dados da instância
-    const getQRCode = async () => {
-      console.log('Fetching QR code from dados-da-instancia...');
-      const qrUrl = new URL('https://webhook.abbadigital.com.br/webhook/dados-da-instancia');
-      qrUrl.searchParams.append('instanceName', instanceName);
-      
-      const qrResponse = await fetch(qrUrl.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (qrResponse.ok) {
-        const qrData = await qrResponse.json();
-        console.log('QR Code data received:', qrData);
-        return qrData;
+    // Buscar o QR code uma única vez no endpoint de dados da instância
+    console.log('Fetching QR code from dados-da-instancia...');
+    const qrUrl = new URL('https://webhook.abbadigital.com.br/webhook/dados-da-instancia');
+    qrUrl.searchParams.append('instanceName', instanceName);
+    
+    const qrResponse = await fetch(qrUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
       }
-      return null;
-    };
+    });
+    
+    let qrData = null;
+    if (qrResponse.ok) {
+      qrData = await qrResponse.json();
+      console.log('QR Code data received:', qrData);
+    }
 
     // Iniciar polling para verificar o status da conexão
     const pollForConnection = async () => {
@@ -120,8 +117,8 @@ serve(async (req) => {
       }
     };
 
-    // Buscar QR code e executar polling em background
-    EdgeRuntime.waitUntil(getQRCode().then(() => pollForConnection()));
+    // Executar polling em background
+    EdgeRuntime.waitUntil(pollForConnection());
 
     return new Response(
       JSON.stringify({ 
