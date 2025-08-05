@@ -183,8 +183,8 @@ const Contacts = () => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-abba-text">Contatos</h2>
-          <p className="text-gray-400">
+          <h2 className="text-3xl font-bold tracking-tight">Contatos</h2>
+          <p className="text-muted-foreground">
             Gerencie todos os leads que interagiram com seus agentes
           </p>
         </div>
@@ -192,25 +192,25 @@ const Contacts = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-abba-black border-abba-gray">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-abba-text">Filtros</CardTitle>
+          <CardTitle className="text-foreground">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 flex-wrap">
             <div className="flex-1 min-w-[300px]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   placeholder="Buscar por nome, email ou empresa..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-abba-gray border-abba-gray text-abba-text"
+                  className="pl-10"
                 />
               </div>
             </div>
             <Select value={filterChannel} onValueChange={setFilterChannel}>
-              <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Canal" />
               </SelectTrigger>
               <SelectContent>
@@ -225,7 +225,7 @@ const Contacts = () => {
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -238,7 +238,7 @@ const Contacts = () => {
               </SelectContent>
             </Select>
             <Select value={filterTag} onValueChange={setFilterTag}>
-              <SelectTrigger className="w-[180px] bg-abba-gray border-abba-gray text-abba-text">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Tag" />
               </SelectTrigger>
               <SelectContent>
@@ -255,21 +255,20 @@ const Contacts = () => {
       </Card>
 
       {/* Contacts Table */}
-      <Card className="bg-abba-black border-abba-gray">
+      <Card className="bg-card border-border">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-abba-text">
+              <CardTitle className="text-foreground">
                 Contatos ({filteredContacts.length})
               </CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-muted-foreground">
                 Lista de todos os contatos e suas informações
               </CardDescription>
             </div>
             <Button 
               variant="outline" 
               onClick={handleExportCSV}
-              className="border-abba-gray text-abba-text hover:bg-abba-gray"
             >
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Exportar CSV
@@ -277,35 +276,35 @@ const Contacts = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-abba-gray">
+          <div className="rounded-md border border-border">
             <Table>
               <TableHeader>
-                <TableRow className="border-abba-gray">
-                  <TableHead className="text-gray-400">Nome</TableHead>
-                  <TableHead className="text-gray-400">Canal</TableHead>
-                  <TableHead className="text-gray-400">Contato</TableHead>
-                  <TableHead className="text-gray-400">Agente</TableHead>
-                  <TableHead className="text-gray-400">Status</TableHead>
-                  <TableHead className="text-gray-400">Tags</TableHead>
-                  <TableHead className="text-gray-400">Último Contato</TableHead>
-                  <TableHead className="text-gray-400">Ações</TableHead>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Canal</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead>Agente</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead>Último Contato</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedContacts.map((contact) => (
                   <TableRow 
                     key={contact.id} 
-                    className="border-abba-gray hover:bg-abba-gray/50 cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() => handleContactClick(contact)}
                   >
                     <TableCell>
-                      <div className="font-medium text-abba-text">{contact.name}</div>
-                      <div className="text-sm text-gray-400">{contact.company || 'N/A'}</div>
+                      <div className="font-medium">{contact.name}</div>
+                      <div className="text-sm text-muted-foreground">{contact.company || 'N/A'}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getChannelIcon(contact.channel)}
-                        <span className="text-abba-text">{getChannelLabel(contact.channel)}</span>
+                        <span>{getChannelLabel(contact.channel)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -313,24 +312,24 @@ const Contacts = () => {
                         {contact.phone && (
                           <div className="flex items-center gap-2 text-sm">
                             <Phone className="w-3 h-3" />
-                            <span className="text-abba-text">{contact.phone}</span>
+                            <span>{contact.phone}</span>
                           </div>
                         )}
                         {contact.instagram && (
                           <div className="flex items-center gap-2 text-sm">
                             <Instagram className="w-3 h-3" />
-                            <span className="text-abba-text">{contact.instagram}</span>
+                            <span>{contact.instagram}</span>
                           </div>
                         )}
                         {contact.email && (
                           <div className="flex items-center gap-2 text-sm">
                             <Mail className="w-3 h-3" />
-                            <span className="text-abba-text">{contact.email}</span>
+                            <span>{contact.email}</span>
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-abba-text">{contact.agent_assigned || 'N/A'}</TableCell>
+                    <TableCell>{contact.agent_assigned || 'N/A'}</TableCell>
                     <TableCell>
                       <Badge className={`${getStatusColor(contact.status)} text-white`}>
                         {getStatusLabel(contact.status)}
@@ -346,7 +345,7 @@ const Contacts = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2 text-sm text-abba-text">
+                      <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-3 h-3" />
                         {contact.last_contact_date ? new Date(contact.last_contact_date).toLocaleDateString('pt-BR') : 'N/A'}
                       </div>
@@ -367,15 +366,15 @@ const Contacts = () => {
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-abba-black border-abba-gray">
+                          <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle className="text-abba-text">Excluir Contato</AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-400">
+                              <AlertDialogTitle>Excluir Contato</AlertDialogTitle>
+                              <AlertDialogDescription>
                                 Tem certeza que deseja excluir o contato "{contact.name}"? Esta ação não pode ser desfeita.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel className="border-abba-gray text-abba-text hover:bg-abba-gray">
+                              <AlertDialogCancel>
                                 Cancelar
                               </AlertDialogCancel>
                               <AlertDialogAction
@@ -393,7 +392,7 @@ const Contacts = () => {
                 ))}
                 {paginatedContacts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-gray-400 py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Nenhum contato encontrado
                     </TableCell>
                   </TableRow>
@@ -407,12 +406,12 @@ const Contacts = () => {
             <div className="flex items-center justify-between mt-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-400">Itens por página:</span>
+                  <span className="text-sm text-muted-foreground">Itens por página:</span>
                   <Select
                     value={itemsPerPage.toString()}
                     onValueChange={(value) => handleItemsPerPageChange(Number(value))}
                   >
-                    <SelectTrigger className="w-[80px] bg-abba-gray border-abba-gray text-abba-text">
+                    <SelectTrigger className="w-[80px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -424,7 +423,7 @@ const Contacts = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-muted-foreground">
                   Mostrando {startItem}-{endItem} de {filteredContacts.length} contatos
                 </span>
               </div>
@@ -457,12 +456,12 @@ const Contacts = () => {
 
       {/* Contact Detail Sheet */}
       <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <SheetContent className="bg-abba-black border-l border-abba-gray w-[600px] sm:w-[600px]">
+        <SheetContent className="w-[600px] sm:w-[600px]">
           {selectedContact && (
             <>
               <SheetHeader>
-                <SheetTitle className="text-abba-text text-xl">{selectedContact.name}</SheetTitle>
-                <SheetDescription className="text-gray-400">
+                <SheetTitle className="text-xl">{selectedContact.name}</SheetTitle>
+                <SheetDescription>
                   {selectedContact.company || 'N/A'} • {selectedContact.position || 'N/A'}
                 </SheetDescription>
               </SheetHeader>
@@ -470,61 +469,61 @@ const Contacts = () => {
               <div className="mt-6 space-y-6">
                 {/* Contact Info */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-abba-text">Informações de Contato</h3>
+                  <h3 className="text-lg font-medium">Informações de Contato</h3>
                   <div className="grid grid-cols-1 gap-3">
                     {selectedContact.email && (
                       <div className="flex items-center gap-3">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="text-abba-text">{selectedContact.email}</span>
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <span>{selectedContact.email}</span>
                       </div>
                     )}
                     {selectedContact.phone && (
                       <div className="flex items-center gap-3">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="text-abba-text">{selectedContact.phone}</span>
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <span>{selectedContact.phone}</span>
                       </div>
                     )}
                     {selectedContact.instagram && (
                       <div className="flex items-center gap-3">
-                        <Instagram className="w-4 h-4 text-gray-400" />
-                        <span className="text-abba-text">{selectedContact.instagram}</span>
+                        <Instagram className="w-4 h-4 text-muted-foreground" />
+                        <span>{selectedContact.instagram}</span>
                       </div>
                     )}
                     {selectedContact.company && (
                       <div className="flex items-center gap-3">
-                        <Building2 className="w-4 h-4 text-gray-400" />
-                        <span className="text-abba-text">{selectedContact.company}</span>
+                        <Building2 className="w-4 h-4 text-muted-foreground" />
+                        <span>{selectedContact.company}</span>
                       </div>
                     )}
                     {selectedContact.position && (
                       <div className="flex items-center gap-3">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-abba-text">{selectedContact.position}</span>
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span>{selectedContact.position}</span>
                       </div>
                     )}
                     {selectedContact.address && (
                       <div className="flex items-center gap-3">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <span className="text-abba-text">{selectedContact.address}</span>
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span>{selectedContact.address}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <Separator className="bg-abba-gray" />
+                <Separator />
 
                 {/* Status & Tags */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-abba-text">Status & Tags</h3>
+                  <h3 className="text-lg font-medium">Status & Tags</h3>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400">Status:</span>
+                      <span className="text-muted-foreground">Status:</span>
                       <Badge className={`${getStatusColor(selectedContact.status)} text-white`}>
                         {getStatusLabel(selectedContact.status)}
                       </Badge>
                     </div>
                     <div className="flex items-start gap-2">
-                      <span className="text-gray-400 mt-1">Tags:</span>
+                      <span className="text-muted-foreground mt-1">Tags:</span>
                       <div className="flex gap-1 flex-wrap">
                         {selectedContact.tags?.length > 0 ? (
                           selectedContact.tags.map((tag) => (
@@ -534,58 +533,58 @@ const Contacts = () => {
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-gray-400 italic">Nenhuma tag</span>
+                          <span className="text-muted-foreground italic">Nenhuma tag</span>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400">Canal:</span>
+                      <span className="text-muted-foreground">Canal:</span>
                       <div className="flex items-center gap-2">
                         {getChannelIcon(selectedContact.channel)}
-                        <span className="text-abba-text">{getChannelLabel(selectedContact.channel)}</span>
+                        <span>{getChannelLabel(selectedContact.channel)}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400">Agente:</span>
-                      <span className="text-abba-text">{selectedContact.agent_assigned || 'N/A'}</span>
+                      <span className="text-muted-foreground">Agente:</span>
+                      <span>{selectedContact.agent_assigned || 'N/A'}</span>
                     </div>
                     {selectedContact.source && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400">Fonte:</span>
-                        <span className="text-abba-text">{selectedContact.source}</span>
+                        <span className="text-muted-foreground">Fonte:</span>
+                        <span>{selectedContact.source}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <Separator className="bg-abba-gray" />
+                <Separator />
 
                 {/* Notes */}
                 {selectedContact.notes && (
                   <>
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-abba-text">Observações</h3>
-                      <div className="p-3 bg-abba-gray rounded-lg">
-                        <p className="text-abba-text text-sm">{selectedContact.notes}</p>
+                      <h3 className="text-lg font-medium">Observações</h3>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm">{selectedContact.notes}</p>
                       </div>
                     </div>
-                    <Separator className="bg-abba-gray" />
+                    <Separator />
                   </>
                 )}
 
                 {/* Created/Updated Info */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-abba-text">Informações do Sistema</h3>
+                  <h3 className="text-lg font-medium">Informações do Sistema</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400">Criado em:</span>
-                      <span className="text-abba-text">
+                      <span className="text-muted-foreground">Criado em:</span>
+                      <span>
                         {new Date(selectedContact.created_at).toLocaleDateString('pt-BR')} às {new Date(selectedContact.created_at).toLocaleTimeString('pt-BR')}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-400">Última atualização:</span>
-                      <span className="text-abba-text">
+                      <span className="text-muted-foreground">Última atualização:</span>
+                      <span>
                         {new Date(selectedContact.updated_at).toLocaleDateString('pt-BR')} às {new Date(selectedContact.updated_at).toLocaleTimeString('pt-BR')}
                       </span>
                     </div>
