@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useUsers } from "@/hooks/useUsers"
 import { useAuth } from "@/contexts/AuthContext"
 import { UserDialog } from "@/components/UserDialog"
+import { ProfileEditDialog } from "@/components/ProfileEditDialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 const Settings = () => {
@@ -267,7 +268,7 @@ const Settings = () => {
                             </Badge>
                           </div>
                           
-                          {isAdmin && (
+                          {isAdmin ? (
                             <>
                             <UserDialog
                               user={user}
@@ -302,6 +303,11 @@ const Settings = () => {
                                 </AlertDialogContent>
                               </AlertDialog>
                             </>
+                          ) : (
+                            // Para usuários não-admin, mostrar apenas o botão de editar próprio perfil
+                            user.id === currentUserProfile?.id && (
+                              <ProfileEditDialog />
+                            )
                           )}
                         </div>
                       </div>
