@@ -110,9 +110,15 @@ export const processInstanceData = (instanceArray: any[]): ProfileData | null =>
     return null
   }
 
-  if (finalProfileName === 'not loaded' || finalProfileName.trim() === '' ||
-      extractedContact.trim() === '' || profilePictureUrl.trim() === '') {
-    console.log('⚠️ Dados da instância com valores inválidos')
+  // Verificar status da conexão
+  const connectionStatus = instanceData.status
+  console.log('🔍 Status da conexão na instância:', connectionStatus)
+  
+  // Se status é "open", aceitar mesmo com profileName sendo instanceName
+  if (connectionStatus === 'open') {
+    console.log('✅ Status "open" detectado - conexão válida!')
+  } else if (finalProfileName.trim() === '' || extractedContact.trim() === '' || profilePictureUrl.trim() === '') {
+    console.log('⚠️ Dados da instância com valores inválidos e status não é "open"')
     return null
   }
   

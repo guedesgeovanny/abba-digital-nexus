@@ -67,13 +67,22 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     // Se profileName é "not loaded", usar o instanceName como fallback
     const finalProfileName = profileName === "not loaded" ? responseInstanceName : profileName
     
+    // Verificar status da conexão primeiro
+    const connectionStatus = instanceData.status
+    console.log('🔍 Status da conexão:', connectionStatus)
+    
+    // Se status é "open", aceitar conexão mesmo com "not loaded"
+    if (connectionStatus === 'open') {
+      console.log('✅ Status "open" detectado - conexão ativa!')
+    }
+    
     // Verificar se os dados existem e não são strings vazias ou "null"
     const isValidProfilename = finalProfileName && 
                               typeof finalProfileName === 'string' && 
                               finalProfileName.trim() !== '' && 
                               finalProfileName !== 'null' &&
-                              finalProfileName !== 'undefined' &&
-                              finalProfileName !== 'not loaded'
+                              finalProfileName !== 'undefined'
+    // Removida validação para "not loaded" pois já foi tratada no fallback
     
     const isValidContato = extractedContact && 
                           typeof extractedContact === 'string' && 
@@ -87,9 +96,13 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
                        profilePictureUrl !== 'null' &&
                        profilePictureUrl !== 'undefined'
     
-    if (!isValidProfilename || !isValidContato || !isValidFoto) {
+    // Se status é "open", aceitar mesmo com dados limitados
+    if (connectionStatus === 'open' && isValidContato && isValidFoto) {
+      console.log('✅ Conexão "open" com dados básicos válidos - prosseguindo!')
+    } else if (!isValidProfilename || !isValidContato || !isValidFoto) {
       console.log('⚠️ Dados do perfil incompletos ou inválidos, continuando polling...')
       console.log('📋 Validação detalhada:', {
+        connectionStatus,
         profileName: { original: profileName, processed: finalProfileName, valid: isValidProfilename },
         owner: { original: owner, extracted: extractedContact, valid: isValidContato },
         profilePictureUrl: { value: profilePictureUrl, valid: isValidFoto }
