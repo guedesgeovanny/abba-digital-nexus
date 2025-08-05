@@ -1,4 +1,4 @@
-import { Home, Bot, Brain, Headphones, BarChart3, Settings, Users, Contact, Trello, LogOut, MessageSquare } from "lucide-react";
+import { Home, Bot, Headphones, BarChart3, Settings, Users, Contact, Trello, LogOut, MessageSquare } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,6 @@ const items = [{
   title: "Conexões",
   url: "/agents",
   icon: Bot
-}, {
-  title: "Agente de IA",
-  url: "/ai-agent",
-  icon: Brain
 }, {
   title: "Atendimento",
   url: "/support",

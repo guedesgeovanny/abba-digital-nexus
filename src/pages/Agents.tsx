@@ -1,181 +1,188 @@
-import { useState } from "react"
-import { useAgents } from "@/hooks/useAgents"
-import { AgentsPageHeader } from "@/components/AgentsPageHeader"
-import { AgentSearch } from "@/components/AgentSearch"
-import { AgentsList } from "@/components/AgentsList"
-import { EmptyAgentsState } from "@/components/EmptyAgentsState"
-import { CreateAgentDialog } from "@/components/CreateAgentDialog"
-import { Tables } from "@/integrations/supabase/types"
-import { useToast } from "@/hooks/use-toast"
-
-type Agent = Tables<'agents'>
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Bot, Smartphone, QrCode, CheckCircle } from "lucide-react";
 
 const Agents = () => {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null)
-  const { toast } = useToast()
-  
-  const { 
-    agents, 
-    isLoading, 
-    createAgent, 
-    updateAgent,
-    deleteAgent, 
-    isCreating,
-    isUpdating,
-    isDeleting
-  } = useAgents()
+  const connections = [
+    {
+      id: 1,
+      name: "WhatsApp Principal",
+      description: "Conexão principal para atendimento automático",
+      status: "connected",
+      phone: "+55 11 99999-9999",
+      messages: 127,
+      lastActivity: "2 minutos atrás"
+    },
+    {
+      id: 2,
+      name: "WhatsApp Secundário",
+      description: "Conexão secundária para overflow e backup",
+      status: "disconnected",
+      phone: null,
+      messages: 0,
+      lastActivity: "Nunca"
+    }
+  ];
 
-  const filteredAgents = agents.filter(agent =>
-    agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (agent.description && agent.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  const getStatusColor = (status: string) => {
+    return status === "connected" ? "default" : "secondary";
+  };
 
-  const handleCreateAgent = (agentData: Parameters<typeof createAgent>[0] & {
-    whatsapp_profile_name?: string
-    whatsapp_contact?: string
-    whatsapp_profile_picture_url?: string
-    whatsapp_profile_picture_data?: string
-  }) => {
-    console.log('📤 Criando agente com dados do WhatsApp:', agentData)
-    
-    createAgent(agentData, {
-      onSuccess: (newAgent) => {
-        console.log('✅ Agente criado com ID real:', newAgent.id)
-        setCreatedAgentId(newAgent.id)
-        
-        // Só fechar o dialog se não for WhatsApp ou se o WhatsApp já estiver conectado
-        if (agentData.channel !== 'whatsapp' || agentData.whatsapp_contact) {
-          setIsCreateDialogOpen(false)
-          toast({
-            title: "Agente criado com sucesso!",
-            description: `O agente ${agentData.name} foi criado${agentData.whatsapp_contact ? ' e o WhatsApp foi conectado' : ''}.`,
-          })
-        }
+  const getStatusText = (status: string) => {
+    return status === "connected" ? "Conectado" : "Desconectado";
+  };
 
-        return newAgent
-      },
-      onError: (error) => {
-        toast({
-          title: "Erro ao criar agente",
-          description: "Ocorreu um erro ao criar o agente. Tente novamente.",
-          variant: "destructive",
-        })
-        console.error("Error creating agent:", error)
-      }
-    })
-  }
+  const handleConnect = (connectionId: number) => {
+    console.log("Conectar WhatsApp:", connectionId);
+    // Aqui seria implementada a lógica de conexão
+  };
 
-  const handleEditAgent = (agent: Agent) => {
-    console.log("Edit agent:", agent)
-  }
-
-  const handleDeleteAgent = (id: string) => {
-    deleteAgent(id, {
-      onSuccess: () => {
-        toast({
-          title: "Agente excluído",
-          description: "O agente foi excluído com sucesso.",
-        })
-      },
-      onError: (error) => {
-        toast({
-          title: "Erro ao excluir agente",
-          description: "Ocorreu um erro ao excluir o agente. Tente novamente.",
-          variant: "destructive",
-        })
-        console.error("Error deleting agent:", error)
-      }
-    })
-  }
-
-  const handleToggleStatus = (id: string, newStatus: 'active' | 'inactive') => {
-    updateAgent({ id, status: newStatus }, {
-      onSuccess: () => {
-        toast({
-          title: "Status atualizado",
-          description: `Agente ${newStatus === 'active' ? 'ativado' : 'desativado'} com sucesso.`,
-        })
-      },
-      onError: (error) => {
-        toast({
-          title: "Erro ao atualizar status",
-          description: "Ocorreu um erro ao alterar o status do agente. Tente novamente.",
-          variant: "destructive",
-        })
-        console.error("Error updating agent status:", error)
-      }
-    })
-  }
-
-  const openCreateDialog = () => {
-    setIsCreateDialogOpen(true)
-    setCreatedAgentId(null)
-  }
-  
-  const closeCreateDialog = () => {
-    setIsCreateDialogOpen(false)
-    setCreatedAgentId(null)
-  }
-
-  const handleWhatsAppConnectionSuccess = () => {
-    // Fechar o dialog quando o botão "Criar Agente" for clicado
-    setIsCreateDialogOpen(false)
-    
-    toast({
-      title: "Agente criado com sucesso!",
-      description: "Agente criado e configurado com sucesso.",
-    })
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-foreground">Carregando agentes...</div>
-        </div>
-      </div>
-    )
-  }
+  const handleDisconnect = (connectionId: number) => {
+    console.log("Desconectar WhatsApp:", connectionId);
+    // Aqui seria implementada a lógica de desconexão
+  };
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-background min-h-screen">
+      {/* Header */}
+      <div className="border-b border-border bg-background">
+        <div className="pb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Bot className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">Conexões</h1>
+                <p className="text-sm text-muted-foreground">
+                  Gerencie suas conexões WhatsApp para atendimento automático
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <AgentsPageHeader onCreateAgent={openCreateDialog} />
+      {/* Conexões WhatsApp */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {connections.map((connection) => (
+          <Card key={connection.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <Smartphone className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{connection.name}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {connection.description}
+                    </CardDescription>
+                  </div>
+                </div>
+                <Badge variant={getStatusColor(connection.status)}>
+                  {getStatusText(connection.status)}
+                </Badge>
+              </div>
+            </CardHeader>
 
-      <AgentSearch 
-        searchTerm={searchTerm} 
-        onSearchChange={setSearchTerm} 
-      />
+            <CardContent className="space-y-4">
+              {connection.status === "connected" ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-muted-foreground">Telefone:</span>
+                    <span className="font-medium">{connection.phone}</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Mensagens hoje:</span>
+                      <div className="font-semibold text-lg">{connection.messages}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Última atividade:</span>
+                      <div className="font-medium">{connection.lastActivity}</div>
+                    </div>
+                  </div>
 
-      {filteredAgents.length === 0 ? (
-        <EmptyAgentsState 
-          hasAgents={agents.length > 0}
-          onCreateAgent={openCreateDialog}
-        />
-      ) : (
-        <AgentsList
-          agents={filteredAgents}
-          onEdit={handleEditAgent}
-          onDelete={handleDeleteAgent}
-          onToggleStatus={handleToggleStatus}
-          isDeleting={isDeleting}
-          isUpdating={isUpdating}
-        />
-      )}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDisconnect(connection.id)}
+                      className="flex-1"
+                    >
+                      Desconectar
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                    >
+                      Configurar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center py-6">
+                    <QrCode className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Esta conexão não está configurada.
+                      <br />
+                      Clique em "Conectar" para configurar.
+                    </p>
+                  </div>
 
-      <CreateAgentDialog
-        isOpen={isCreateDialogOpen}
-        onClose={closeCreateDialog}
-        onCreateAgent={handleCreateAgent}
-        onWhatsAppConnectionSuccess={handleWhatsAppConnectionSuccess}
-        isCreating={isCreating}
-        createdAgentId={createdAgentId}
-      />
+                  <Button
+                    onClick={() => handleConnect(connection.id)}
+                    className="w-full"
+                  >
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Conectar WhatsApp
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Informações adicionais */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Como funciona?</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-xs font-semibold text-primary">1</span>
+            </div>
+            <div>
+              <strong className="text-foreground">Conecte seu WhatsApp:</strong> Escaneie o QR Code com seu dispositivo móvel para estabelecer a conexão.
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-xs font-semibold text-primary">2</span>
+            </div>
+            <div>
+              <strong className="text-foreground">Configure automações:</strong> Defina respostas automáticas e fluxos de atendimento personalizados.
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-xs font-semibold text-primary">3</span>
+            </div>
+            <div>
+              <strong className="text-foreground">Monitore o desempenho:</strong> Acompanhe métricas e relatórios de atendimento em tempo real.
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
-}
+  );
+};
 
-export default Agents
+export default Agents;
