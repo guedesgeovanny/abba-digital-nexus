@@ -199,7 +199,13 @@ export const CreateAgentDialog = ({
     profilePictureUrl: string
     profilePictureData?: string
   }) => {
-    console.log('✅ WhatsApp conectado com sucesso! Salvando dados do perfil:', profileData)
+    console.log('🎉 Conexão WhatsApp realizada com sucesso no CreateAgentDialog!', {
+      profileName: profileData.profileName,
+      contact: profileData.contact,
+      hasProfilePicture: !!profileData.profilePictureUrl,
+      hasProfilePictureData: !!profileData.profilePictureData,
+      createdAgentId
+    })
     
     // Atualizar estado com os dados do perfil
     setWhatsAppState(prev => ({
@@ -215,7 +221,7 @@ export const CreateAgentDialog = ({
     
     toast({
       title: "WhatsApp Conectado!",
-      description: `Conectado como ${profileData.profileName}. Agora você pode criar o agente com os dados do WhatsApp.`,
+      description: `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Os dados foram salvos no agente automaticamente.`,
     })
   }
 

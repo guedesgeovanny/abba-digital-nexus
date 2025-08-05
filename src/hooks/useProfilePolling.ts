@@ -59,13 +59,14 @@ export const useProfilePolling = ({
           profilePictureData: profilePictureData
         }
         
-        // Salvar no banco se temos o agentId real
-        if (agentId && agentId.length > 10) { // ID real tem mais de 10 caracteres
+        // Salvar no banco se temos um agentId válido (UUID real)
+        if (agentId && agentId.length === 36 && agentId.includes('-')) {
           console.log('💾 Salvando dados do perfil no banco para agente:', agentId)
           console.log('💾 Dados a serem salvos:', {
-            whatsapp_profile_name: profileData.profilename,
-            whatsapp_contact: profileData.contato,
-            whatsapp_profile_picture_url: profileData.fotodoperfil
+            profileName: profileData.profilename,
+            contact: profileData.contato,
+            profilePictureUrl: profileData.fotodoperfil,
+            hasProfilePictureData: !!profilePictureData
           })
           
           try {
@@ -77,12 +78,16 @@ export const useProfilePolling = ({
               profilePictureData: profilePictureData
             })
 
-            console.log('✅ Dados do perfil salvos no banco com sucesso')
+            console.log('✅ Dados do perfil WhatsApp salvos no banco com sucesso!')
           } catch (error) {
-            console.error('❌ Erro ao salvar perfil no banco:', error)
+            console.error('❌ Erro ao salvar perfil WhatsApp no banco:', error)
+            // Mesmo com erro no salvamento, continuamos o fluxo para não bloquear a UI
           }
         } else {
-          console.log('⚠️ AgentId não disponível ainda ou é temporário. AgentId:', agentId)
+          console.log('⚠️ AgentId inválido ou não disponível para salvamento:', {
+            agentId,
+            isValid: agentId && agentId.length === 36 && agentId.includes('-')
+          })
         }
         
         setIsPolling(false)

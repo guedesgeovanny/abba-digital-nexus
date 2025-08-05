@@ -39,7 +39,7 @@ export const AgentForm = ({
 }: AgentFormProps) => {
   const instanceName = formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 
-  console.log('🔍 AgentForm recebeu agentId:', agentId)
+  console.log('🔍 AgentForm recebeu agentId:', agentId, 'isValid:', agentId && agentId.length === 36)
 
   const handleWhatsAppConnectionSuccess = (profileData: {
     profileName: string
@@ -47,6 +47,13 @@ export const AgentForm = ({
     profilePictureUrl: string
     profilePictureData?: string
   }) => {
+    console.log('📡 AgentForm repassando sucesso da conexão WhatsApp:', {
+      profileName: profileData.profileName,
+      contact: profileData.contact,
+      agentId,
+      hasCallback: !!onWhatsAppConnectionSuccess
+    })
+    
     if (onWhatsAppConnectionSuccess) {
       onWhatsAppConnectionSuccess(profileData)
     }
