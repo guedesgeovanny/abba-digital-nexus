@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Upload, X, User, Lock } from 'lucide-react'
+import { Upload, X, User, Lock, Edit } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { useProfileUpdate } from '@/hooks/useProfileUpdate'
@@ -168,9 +168,8 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
   }
 
   const defaultTrigger = (
-    <Button variant="ghost" size="sm" className="text-foreground hover:bg-accent">
-      <User className="h-4 w-4" />
-      Editar Perfil
+    <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
+      <Edit className="h-4 w-4" />
     </Button>
   )
 
@@ -326,7 +325,7 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
               disabled={loading}
               className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {loading ? 'Salvando...' : 'Salvar'}
+              {loading ? 'Salvando...' : 'Atualizar'}
             </Button>
           </div>
         </div>
