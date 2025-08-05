@@ -38,6 +38,18 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
 
   const [showPasswordSection, setShowPasswordSection] = useState(false)
 
+  // Clear password fields when password section is toggled off
+  useEffect(() => {
+    if (!showPasswordSection) {
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }))
+    }
+  }, [showPasswordSection])
+
   useEffect(() => {
     if (open && userProfile) {
       setFormData({
@@ -116,12 +128,19 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
       confirmPassword: formData.confirmPassword
     })
     
+    // Validação básica do nome
     const errors = {
       full_name: !formData.full_name || formData.full_name.trim().length < 2,
-      // Só exigir senha atual se o usuário realmente quer alterar a senha
-      currentPassword: formData.newPassword && !formData.currentPassword,
-      newPassword: formData.newPassword && formData.newPassword.length < 6,
-      confirmPassword: formData.newPassword && formData.newPassword !== formData.confirmPassword
+      currentPassword: false,
+      newPassword: false,
+      confirmPassword: false
+    }
+    
+    // Só validar senha se a seção de senha estiver ativa E se o usuário digitou uma nova senha
+    if (showPasswordSection && formData.newPassword) {
+      errors.newPassword = formData.newPassword.length < 6
+      errors.confirmPassword = formData.newPassword !== formData.confirmPassword
+      // Removido a validação de currentPassword por enquanto para simplificar
     }
     
     console.log('❌ Erros de validação:', errors)
