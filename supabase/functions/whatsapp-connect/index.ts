@@ -48,7 +48,28 @@ serve(async (req) => {
       responseData = { status: 'success', message: 'Request sent successfully' };
     }
 
-    // Iniciar polling em background para verificar o status da conexão
+    // Buscar o QR code no endpoint de dados da instância
+    const getQRCode = async () => {
+      console.log('Fetching QR code from dados-da-instancia...');
+      const qrUrl = new URL('https://webhook.abbadigital.com.br/webhook/dados-da-instancia');
+      qrUrl.searchParams.append('instanceName', instanceName);
+      
+      const qrResponse = await fetch(qrUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (qrResponse.ok) {
+        const qrData = await qrResponse.json();
+        console.log('QR Code data received:', qrData);
+        return qrData;
+      }
+      return null;
+    };
+
+    // Iniciar polling para verificar o status da conexão
     const pollForConnection = async () => {
       console.log('Starting background polling for connection status...');
       const maxAttempts = 60; // 60 tentativas = 5 minutos
@@ -58,21 +79,21 @@ serve(async (req) => {
         try {
           console.log(`Polling attempt ${attempts + 1}/${maxAttempts} for instance: ${instanceName}`);
           
-          const pollResponse = await fetch('https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil', {
+          const statusUrl = new URL('https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil');
+          statusUrl.searchParams.append('instanceName', instanceName);
+          
+          const pollResponse = await fetch(statusUrl.toString(), {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              instanceName: instanceName
-            })
+            }
           });
           
           if (pollResponse.ok) {
             const pollData = await pollResponse.json();
-            console.log('Polling response:', pollData);
+            console.log('Status polling response:', pollData);
             
-            // Verificar se a conexão foi estabelecida (pode ajustar a condição conforme a resposta do webhook)
+            // Verificar se a conexão foi estabelecida
             if (pollData && (pollData.connected || pollData.status === 'connected' || pollData.state === 'connected')) {
               console.log('Connection established successfully!');
               break;
@@ -94,14 +115,14 @@ serve(async (req) => {
       }
     };
 
-    // Executar polling em background
-    EdgeRuntime.waitUntil(pollForConnection());
+    // Buscar QR code e executar polling em background
+    EdgeRuntime.waitUntil(getQRCode().then(() => pollForConnection()));
 
     return new Response(
       JSON.stringify({ 
         ...responseData, 
         polling: true,
-        message: 'Connection request sent, polling for status...' 
+        message: 'Connection request sent, fetching QR code and polling for status...' 
       }),
       { 
         headers: { 
