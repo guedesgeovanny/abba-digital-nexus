@@ -48,8 +48,61 @@ serve(async (req) => {
       responseData = { status: 'success', message: 'Request sent successfully' };
     }
 
+    // Iniciar polling em background para verificar o status da conexão
+    const pollForConnection = async () => {
+      console.log('Starting background polling for connection status...');
+      const maxAttempts = 60; // 60 tentativas = 5 minutos
+      let attempts = 0;
+      
+      while (attempts < maxAttempts) {
+        try {
+          console.log(`Polling attempt ${attempts + 1}/${maxAttempts} for instance: ${instanceName}`);
+          
+          const pollResponse = await fetch('https://webhook.abbadigital.com.br/webhook/dados-da-instancia', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              instanceName: instanceName
+            })
+          });
+          
+          if (pollResponse.ok) {
+            const pollData = await pollResponse.json();
+            console.log('Polling response:', pollData);
+            
+            // Verificar se a conexão foi estabelecida (pode ajustar a condição conforme a resposta do webhook)
+            if (pollData && (pollData.connected || pollData.status === 'connected' || pollData.state === 'connected')) {
+              console.log('Connection established successfully!');
+              break;
+            }
+          }
+          
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 5000)); // Aguardar 5 segundos entre tentativas
+          
+        } catch (error) {
+          console.error(`Polling error on attempt ${attempts + 1}:`, error);
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+      
+      if (attempts >= maxAttempts) {
+        console.log('Polling timeout reached - connection status unknown');
+      }
+    };
+
+    // Executar polling em background
+    EdgeRuntime.waitUntil(pollForConnection());
+
     return new Response(
-      JSON.stringify(responseData),
+      JSON.stringify({ 
+        ...responseData, 
+        polling: true,
+        message: 'Connection request sent, polling for status...' 
+      }),
       { 
         headers: { 
           ...corsHeaders, 
