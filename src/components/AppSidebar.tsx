@@ -16,10 +16,6 @@ const items = [{
   url: "/agents",
   icon: Bot
 }, {
-  title: "Atendimento",
-  url: "/support",
-  icon: Headphones
-}, {
   title: "Contatos",
   url: "/contacts",
   icon: Contact

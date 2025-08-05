@@ -57,7 +57,7 @@ const Agents = () => {
 
   const makeConnectionRequest = async (connectionName: string) => {
     const response = await fetch('https://webhook.abbadigital.com.br/webhook/conecta-mp-brasil', {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
