@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { ProfileEditDialog } from "@/components/ProfileEditDialog"
 
 export const Header = () => {
   const { userProfile, loading } = useAuth()
@@ -38,33 +39,44 @@ export const Header = () => {
 
   return (
     <header className="bg-background border-b border-border px-6 py-3 flex justify-between items-center">
-      <div className="flex items-center gap-3">
-        <SidebarTrigger className="text-abba-green hover:bg-accent">
-          <Menu className="h-4 w-4" />
-        </SidebarTrigger>
-        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center relative">
-          {userProfile?.avatar_url ? (
-            <img 
-              src={userProfile.avatar_url} 
-              alt={getFirstName()} 
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">
-                {getFirstName().charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3">
+          <SidebarTrigger className="text-abba-green hover:bg-accent">
+            <Menu className="h-4 w-4" />
+          </SidebarTrigger>
+          <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center relative">
+            {userProfile?.avatar_url ? (
+              <img 
+                src={userProfile.avatar_url} 
+                alt={getFirstName()} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">
+                  {getFirstName().charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-foreground text-sm font-medium">
+              {getFirstName()}
+            </span>
+            <span className="text-muted-foreground text-xs">
+              {userProfile?.email}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-foreground text-sm font-medium">
-            {getFirstName()}
-          </span>
-          <span className="text-muted-foreground text-xs">
-            {userProfile?.email}
-          </span>
-        </div>
+        
+        {/* Profile Edit Button */}
+        <ProfileEditDialog 
+          trigger={
+            <Button variant="ghost" size="sm" className="text-foreground hover:bg-accent">
+              <User className="h-4 w-4" />
+            </Button>
+          }
+        />
       </div>
     </header>
   )
