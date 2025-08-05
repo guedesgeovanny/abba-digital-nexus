@@ -25,29 +25,6 @@ serve(async (req) => {
       throw new Error('Instance name is required');
     }
 
-    // Fazer a requisição GET para o webhook externo
-    console.log('Making GET request to external webhook...');
-    const url = new URL('https://webhook.abbadigital.com.br/webhook/conecta-mp-brasil');
-    url.searchParams.append('instanceName', instanceName);
-    
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    console.log('External webhook response status:', response.status);
-    
-    let responseData;
-    try {
-      responseData = await response.json();
-      console.log('External webhook response data:', responseData);
-    } catch (error) {
-      console.log('Failed to parse JSON response:', error);
-      responseData = { status: 'success', message: 'Request sent successfully' };
-    }
-
     // Buscar o QR code uma única vez no endpoint de dados da instância
     console.log('Fetching QR code from dados-da-instancia...');
     const qrUrl = new URL('https://webhook.abbadigital.com.br/webhook/dados-da-instancia');
@@ -122,9 +99,9 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        ...responseData, 
+        ...qrData,
         polling: true,
-        message: 'Connection request sent, fetching QR code and polling for status...' 
+        message: 'QR code fetched and polling for connection status...' 
       }),
       { 
         headers: { 
