@@ -119,18 +119,29 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
   }
 
   const handleSave = async () => {
+    console.log('🔄 Iniciando handleSave')
+    
     if (!validateForm()) {
+      console.log('❌ Validação falhou')
       return
     }
 
+    console.log('✅ Validação passou, iniciando atualização')
     setLoading(true)
     
     try {
       // Update profile info
+      console.log('📝 Atualizando perfil com dados:', { 
+        full_name: formData.full_name, 
+        avatar_url: formData.avatar_url?.substring(0, 50) + '...' 
+      })
+      
       const profileSuccess = await updateProfile({
         full_name: formData.full_name,
         avatar_url: formData.avatar_url
       })
+
+      console.log('📝 Resultado da atualização do perfil:', profileSuccess)
 
       if (!profileSuccess) {
         throw new Error('Erro ao atualizar perfil')
@@ -138,7 +149,10 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
 
       // Update password if provided
       if (showPasswordSection && formData.newPassword) {
+        console.log('🔒 Atualizando senha')
         const passwordSuccess = await changePassword(formData.newPassword)
+        console.log('🔒 Resultado da atualização da senha:', passwordSuccess)
+        
         if (!passwordSuccess) {
           toast({
             title: 'Aviso',
@@ -148,15 +162,17 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
         }
       }
 
+      console.log('🎉 Sucesso total, mostrando toast')
       toast({
         title: 'Sucesso',
         description: 'Perfil atualizado com sucesso',
         variant: 'default'
       })
       
+      console.log('🚪 Fechando diálogo')
       setOpen(false)
     } catch (error) {
-      console.error('Erro ao salvar perfil:', error)
+      console.error('❌ Erro ao salvar perfil:', error)
       toast({
         title: 'Erro',
         description: 'Erro ao atualizar perfil. Tente novamente.',
@@ -164,6 +180,7 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
       })
     } finally {
       setLoading(false)
+      console.log('🔄 handleSave finalizado')
     }
   }
 

@@ -50,9 +50,7 @@ export const useProfileUpdate = () => {
         throw error
       }
 
-      // Force a page reload to refresh the auth context
-      window.location.reload()
-
+      console.log('✅ Perfil atualizado com sucesso no banco')
       return true
     } catch (error) {
       console.error('Error updating profile:', error)
