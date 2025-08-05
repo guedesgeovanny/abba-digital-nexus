@@ -67,7 +67,7 @@ const Agents = () => {
       {/* Conexões WhatsApp */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {connections.map((connection) => (
-          <Card key={connection.id} className="hover:shadow-lg transition-shadow">
+          <Card key={connection.id} className="hover:shadow-lg transition-shadow h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -87,16 +87,16 @@ const Agents = () => {
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 flex-1 flex flex-col">
               {connection.status === "connected" ? (
-                <div className="space-y-3">
+                <div className="space-y-4 flex-1 flex flex-col">
                   <div className="flex items-center gap-2 text-sm">
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <span className="text-muted-foreground">Telefone:</span>
                     <span className="font-medium">{connection.phone}</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm flex-1">
                     <div>
                       <span className="text-muted-foreground">Mensagens hoje:</span>
                       <div className="font-semibold text-lg">{connection.messages}</div>
@@ -107,7 +107,7 @@ const Agents = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 mt-auto">
                     <Button
                       variant="outline"
                       size="sm"
@@ -125,10 +125,10 @@ const Agents = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="text-center py-6">
+                <div className="space-y-4 flex-1 flex flex-col">
+                  <div className="text-center py-8 flex-1 flex flex-col justify-center">
                     <QrCode className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-sm text-muted-foreground mb-6">
                       Esta conexão não está configurada.
                       <br />
                       Clique em "Conectar" para configurar.
@@ -137,7 +137,7 @@ const Agents = () => {
 
                   <Button
                     onClick={() => handleConnect(connection.id)}
-                    className="w-full"
+                    className="w-full mt-auto"
                   >
                     <Smartphone className="h-4 w-4 mr-2" />
                     Conectar WhatsApp
@@ -148,39 +148,6 @@ const Agents = () => {
           </Card>
         ))}
       </div>
-
-      {/* Informações adicionais */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Como funciona?</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-semibold text-primary">1</span>
-            </div>
-            <div>
-              <strong className="text-foreground">Conecte seu WhatsApp:</strong> Escaneie o QR Code com seu dispositivo móvel para estabelecer a conexão.
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-semibold text-primary">2</span>
-            </div>
-            <div>
-              <strong className="text-foreground">Configure automações:</strong> Defina respostas automáticas e fluxos de atendimento personalizados.
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-xs font-semibold text-primary">3</span>
-            </div>
-            <div>
-              <strong className="text-foreground">Monitore o desempenho:</strong> Acompanhe métricas e relatórios de atendimento em tempo real.
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
