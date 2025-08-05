@@ -33,20 +33,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Create regular client to verify the requesting user
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    );
-
-    // Set the auth header for the regular client
-    supabaseClient.auth.getSession = async () => {
-      const token = authHeader.replace('Bearer ', '');
-      return { data: { session: { access_token: token } }, error: null } as any;
-    };
-
-    // Verify the user making the request
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
+    // Verify the user making the request using admin client
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Error getting user:', userError);
@@ -57,7 +46,7 @@ serve(async (req) => {
     }
 
     // Check if the user is an admin
-    const { data: profile, error: profileError } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
