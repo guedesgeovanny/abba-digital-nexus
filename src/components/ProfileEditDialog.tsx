@@ -107,6 +107,15 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
   }
 
   const validateForm = () => {
+    console.log('🔍 Validando formulário...')
+    console.log('📋 Dados do formulário:', {
+      full_name: formData.full_name,
+      showPasswordSection,
+      currentPassword: formData.currentPassword,
+      newPassword: formData.newPassword,
+      confirmPassword: formData.confirmPassword
+    })
+    
     const errors = {
       full_name: !formData.full_name || formData.full_name.trim().length < 2,
       currentPassword: showPasswordSection && !formData.currentPassword,
@@ -114,8 +123,12 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
       confirmPassword: showPasswordSection && formData.newPassword !== formData.confirmPassword
     }
     
+    console.log('❌ Erros de validação:', errors)
+    
     setFormErrors(errors)
-    return !Object.values(errors).some(Boolean)
+    const isValid = !Object.values(errors).some(Boolean)
+    console.log('✅ Formulário válido?', isValid)
+    return isValid
   }
 
   const handleSave = async () => {
