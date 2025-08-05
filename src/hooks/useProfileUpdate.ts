@@ -10,7 +10,7 @@ interface ProfileUpdateData {
 
 export const useProfileUpdate = () => {
   const [loading, setLoading] = useState(false)
-  const { userProfile, fetchUserProfile } = useAuth()
+  const { userProfile } = useAuth()
   const { toast } = useToast()
 
   const updateProfile = async (data: ProfileUpdateData): Promise<boolean> => {
@@ -50,8 +50,8 @@ export const useProfileUpdate = () => {
         throw error
       }
 
-      // Refresh user profile
-      await fetchUserProfile()
+      // Force a page reload to refresh the auth context
+      window.location.reload()
 
       return true
     } catch (error) {
