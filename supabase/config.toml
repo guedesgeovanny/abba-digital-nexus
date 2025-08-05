@@ -2,3 +2,6 @@ project_id = "vlarijlhllzjqvxdigds"
 
 [functions.reset-user-password]
 verify_jwt = true
+
+[functions.whatsapp-connect]
+verify_jwt = false
