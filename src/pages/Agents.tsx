@@ -3,8 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Smartphone, QrCode, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { WhatsAppConnection } from "@/components/WhatsAppConnection";
 
 const Agents = () => {
+  const [connectingAgent, setConnectingAgent] = useState<number | null>(null);
+  
   const connections = [
     {
       id: 1,
@@ -43,13 +47,26 @@ const Agents = () => {
   };
 
   const handleConnect = (connectionId: number) => {
-    console.log("Conectar WhatsApp:", connectionId);
-    // Aqui seria implementada a lógica de conexão
+    setConnectingAgent(connectionId);
   };
 
   const handleDisconnect = (connectionId: number) => {
     console.log("Desconectar WhatsApp:", connectionId);
     // Aqui seria implementada a lógica de desconexão
+  };
+
+  const makeConnectionRequest = async (connectionName: string) => {
+    const response = await fetch('https://webhook.abbadigital.com.br/webhook/conecta-mp-brasil', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        instanceName: connectionName
+      })
+    });
+    
+    return response.json();
   };
 
   return (
@@ -72,6 +89,34 @@ const Agents = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Conexão WhatsApp */}
+      {connectingAgent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Conectar WhatsApp</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConnectingAgent(null)}
+              >
+                ✕
+              </Button>
+            </div>
+            <WhatsAppConnection
+              onConnect={() => makeConnectionRequest(
+                connections.find(c => c.id === connectingAgent)?.name || ""
+              )}
+              instanceName={connections.find(c => c.id === connectingAgent)?.name || ""}
+              onConnectionSuccess={() => {
+                setConnectingAgent(null);
+                // Aqui você pode atualizar o status da conexão
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Conexões WhatsApp */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
