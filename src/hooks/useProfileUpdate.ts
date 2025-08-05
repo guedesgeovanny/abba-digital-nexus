@@ -23,6 +23,15 @@ export const useProfileUpdate = () => {
       return false
     }
 
+    if (!userProfile.email) {
+      toast({
+        title: 'Erro',
+        description: 'Email do usuário não encontrado',
+        variant: 'destructive'
+      })
+      return false
+    }
+
     setLoading(true)
     
     try {
@@ -36,27 +45,48 @@ export const useProfileUpdate = () => {
         }
       }
 
+      // Prepare update data with all required fields
+      const updateData = {
+        full_name: data.full_name || userProfile.full_name,
+        avatar_url: finalAvatarUrl || userProfile.avatar_url,
+        email: userProfile.email, // Always include email to satisfy NOT NULL constraint
+        role: userProfile.role || 'viewer', // Preserve existing role
+        status: userProfile.status || 'pending' // Preserve existing status
+      }
+
+      console.log('🔄 Dados sendo enviados para atualização:', {
+        userId: userProfile.id,
+        updateData
+      })
+
       // Update profile in database
       const { error } = await supabase
         .from('profiles')
-        .update({
-          full_name: data.full_name,
-          avatar_url: finalAvatarUrl
-        })
+        .update(updateData)
         .eq('id', userProfile.id)
 
       if (error) {
-        console.error('Error updating profile:', error)
-        throw error
+        console.error('❌ Erro ao atualizar perfil:', error)
+        toast({
+          title: 'Erro',
+          description: `Erro ao atualizar perfil: ${error.message}`,
+          variant: 'destructive'
+        })
+        return false
       }
 
       console.log('✅ Perfil atualizado com sucesso no banco')
+      toast({
+        title: 'Sucesso',
+        description: 'Perfil atualizado com sucesso!',
+        variant: 'default'
+      })
       return true
     } catch (error) {
-      console.error('Error updating profile:', error)
+      console.error('❌ Erro inesperado ao atualizar perfil:', error)
       toast({
         title: 'Erro',
-        description: 'Erro ao atualizar perfil',
+        description: 'Erro inesperado ao atualizar perfil',
         variant: 'destructive'
       })
       return false
