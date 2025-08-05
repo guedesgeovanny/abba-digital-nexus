@@ -131,6 +131,14 @@ export const useAgents = () => {
       profilePictureUrl?: string
       profilePictureData?: string
     }) => {
+      console.log('💾 Atualizando perfil WhatsApp do agente:', {
+        agentId,
+        profileName,
+        contact,
+        profilePictureUrl: profilePictureUrl ? 'presente' : 'ausente',
+        profilePictureData: profilePictureData ? 'presente' : 'ausente'
+      })
+
       const { data, error } = await supabase
         .from('agents')
         .update({
@@ -139,12 +147,24 @@ export const useAgents = () => {
           whatsapp_profile_picture_url: profilePictureUrl,
           whatsapp_profile_picture_data: profilePictureData,
           whatsapp_connected_at: new Date().toISOString(),
+          status: 'active', // Ativar o agente quando conectar o WhatsApp
+          configuration: {
+            connection_status: 'connected',
+            evolution_api_key: null,
+            evolution_instance_name: profileName,
+            last_connection_check: new Date().toISOString()
+          }
         })
         .eq('id', agentId)
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Erro ao atualizar perfil WhatsApp:', error)
+        throw error
+      }
+
+      console.log('✅ Perfil WhatsApp atualizado com sucesso:', data)
       return data
     },
     onSuccess: () => {
