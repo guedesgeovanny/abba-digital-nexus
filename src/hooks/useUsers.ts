@@ -28,43 +28,70 @@ export const useUsers = () => {
   }, [currentUserProfile])
 
   const fetchUsers = async () => {
-    // Só busca usuários se for admin
-    if (!isAdmin) {
-      setLoading(false)
-      return
-    }
-
     try {
       setLoading(true)
-      console.log('Admin buscando todos os usuários da tabela profiles...')
       
-      // Buscar todos os profiles da tabela
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+      if (isAdmin) {
+        console.log('Admin buscando todos os usuários da tabela profiles...')
+        
+        // Buscar todos os profiles da tabela para admins
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Erro ao buscar usuários:', error)
-        throw error
+        if (error) {
+          console.error('Erro ao buscar usuários:', error)
+          throw error
+        }
+
+        console.log('Profiles encontrados:', profiles)
+
+        // Filtrar e mapear usuários válidos
+        const validUsers = (profiles || [])
+          .filter(profile => profile.email && profile.id)
+          .map(profile => ({
+            ...profile,
+            role: profile.role || 'viewer',
+            status: profile.status || 'pending',
+            full_name: profile.full_name || '',
+            avatar_url: profile.avatar_url || null
+          }))
+
+        setUsers(validUsers as User[])
+        console.log('Usuários válidos carregados:', validUsers.length)
+      } else {
+        console.log('Usuário comum buscando apenas seu próprio perfil...')
+        
+        // Para usuários comuns, buscar apenas seu próprio perfil
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUserProfile?.id)
+
+        if (error) {
+          console.error('Erro ao buscar perfil próprio:', error)
+          throw error
+        }
+
+        console.log('Perfil próprio encontrado:', profiles)
+
+        // Mapear perfil próprio
+        const userProfile = profiles?.[0]
+        if (userProfile) {
+          const mappedUser = {
+            ...userProfile,
+            role: userProfile.role || 'viewer',
+            status: userProfile.status || 'pending',
+            full_name: userProfile.full_name || '',
+            avatar_url: userProfile.avatar_url || null
+          }
+          setUsers([mappedUser] as User[])
+        } else {
+          setUsers([])
+        }
       }
 
-      console.log('Profiles encontrados:', profiles)
-
-      // Filtrar e mapear usuários válidos
-      const validUsers = (profiles || [])
-        .filter(profile => profile.email && profile.id)
-        .map(profile => ({
-          ...profile,
-          role: profile.role || 'viewer',
-          status: profile.status || 'pending',
-          full_name: profile.full_name || '',
-          avatar_url: profile.avatar_url || null
-        }))
-
-      setUsers(validUsers as User[])
-      console.log('Usuários válidos carregados:', validUsers.length)
-      
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
       toast({
@@ -305,17 +332,13 @@ export const useUsers = () => {
   }
 
   useEffect(() => {
-    // Só busca usuários quando o perfil do usuário atual for carregado e for admin
+    // Busca usuários quando o perfil do usuário atual for carregado
     if (currentUserProfile) {
       console.log('Perfil do usuário atual:', currentUserProfile)
       console.log('É admin?', isAdmin)
       
-      if (isAdmin) {
-        fetchUsers()
-      } else {
-        setLoading(false)
-        console.log('Usuário não é admin')
-      }
+      // Busca todos os usuários para admin ou apenas o próprio para usuários comuns
+      fetchUsers()
     }
   }, [currentUserProfile, isAdmin])
 

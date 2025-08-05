@@ -158,31 +158,34 @@ const Settings = () => {
         </div>
       </div>
 
-      <Tabs defaultValue={isAdmin ? "users" : "security"} className="space-y-4">
+      <Tabs defaultValue="users" className="space-y-4">
         <TabsList className="bg-card border-border">
-          {isAdmin && (
-            <TabsTrigger value="users" className="data-[state=active]:bg-abba-green data-[state=active]:text-white">
-              <Users className="w-4 h-4 mr-2" />
-              Usuários ({users.length})
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="users" className="data-[state=active]:bg-abba-green data-[state=active]:text-white">
+            <Users className="w-4 h-4 mr-2" />
+            {isAdmin ? `Usuários (${users.length})` : 'Meu Perfil'}
+          </TabsTrigger>
           <TabsTrigger value="security" className="data-[state=active]:bg-abba-green data-[state=active]:text-white">
             <Shield className="w-4 h-4 mr-2" />
             Segurança
           </TabsTrigger>
         </TabsList>
 
-        {isAdmin && (
-          <TabsContent value="users" className="space-y-4">
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-card-foreground">Usuários & Permissões</CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Gerencie quem tem acesso à plataforma. {users.length > 0 ? `${users.length} usuários encontrados` : 'Nenhum usuário encontrado'}
-                    </CardDescription>
-                  </div>
+        <TabsContent value="users" className="space-y-4">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-card-foreground">
+                    {isAdmin ? 'Usuários & Permissões' : 'Meu Perfil'}
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    {isAdmin 
+                      ? `Gerencie quem tem acesso à plataforma. ${users.length > 0 ? `${users.length} usuários encontrados` : 'Nenhum usuário encontrado'}`
+                      : 'Visualize suas informações de perfil e configurações'
+                    }
+                  </CardDescription>
+                </div>
+                {isAdmin && (
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -196,8 +199,9 @@ const Settings = () => {
                     </Button>
                     <UserDialog onSave={createUser} />
                   </div>
-                </div>
-              </CardHeader>
+                )}
+              </div>
+            </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {loading ? (
@@ -263,37 +267,41 @@ const Settings = () => {
                             </Badge>
                           </div>
                           
-                          <UserDialog 
-                            user={user} 
-                            onSave={(userData) => updateUser(user.id, userData)}
-                          />
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-abba-dark border-abba-gray">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-abba-text">Confirmar Exclusão</AlertDialogTitle>
-                                <AlertDialogDescription className="text-gray-400">
-                                  Tem certeza que deseja excluir o usuário {user.full_name || user.email}? Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="border-abba-gray text-abba-text hover:bg-abba-gray/10">
-                                  Cancelar
-                                </AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => deleteUser(user.id)}
-                                  className="bg-red-500 hover:bg-red-600 text-white"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          {isAdmin && (
+                            <>
+                              <UserDialog 
+                                user={user} 
+                                onSave={(userData) => updateUser(user.id, userData)}
+                              />
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="bg-abba-dark border-abba-gray">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-abba-text">Confirmar Exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription className="text-gray-400">
+                                      Tem certeza que deseja excluir o usuário {user.full_name || user.email}? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="border-abba-gray text-abba-text hover:bg-abba-gray/10">
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => deleteUser(user.id)}
+                                      className="bg-red-500 hover:bg-red-600 text-white"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))
@@ -302,23 +310,6 @@ const Settings = () => {
               </CardContent>
             </Card>
           </TabsContent>
-        )}
-
-        {!isAdmin && (
-          <TabsContent value="users" className="space-y-4">
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-card-foreground flex items-center gap-2">
-                  <Lock className="w-5 h-5" />
-                  Acesso Restrito
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Você não tem permissão para gerenciar usuários. Entre em contato com um administrador.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </TabsContent>
-        )}
 
         <TabsContent value="security" className="space-y-4">
           <Card className="bg-card border-border">
