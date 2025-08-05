@@ -27,9 +27,9 @@ export const sendInstanceData = async (instanceName: string): Promise<void> => {
 
 export const getInstanceProfile = async (instanceName: string): Promise<any | null> => {
   try {
-    console.log(`🔍 Buscando dados do perfil da instância: ${instanceName}`)
+    console.log(`🔍 Verificando status da instância: ${instanceName}`)
     
-    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/dados-da-instancia?instanceName=${instanceName}`, {
+    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${instanceName}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
