@@ -42,10 +42,20 @@ export const Header = () => {
         <SidebarTrigger className="text-abba-green hover:bg-accent">
           <Menu className="h-4 w-4" />
         </SidebarTrigger>
-        <div className="w-8 h-8 rounded-full bg-abba-green flex items-center justify-center">
-          <span className="text-white font-semibold text-sm">
-            {getFirstName().charAt(0).toUpperCase()}
-          </span>
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center relative">
+          {userProfile?.avatar_url ? (
+            <img 
+              src={userProfile.avatar_url} 
+              alt={getFirstName()} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
+              <span className="text-white font-semibold text-sm">
+                {getFirstName().charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col">
           <span className="text-foreground text-sm font-medium">
