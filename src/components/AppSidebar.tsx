@@ -64,17 +64,11 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-4 bg-sidebar">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center relative">
-            {userProfile?.avatar_url ? (
-              <img 
-                src={userProfile.avatar_url} 
-                alt="Company logo" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-abba-green rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">M</span>
-              </div>
-            )}
+            <img 
+              src="/lovable-uploads/ac4a1d02-c454-4a67-b422-71008557e1d9.png" 
+              alt="Marcas & Patentes" 
+              className="w-full h-full object-cover"
+            />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
