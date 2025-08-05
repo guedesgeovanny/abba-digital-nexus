@@ -27,22 +27,28 @@ export const sendInstanceData = async (instanceName: string): Promise<void> => {
 
 export const getInstanceProfile = async (instanceName: string): Promise<any | null> => {
   try {
-    console.log(`🔍 Verificando status da instância: ${instanceName}`)
+    console.log(`🔍 Verificando status da instância: "${instanceName}"`)
+    console.log(`🔗 URL completa: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`)
     
-    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${instanceName}`, {
+    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     })
 
+    console.log(`📡 Status da resposta HTTP: ${response.status}`)
+    console.log(`📡 Headers da resposta:`, Object.fromEntries(response.headers.entries()))
+
     if (!response.ok) {
       console.log(`⚠️ Resposta não OK para perfil da instância: ${response.status}`)
+      const errorText = await response.text()
+      console.log(`📋 Corpo da resposta de erro:`, errorText)
       return null
     }
 
     const data = await response.json()
-    console.log('📋 Dados brutos recebidos do perfil:', data)
+    console.log('📋 Dados brutos recebidos do perfil:', JSON.stringify(data, null, 2))
 
     // Verificar se a resposta é um array e extrair os dados da instância
     if (!Array.isArray(data) || data.length === 0) {
