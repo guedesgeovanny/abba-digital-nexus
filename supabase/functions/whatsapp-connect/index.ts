@@ -93,9 +93,14 @@ serve(async (req) => {
             const pollData = await pollResponse.json();
             console.log('Status polling response:', pollData);
             
-            // Verificar se a conexão foi estabelecida
-            if (pollData && (pollData.connected || pollData.status === 'connected' || pollData.state === 'connected')) {
+            // Verificar se a conexão foi estabelecida (status = "open")
+            if (pollData && pollData.status === 'open') {
               console.log('Connection established successfully!');
+              console.log('Profile data:', {
+                profileName: pollData.profilename,
+                contact: pollData.contato,
+                profilePictureUrl: pollData.fotodoperfil
+              });
               break;
             }
           }
