@@ -44,40 +44,69 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     const data = await response.json()
     console.log('📋 Dados brutos recebidos do perfil:', data)
 
-    // Validar se todos os campos obrigatórios estão preenchidos e não vazios
-    const { profilename, contato, fotodoperfil } = data
+    // Verificar se a resposta é um array e extrair os dados da instância
+    if (!Array.isArray(data) || data.length === 0) {
+      console.log('⚠️ Resposta não está no formato esperado (array)')
+      return null
+    }
+
+    const instanceData = data[0]?.instance
+    if (!instanceData) {
+      console.log('⚠️ Dados da instância não encontrados na resposta')
+      return null
+    }
+
+    console.log('📋 Dados da instância extraídos:', instanceData)
+
+    // Extrair e mapear os campos corretos
+    const { profileName, owner, profilePictureUrl, instanceName: responseInstanceName } = instanceData
+    
+    // Extrair número de telefone do campo owner (formato: 559189449701@s.whatsapp.net)
+    const extractedContact = owner ? owner.split('@')[0] : null
+    
+    // Se profileName é "not loaded", usar o instanceName como fallback
+    const finalProfileName = profileName === "not loaded" ? responseInstanceName : profileName
     
     // Verificar se os dados existem e não são strings vazias ou "null"
-    const isValidProfilename = profilename && 
-                              typeof profilename === 'string' && 
-                              profilename.trim() !== '' && 
-                              profilename !== 'null' &&
-                              profilename !== 'undefined'
+    const isValidProfilename = finalProfileName && 
+                              typeof finalProfileName === 'string' && 
+                              finalProfileName.trim() !== '' && 
+                              finalProfileName !== 'null' &&
+                              finalProfileName !== 'undefined' &&
+                              finalProfileName !== 'not loaded'
     
-    const isValidContato = contato && 
-                          typeof contato === 'string' && 
-                          contato.trim() !== '' && 
-                          contato !== 'null' &&
-                          contato !== 'undefined'
+    const isValidContato = extractedContact && 
+                          typeof extractedContact === 'string' && 
+                          extractedContact.trim() !== '' && 
+                          extractedContact !== 'null' &&
+                          extractedContact !== 'undefined'
     
-    const isValidFoto = fotodoperfil && 
-                       typeof fotodoperfil === 'string' && 
-                       fotodoperfil.trim() !== '' && 
-                       fotodoperfil !== 'null' &&
-                       fotodoperfil !== 'undefined'
+    const isValidFoto = profilePictureUrl && 
+                       typeof profilePictureUrl === 'string' && 
+                       profilePictureUrl.trim() !== '' && 
+                       profilePictureUrl !== 'null' &&
+                       profilePictureUrl !== 'undefined'
     
     if (!isValidProfilename || !isValidContato || !isValidFoto) {
       console.log('⚠️ Dados do perfil incompletos ou inválidos, continuando polling...')
       console.log('📋 Validação detalhada:', {
-        profilename: { value: profilename, valid: isValidProfilename },
-        contato: { value: contato, valid: isValidContato },
-        fotodoperfil: { value: fotodoperfil, valid: isValidFoto }
+        profileName: { original: profileName, processed: finalProfileName, valid: isValidProfilename },
+        owner: { original: owner, extracted: extractedContact, valid: isValidContato },
+        profilePictureUrl: { value: profilePictureUrl, valid: isValidFoto }
       })
       return null
     }
 
+    // Retornar dados formatados para compatibilidade com o código existente
+    const formattedData = {
+      profilename: finalProfileName,
+      contato: extractedContact,
+      fotodoperfil: profilePictureUrl
+    }
+
     console.log('✅ Dados do perfil válidos recebidos!')
-    return data
+    console.log('📋 Dados formatados:', formattedData)
+    return formattedData
     
   } catch (error) {
     console.error('❌ Erro ao buscar dados do perfil:', error)

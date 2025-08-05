@@ -58,10 +58,68 @@ export const processProfileData = (response: any): ProfileData | null => {
     return null
   }
   
+  // Validar se não são valores inválidos
+  if (profilename === 'not loaded' || profilename.trim() === '' || 
+      contato.trim() === '' || fotodoperfil.trim() === '') {
+    console.log('⚠️ Dados do perfil com valores inválidos:')
+    console.log('profilename:', profilename)
+    console.log('contato:', contato)
+    console.log('fotodoperfil:', fotodoperfil)
+    return null
+  }
+  
   console.log('✅ Dados do perfil válidos!')
   return {
     profileName: profilename,
     contact: contato,
     profilePictureUrl: fotodoperfil
+  }
+}
+
+export const processInstanceData = (instanceArray: any[]): ProfileData | null => {
+  console.log('=== PROCESSANDO DADOS DA INSTÂNCIA ===')
+  console.log('Array recebido:', instanceArray)
+  
+  if (!Array.isArray(instanceArray) || instanceArray.length === 0) {
+    console.log('⚠️ Array de instâncias vazio ou inválido')
+    return null
+  }
+
+  const instanceData = instanceArray[0]?.instance
+  if (!instanceData) {
+    console.log('⚠️ Dados da instância não encontrados')
+    return null
+  }
+
+  console.log('📋 Dados da instância:', instanceData)
+
+  const { profileName, owner, profilePictureUrl, instanceName } = instanceData
+  
+  // Extrair número de telefone do campo owner
+  const extractedContact = owner ? owner.split('@')[0] : null
+  
+  // Se profileName é "not loaded", usar instanceName
+  const finalProfileName = profileName === "not loaded" ? instanceName : profileName
+  
+  // Validar dados
+  if (!finalProfileName || !extractedContact || !profilePictureUrl) {
+    console.log('⚠️ Dados da instância incompletos:')
+    console.log('profileName:', finalProfileName)
+    console.log('contact:', extractedContact)
+    console.log('profilePictureUrl:', profilePictureUrl)
+    return null
+  }
+
+  if (finalProfileName === 'not loaded' || finalProfileName.trim() === '' ||
+      extractedContact.trim() === '' || profilePictureUrl.trim() === '') {
+    console.log('⚠️ Dados da instância com valores inválidos')
+    return null
+  }
+  
+  console.log('✅ Dados da instância válidos!')
+  return {
+    profileName: finalProfileName,
+    contact: extractedContact,
+    profilePictureUrl: profilePictureUrl
   }
 }
