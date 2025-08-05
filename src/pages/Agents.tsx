@@ -7,7 +7,7 @@ const Agents = () => {
   const connections = [
     {
       id: 1,
-      name: "Principal",
+      name: "Agente de IA",
       subtitle: "João Silva - Atendimento Geral",
       phone: "556211999887766",
       status: "connected",
@@ -17,7 +17,7 @@ const Agents = () => {
     },
     {
       id: 2,
-      name: "Secundário", 
+      name: "Atendimento Humano", 
       subtitle: "Maria Santos - Suporte Técnico",
       phone: "556211888776655",
       status: "disconnected",
