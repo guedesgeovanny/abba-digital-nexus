@@ -286,17 +286,53 @@ export const useUsers = () => {
       return false
     }
 
+    // Prevent admin from resetting their own password
+    if (userId === currentUserProfile?.id) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Você não pode redefinir sua própria senha por este método.",
+      });
+      return false;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+      });
+      return false;
+    }
+
     try {
       console.log('Admin redefinindo senha do usuário:', userId)
 
-      // Usar Admin API para redefinir senha
-      const { data, error } = await supabase.auth.admin.updateUserById(userId, {
-        password: newPassword
-      })
+      // Call the Edge Function to reset the password
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: {
+          userId,
+          newPassword
+        }
+      });
 
       if (error) {
-        console.error('Erro ao redefinir senha:', error)
-        throw error
+        console.error('Error calling reset-user-password function:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao redefinir senha",
+          description: error.message || "Erro ao conectar com o servidor.",
+        });
+        return false;
+      }
+
+      if (!data?.success) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao redefinir senha",
+          description: data?.error || "Erro desconhecido.",
+        });
+        return false;
       }
 
       console.log('Senha redefinida com sucesso:', data)
