@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { MessageSquare, Bot, Users } from "lucide-react"
 import { WhatsAppConnection } from "@/components/WhatsAppConnection"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
 
 interface Module {
   id: string
@@ -62,16 +63,47 @@ const Agents = () => {
   }
 
   const handleWhatsAppConnect = async () => {
-    // Simular conexão WhatsApp
-    return { success: true }
+    if (!connectingModule) return { success: false }
+
+    try {
+      console.log('🔗 Iniciando conexão WhatsApp para módulo:', connectingModule)
+      
+      const { data, error } = await supabase.functions.invoke('whatsapp-connect', {
+        body: { 
+          instanceName: connectingModule,
+          action: 'connect'
+        }
+      })
+
+      if (error) {
+        console.error('❌ Erro na função whatsapp-connect:', error)
+        throw new Error(`Erro na conexão: ${error.message}`)
+      }
+
+      console.log('✅ Resposta da função whatsapp-connect:', data)
+      return data
+    } catch (error) {
+      console.error('❌ Erro ao conectar WhatsApp:', error)
+      toast({
+        title: "Erro na conexão",
+        description: "Não foi possível conectar ao WhatsApp. Tente novamente.",
+        variant: "destructive"
+      })
+      throw error
+    }
   }
 
-  const handleConnectionSuccess = (moduleId: string) => {
+  const handleConnectionSuccess = (profileData: { profileName: string, contact: string, profilePictureUrl: string, profilePictureData?: string }) => {
+    console.log('🎉 Conexão WhatsApp bem-sucedida para módulo:', connectingModule, profileData)
+    
     setConnectingModule(null)
     toast({
       title: "WhatsApp conectado!",
-      description: "Módulo conectado ao WhatsApp com sucesso.",
+      description: `Módulo ${connectingModule} conectado com sucesso.`,
     })
+
+    // Aqui você pode salvar os dados de perfil no localStorage ou estado global se necessário
+    localStorage.setItem(`whatsapp_profile_${connectingModule}`, JSON.stringify(profileData))
   }
 
   const getModuleIcon = (type: string) => {
@@ -137,7 +169,7 @@ const Agents = () => {
                   <WhatsAppConnection
                     onConnect={handleWhatsAppConnect}
                     instanceName={module.name}
-                    onConnectionSuccess={(profileData) => handleConnectionSuccess(module.id)}
+                    onConnectionSuccess={handleConnectionSuccess}
                   />
                 ) : (
                   <Button 
