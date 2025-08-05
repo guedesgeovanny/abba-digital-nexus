@@ -153,8 +153,8 @@ export const ConversationList = ({
           <div className="relative" onClick={() => onSelectConversation(conversation)}>
             <Avatar className="h-12 w-12">
               <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
-              <AvatarFallback className="bg-abba-gray">
-                <User className="h-6 w-6 text-abba-green" />
+              <AvatarFallback className="bg-muted">
+                <User className="h-6 w-6 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
           </div>

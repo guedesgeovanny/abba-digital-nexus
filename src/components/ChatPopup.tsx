@@ -109,7 +109,7 @@ export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
                 <AvatarImage src="" alt={deal.name} />
-                <AvatarFallback className="bg-abba-green text-abba-black">
+                <AvatarFallback className="bg-abba-green text-primary-foreground">
                   {deal.name.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>

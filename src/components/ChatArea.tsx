@@ -221,8 +221,8 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
-            <AvatarFallback className="bg-abba-gray">
-              <User className="h-5 w-5 text-abba-green" />
+            <AvatarFallback className="bg-muted">
+              <User className="h-5 w-5 text-muted-foreground" />
             </AvatarFallback>
           </Avatar>
           

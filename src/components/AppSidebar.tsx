@@ -2,6 +2,7 @@ import { Home, Bot, BarChart3, Settings, Users, Contact, Trello, LogOut, Message
 import { useLocation, Link } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -62,9 +63,10 @@ export function AppSidebar() {
     <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="border-b border-sidebar-border p-4 bg-sidebar">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-abba-green flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-semibold text-sm">M</span>
-          </div>
+          <Avatar className="w-8 h-8 flex-shrink-0">
+            <AvatarImage src={userProfile?.avatar_url || undefined} alt="Company logo" />
+            <AvatarFallback className="bg-abba-green text-white font-semibold text-sm">M</AvatarFallback>
+          </Avatar>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-sidebar-foreground text-sm truncate">Marcas & Patentes</span>
@@ -118,11 +120,12 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-abba-green rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-semibold text-sm">
+            <Avatar className="w-8 h-8 flex-shrink-0">
+              <AvatarImage src={userProfile?.avatar_url || undefined} alt={getFirstName()} />
+              <AvatarFallback className="bg-abba-green text-white font-semibold text-sm">
                 {getFirstName().charAt(0).toUpperCase()}
-              </span>
-            </div>
+              </AvatarFallback>
+            </Avatar>
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-medium text-sidebar-foreground truncate">{getFirstName()}</span>
