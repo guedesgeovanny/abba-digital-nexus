@@ -118,9 +118,10 @@ export const ProfileEditDialog = ({ trigger }: ProfileEditDialogProps) => {
     
     const errors = {
       full_name: !formData.full_name || formData.full_name.trim().length < 2,
-      currentPassword: showPasswordSection && !formData.currentPassword,
-      newPassword: showPasswordSection && (!formData.newPassword || formData.newPassword.length < 6),
-      confirmPassword: showPasswordSection && formData.newPassword !== formData.confirmPassword
+      // Só exigir senha atual se o usuário realmente quer alterar a senha
+      currentPassword: formData.newPassword && !formData.currentPassword,
+      newPassword: formData.newPassword && formData.newPassword.length < 6,
+      confirmPassword: formData.newPassword && formData.newPassword !== formData.confirmPassword
     }
     
     console.log('❌ Erros de validação:', errors)
