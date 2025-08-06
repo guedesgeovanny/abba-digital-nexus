@@ -34,6 +34,7 @@ const Agents = () => {
   }
 
   const handleConnectWhatsApp = (agentId: string) => {
+    console.log('🔍 DEBUGGING - handleConnectWhatsApp chamado para agentId:', agentId)
     setConnectingAgentId(agentId)
   }
 
@@ -74,6 +75,16 @@ const Agents = () => {
   const handleConnectionSuccess = (profileData: { profileName: string, contact: string, profilePictureUrl: string, profilePictureData?: string }) => {
     const agent = agents.find(a => a.id === connectingAgentId)
     console.log('🎉 Conexão WhatsApp bem-sucedida para agente:', agent?.name, profileData)
+    console.log('🔍 DEBUGGING - handleConnectionSuccess chamado com:', {
+      connectingAgentId,
+      agentName: agent?.name,
+      profileData: {
+        profileName: profileData.profileName,
+        contact: profileData.contact,
+        profilePictureUrl: profileData.profilePictureUrl,
+        hasProfilePictureData: !!profileData.profilePictureData
+      }
+    })
     
     setConnectingAgentId(null)
     toast({

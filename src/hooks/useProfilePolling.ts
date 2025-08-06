@@ -74,13 +74,15 @@ export const useProfilePolling = ({
         
         // Salvar no banco se temos um agentId válido
         if (agentId && agentId.trim() !== '') {
-          console.log('💾 Iniciando salvamento dos dados do perfil no banco para agente:', agentId)
-          console.log('💾 Dados a serem salvos:', {
-            profileName: profileData.profilename,
+          console.log('💾 DEBUGGING - Iniciando salvamento dos dados do perfil no banco para agente:', agentId)
+          console.log('💾 DEBUGGING - Tipo do agentId:', typeof agentId)
+          console.log('💾 DEBUGGING - Dados a serem salvos:', {
+            profileName: displayName,
             contact: profileData.contato,
             profilePictureUrl: profileData.fotodoperfil,
             hasProfilePictureData: !!profilePictureData
           })
+          console.log('💾 DEBUGGING - Dados brutos do polling:', profileData)
           
           // Tentativa com retry automático
           let saveAttempts = 0
@@ -91,7 +93,7 @@ export const useProfilePolling = ({
               saveAttempts++
               console.log(`💾 Tentativa ${saveAttempts}/${maxAttempts} de salvar no banco`)
               
-              await updateAgentWhatsAppProfile({
+              const updateResult = await updateAgentWhatsAppProfile({
                 agentId,
                 profileName: displayName, // Usar o displayName que já trata o fallback
                 contact: profileData.contato,
@@ -99,14 +101,23 @@ export const useProfilePolling = ({
                 profilePictureData: profilePictureData
               })
 
+              console.log('✅ DEBUGGING - updateAgentWhatsAppProfile resultado:', updateResult)
               console.log('✅ Dados do perfil WhatsApp salvos no banco com sucesso!')
               break // Saiu do loop se salvou com sucesso
               
             } catch (error) {
-              console.error(`❌ Erro na tentativa ${saveAttempts} ao salvar perfil WhatsApp no banco:`, error)
+              console.error(`❌ DEBUGGING - Erro na tentativa ${saveAttempts} ao salvar perfil WhatsApp no banco:`, error)
+              console.error(`❌ DEBUGGING - Detalhes do erro:`, {
+                message: error instanceof Error ? error.message : 'Erro desconhecido',
+                agentId,
+                displayName,
+                contact: profileData.contato,
+                attemptNumber: saveAttempts
+              })
               
               if (saveAttempts === maxAttempts) {
-                console.error('❌ Falha definitiva após todas as tentativas de salvamento')
+                console.error('❌ DEBUGGING - Falha definitiva após todas as tentativas de salvamento')
+                console.error('❌ DEBUGGING - Último erro completo:', error)
                 // Mesmo com erro no salvamento, continuamos o fluxo para não bloquear a UI
               } else {
                 // Aguardar 2 segundos antes da próxima tentativa

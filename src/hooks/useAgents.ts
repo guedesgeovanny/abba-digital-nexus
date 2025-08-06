@@ -131,15 +131,17 @@ export const useAgents = () => {
       profilePictureUrl?: string
       profilePictureData?: string
     }) => {
-      console.log('💾 Iniciando atualização do perfil WhatsApp do agente:', {
+      console.log('🔍 DEBUGGING - updateAgentWhatsAppProfile chamado com:', {
         agentId,
+        agentIdType: typeof agentId,
+        agentIdLength: agentId?.length,
         profileName,
         contact,
         profilePictureUrl: profilePictureUrl ? 'presente' : 'ausente',
         profilePictureData: profilePictureData ? 'presente' : 'ausente'
       })
 
-      console.log('📋 Dados que serão salvos nos campos do banco:', {
+      console.log('🔍 DEBUGGING - Dados que serão salvos nos campos do banco:', {
         whatsapp_profile_name: profileName,
         whatsapp_contact: contact,
         whatsapp_profile_picture_url: profilePictureUrl,
@@ -167,19 +169,22 @@ export const useAgents = () => {
         .select()
         .single()
 
+      console.log('🔍 DEBUGGING - Resultado da query Supabase:', { data, error })
+
       if (error) {
-        console.error('❌ Erro crítico ao salvar perfil WhatsApp no banco:', error)
-        console.error('📋 Detalhes do erro:', {
+        console.error('❌ DEBUGGING - Erro crítico ao salvar perfil WhatsApp no banco:', error)
+        console.error('❌ DEBUGGING - Detalhes completos do erro:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
-          code: error.code
+          code: error.code,
+          agentIdUsed: agentId
         })
         throw error
       }
 
-      console.log('✅ Perfil WhatsApp salvo com sucesso no banco de dados!')
-      console.log('📋 Confirmação dos dados salvos:', {
+      console.log('✅ DEBUGGING - Perfil WhatsApp salvo com sucesso no banco de dados!')
+      console.log('✅ DEBUGGING - Confirmação dos dados salvos:', {
         id: data.id,
         whatsapp_profile_name: data.whatsapp_profile_name,
         whatsapp_contact: data.whatsapp_contact,
@@ -189,9 +194,13 @@ export const useAgents = () => {
       })
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ DEBUGGING - updateAgentWhatsAppProfile mutation onSuccess:', data)
       queryClient.invalidateQueries({ queryKey: ['agents'] })
     },
+    onError: (error) => {
+      console.error('❌ DEBUGGING - updateAgentWhatsAppProfile mutation onError:', error)
+    }
   })
 
   return {
