@@ -96,27 +96,30 @@ const Agents = () => {
     })
   }
 
-  const handleManualStatusCheck = async (agentId: string, connectionName: string) => {
-    try {
-      setCheckingAgentId(agentId)
-      
-      const isConnected = await manualCheck(agentId, connectionName)
-      
+  const handleManualStatusCheck = async (agentId: string) => {
+    const agent = agents?.find(a => a.id === agentId)
+    if (!agent) return
+    
+    const config = agent.configuration as any
+    const connectionName = config?.evolution_instance_name || 
+      (agent.name.includes('IA') ? 'Agente-de-IA' : 'Atendimento-Humano')
+    
+    console.log(`🔍 Verificação manual para agente ${agent.name} com conexão: ${connectionName}`)
+    console.log(`📡 instanceName que será enviado para o webhook: "${connectionName}"`)
+    
+    const result = await manualCheck(agentId, connectionName)
+    
+    if (result) {
       toast({
-        title: isConnected ? "Status Verificado" : "WhatsApp Desconectado",
-        description: isConnected 
-          ? "O agente continua conectado no WhatsApp" 
-          : "O agente foi desconectado automaticamente",
-        variant: isConnected ? "default" : "destructive"
+        title: "Status Verificado",
+        description: "Status verificado e atualizado com sucesso!",
       })
-    } catch (error) {
+    } else {
       toast({
-        title: "Erro na Verificação",
-        description: "Não foi possível verificar o status do WhatsApp",
+        title: "Falha na Verificação",
+        description: "Falha na verificação do status",
         variant: "destructive"
       })
-    } finally {
-      setCheckingAgentId(null)
     }
   }
 
@@ -216,26 +219,7 @@ const Agents = () => {
                           variant="outline"
                           size="sm"
                           className="flex-1"
-                          onClick={() => {
-                            const config = agent.configuration as any
-                            // Determinar o nome da conexão baseado no tipo do agente
-                            let connectionName = config?.evolution_instance_name
-                            
-                            if (!connectionName) {
-                              // Se não tiver configuração, usar baseado no nome do agente
-                              if (agent.name.toLowerCase().includes('atendimento') || agent.name.toLowerCase().includes('humano')) {
-                                connectionName = 'Atendimento-Humano'
-                              } else if (agent.name.toLowerCase().includes('agente') || agent.name.toLowerCase().includes('ia') || agent.name.toLowerCase().includes('ai')) {
-                                connectionName = 'Agente-de-IA'
-                              } else {
-                                // Fallback padrão
-                                connectionName = 'Atendimento-Humano'
-                              }
-                            }
-                            
-                            console.log(`🔍 Verificação manual - Agente: ${agent.name}, Conexão: ${connectionName}`)
-                            handleManualStatusCheck(agent.id, connectionName)
-                          }}
+                          onClick={() => handleManualStatusCheck(agent.id)}
                           disabled={checkingAgentId === agent.id}
                         >
                           {checkingAgentId === agent.id ? (

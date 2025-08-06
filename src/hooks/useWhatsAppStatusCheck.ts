@@ -51,10 +51,15 @@ export const useWhatsAppStatusCheck = () => {
   }, [disconnectAgentWhatsApp, toast])
 
   const checkAllConnectedAgents = useCallback(async () => {
-    if (!agents || isLoading) return
+    console.log('🔍 Verificando status de todos os agentes conectados...')
+    
+    if (!agents?.length) {
+      console.log('📱 Nenhum agente encontrado')
+      return
+    }
     
     const connectedAgents = agents.filter(agent => 
-      agent.whatsapp_contact || agent.whatsapp_profile_name
+      agent.whatsapp_connected_at && agent.whatsapp_contact
     )
     
     if (connectedAgents.length === 0) {
@@ -62,29 +67,16 @@ export const useWhatsAppStatusCheck = () => {
       return
     }
     
-    console.log(`🔍 Verificando status de ${connectedAgents.length} agentes conectados`)
+    console.log(`📱 Verificando ${connectedAgents.length} agente(s) conectado(s)`)
     
     for (const agent of connectedAgents) {
       const config = agent.configuration as any
-      // Determinar o nome da conexão baseado no tipo do agente
-      let connectionName = config?.evolution_instance_name
+      const connectionName = config?.evolution_instance_name || 
+        (agent.name.includes('IA') ? 'Agente-de-IA' : 'Atendimento-Humano')
       
-      if (!connectionName) {
-        // Se não tiver configuração, usar baseado no nome do agente
-        if (agent.name.toLowerCase().includes('atendimento') || agent.name.toLowerCase().includes('humano')) {
-          connectionName = 'Atendimento-Humano'
-        } else if (agent.name.toLowerCase().includes('agente') || agent.name.toLowerCase().includes('ia') || agent.name.toLowerCase().includes('ai')) {
-          connectionName = 'Agente-de-IA'
-        } else {
-          // Fallback padrão
-          connectionName = 'Atendimento-Humano'
-        }
-      }
-      
-      if (connectionName) {
-        console.log(`🔍 Verificação automática - Agente: ${agent.name}, Conexão: ${connectionName}`)
-        await checkAgentStatus(agent.id, connectionName)
-      }
+      console.log(`🔍 Verificando agente: ${agent.name} com conexão: ${connectionName}`)
+      console.log(`📡 instanceName que será enviado para o webhook: "${connectionName}"`)
+      await checkAgentStatus(agent.id, connectionName)
     }
   }, [agents, isLoading, checkAgentStatus])
 
@@ -113,14 +105,16 @@ export const useWhatsAppStatusCheck = () => {
       
       // Se status for "open", atualizar dados usando profilename do retorno
       if (status === 'open') {
-        console.log(`✅ Status open, atualizando dados do perfil`)
-        await updateAgentWhatsAppProfile({
-          agentId,
-          profileName: profileData.profilename, // Usar profilename do JSON de retorno
-          contact: profileData.contato,
-          profilePictureUrl: profileData.fotodoperfil
-        })
-        return true
+        if (profileData) {
+          console.log('✅ Atualizando perfil do agente com dados válidos:', profileData)
+          await updateAgentWhatsAppProfile({
+            agentId,
+            profileName: profileData.profilename, // Usar profilename original do webhook
+            contact: profileData.contato,
+            profilePictureUrl: profileData.fotodoperfil
+          })
+          return true
+        }
       }
       
       // Para outros status, apenas informar
