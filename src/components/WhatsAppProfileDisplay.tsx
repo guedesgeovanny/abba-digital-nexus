@@ -135,7 +135,9 @@ export const WhatsAppProfileDisplay = ({
           
           {profileData.profileName && (
             <p className="text-green-300 text-sm font-medium">
-              {profileData.profileName}
+              {profileData.profileName === profileData.contact 
+                ? `${profileData.profileName} (Carregando nome...)`
+                : profileData.profileName}
             </p>
           )}
           

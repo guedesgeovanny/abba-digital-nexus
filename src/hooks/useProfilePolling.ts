@@ -29,13 +29,16 @@ export const useProfilePolling = ({
       
       console.log('📋 Dados recebidos do polling:', profileData)
       
-      if (profileData && 
-          profileData.profilename && 
-          profileData.contato && 
-          profileData.fotodoperfil &&
-          profileData.profilename.trim() !== '' &&
-          profileData.contato.trim() !== '' &&
-          profileData.fotodoperfil.trim() !== '') {
+      // Validação melhorada: aceitar "not loaded" como profilename válido
+      const hasValidContact = profileData?.contato && profileData.contato.trim() !== ''
+      const hasValidPhoto = profileData?.fotodoperfil && profileData.fotodoperfil.trim() !== ''
+      const hasValidProfileName = profileData?.profilename && 
+        profileData.profilename.trim() !== '' && 
+        profileData.profilename !== 'not loaded'
+      const isProfileNameNotLoaded = profileData?.profilename === 'not loaded'
+      
+      // Aceitar se temos dados básicos (contato + foto) mesmo se profilename for "not loaded"
+      if (profileData && hasValidContact && hasValidPhoto && (hasValidProfileName || isProfileNameNotLoaded)) {
         
         console.log('✅ Dados do perfil válidos recebidos via polling!')
         console.log('📋 Dados validados:', {
@@ -52,8 +55,13 @@ export const useProfilePolling = ({
           return
         }
         
+        // Usar o número do contato como fallback se profilename for "not loaded"
+        const displayName = profileData.profilename === 'not loaded' 
+          ? profileData.contato 
+          : profileData.profilename
+        
         const formattedProfileData: ProfileData & { profilePictureData: string } = {
-          profileName: profileData.profilename,
+          profileName: displayName,
           contact: profileData.contato,
           profilePictureUrl: profileData.fotodoperfil,
           profilePictureData: profilePictureData
@@ -80,7 +88,7 @@ export const useProfilePolling = ({
               
               await updateAgentWhatsAppProfile({
                 agentId,
-                profileName: profileData.profilename,
+                profileName: displayName, // Usar o displayName que já trata o fallback
                 contact: profileData.contato,
                 profilePictureUrl: profileData.fotodoperfil,
                 profilePictureData: profilePictureData
