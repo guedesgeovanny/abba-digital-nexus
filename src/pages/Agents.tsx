@@ -218,9 +218,22 @@ const Agents = () => {
                           className="flex-1"
                           onClick={() => {
                             const config = agent.configuration as any
-                            // Usar o nome da conexão específica
-                            const connectionName = config?.evolution_instance_name || 
-                                                  (agent.name.includes('Atendimento') ? 'Atendimento-Humano' : 'Agente-de-IA')
+                            // Determinar o nome da conexão baseado no tipo do agente
+                            let connectionName = config?.evolution_instance_name
+                            
+                            if (!connectionName) {
+                              // Se não tiver configuração, usar baseado no nome do agente
+                              if (agent.name.toLowerCase().includes('atendimento') || agent.name.toLowerCase().includes('humano')) {
+                                connectionName = 'Atendimento-Humano'
+                              } else if (agent.name.toLowerCase().includes('agente') || agent.name.toLowerCase().includes('ia') || agent.name.toLowerCase().includes('ai')) {
+                                connectionName = 'Agente-de-IA'
+                              } else {
+                                // Fallback padrão
+                                connectionName = 'Atendimento-Humano'
+                              }
+                            }
+                            
+                            console.log(`🔍 Verificação manual - Agente: ${agent.name}, Conexão: ${connectionName}`)
                             handleManualStatusCheck(agent.id, connectionName)
                           }}
                           disabled={checkingAgentId === agent.id}

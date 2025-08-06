@@ -65,10 +65,23 @@ export const useWhatsAppStatusCheck = () => {
     
     for (const agent of connectedAgents) {
       const config = agent.configuration as any
-      // Usar o nome da conexão específica: "Atendimento-Humano" ou "Agente-de-IA"
-      const connectionName = config?.evolution_instance_name || 
-                            (agent.name.includes('Atendimento') ? 'Atendimento-Humano' : 'Agente-de-IA')
+      // Determinar o nome da conexão baseado no tipo do agente
+      let connectionName = config?.evolution_instance_name
+      
+      if (!connectionName) {
+        // Se não tiver configuração, usar baseado no nome do agente
+        if (agent.name.toLowerCase().includes('atendimento') || agent.name.toLowerCase().includes('humano')) {
+          connectionName = 'Atendimento-Humano'
+        } else if (agent.name.toLowerCase().includes('agente') || agent.name.toLowerCase().includes('ia') || agent.name.toLowerCase().includes('ai')) {
+          connectionName = 'Agente-de-IA'
+        } else {
+          // Fallback padrão
+          connectionName = 'Atendimento-Humano'
+        }
+      }
+      
       if (connectionName) {
+        console.log(`🔍 Verificação automática - Agente: ${agent.name}, Conexão: ${connectionName}`)
         await checkAgentStatus(agent.id, connectionName)
       }
     }
