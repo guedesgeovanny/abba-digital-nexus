@@ -42,13 +42,26 @@ export const useWhatsAppStatusCheck = () => {
         return false
       }
       
-      console.log(`✅ Agente ${agentId} ainda conectado com status: ${profileData.status}`)
+      // Se status for "open", atualizar dados usando profilename do retorno (como na verificação manual)
+      if (profileData.status === 'open') {
+        console.log('✅ Atualizando perfil do agente com dados válidos:', profileData)
+        await updateAgentWhatsAppProfile({
+          agentId,
+          profileName: profileData.profilename, // Usar profilename original do webhook
+          contact: profileData.contato,
+          profilePictureUrl: profileData.fotodoperfil
+        })
+        return true
+      }
+      
+      // Para outros status, apenas informar
+      console.log(`⚠️ Status ${profileData.status}, sem ação necessária`)
       return true
     } catch (error) {
       console.error(`❌ Erro ao verificar status do agente ${agentId}:`, error)
       return false
     }
-  }, [disconnectAgentWhatsApp, toast])
+  }, [disconnectAgentWhatsApp, updateAgentWhatsAppProfile, toast])
 
   const checkAllConnectedAgents = useCallback(async () => {
     console.log('🔍 Verificando status de todos os agentes conectados...')
