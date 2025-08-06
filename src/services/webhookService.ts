@@ -105,7 +105,7 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     // Se status é "open", aceitar mesmo com dados limitados
     if (connectionStatus === 'open' && isValidContato && isValidFoto) {
       console.log('✅ Conexão "open" com dados básicos válidos - prosseguindo!')
-    } else if (!isValidProfilename || !isValidContato || !isValidFoto) {
+    } else if (!isValidContato || !isValidFoto) {
       console.log('⚠️ Dados do perfil incompletos ou inválidos, continuando polling...')
       console.log('📋 Validação detalhada:', {
         connectionStatus,
