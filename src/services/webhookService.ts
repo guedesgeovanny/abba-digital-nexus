@@ -25,16 +25,19 @@ export const sendInstanceData = async (instanceName: string): Promise<void> => {
   }
 }
 
-export const getInstanceProfile = async (instanceName: string): Promise<any | null> => {
+export const getInstanceProfile = async (connectionName: string): Promise<any | null> => {
   try {
-    console.log(`🔍 Verificando status da instância: "${instanceName}"`)
-    console.log(`🔗 URL completa: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`)
+    console.log(`🔍 Verificando status da conexão: "${connectionName}"`)
+    console.log(`🔗 Enviando POST para: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil`)
     
-    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
-      method: 'GET',
+    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        instanceName: connectionName
+      }),
     })
 
     console.log(`📡 Status da resposta HTTP: ${response.status}`)
@@ -145,15 +148,18 @@ export const downloadProfileImage = async (imageUrl: string): Promise<string | n
 
 // saveProfileToDatabase function removed - use updateAgentWhatsAppProfile from useAgents hook instead
 
-export const checkConnectionStatus = async (instanceName: string): Promise<{ connected: boolean; profileData?: any }> => {
+export const checkConnectionStatus = async (connectionName: string): Promise<{ connected: boolean; profileData?: any }> => {
   try {
-    console.log(`🔍 Verificando status de conexão para instância: ${instanceName}`)
+    console.log(`🔍 Verificando status de conexão para: ${connectionName}`)
     
-    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
-      method: 'GET',
+    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        instanceName: connectionName
+      }),
     })
     
     if (!response.ok) {

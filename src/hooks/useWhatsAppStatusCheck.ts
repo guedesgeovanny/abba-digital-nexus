@@ -96,12 +96,12 @@ export const useWhatsAppStatusCheck = () => {
         return false
       }
       
-      // Se status for "open", atualizar dados usando profileName do retorno
+      // Se status for "open", atualizar dados usando profilename do retorno
       if (status === 'open') {
         console.log(`✅ Status open, atualizando dados do perfil`)
         await updateAgentWhatsAppProfile({
           agentId,
-          profileName: profileData.profileName, // Usar profileName do JSON de retorno
+          profileName: profileData.profilename, // Usar profilename do JSON de retorno
           contact: profileData.contato,
           profilePictureUrl: profileData.fotodoperfil
         })
