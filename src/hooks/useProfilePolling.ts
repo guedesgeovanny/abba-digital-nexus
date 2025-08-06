@@ -60,13 +60,8 @@ export const useProfilePolling = ({
           return
         }
         
-        // Usar o número do contato como fallback se profilename for "not loaded"
-        const displayName = profileData.profilename === 'not loaded' 
-          ? profileData.contato 
-          : profileData.profilename
-        
         const formattedProfileData: ProfileData & { profilePictureData: string } = {
-          profileName: displayName,
+          profileName: profileData.profilename, // Usar o profilename diretamente sem fallback
           contact: profileData.contato,
           profilePictureUrl: profileData.fotodoperfil,
           profilePictureData: profilePictureData
@@ -77,7 +72,7 @@ export const useProfilePolling = ({
           console.log('💾 DEBUGGING - Iniciando salvamento dos dados do perfil no banco para agente:', agentId)
           console.log('💾 DEBUGGING - Tipo do agentId:', typeof agentId)
           console.log('💾 DEBUGGING - Dados a serem salvos:', {
-            profileName: displayName,
+            profileName: profileData.profilename,
             contact: profileData.contato,
             profilePictureUrl: profileData.fotodoperfil,
             hasProfilePictureData: !!profilePictureData
@@ -95,7 +90,7 @@ export const useProfilePolling = ({
               
               const updateResult = await updateAgentWhatsAppProfile({
                 agentId,
-                profileName: displayName, // Usar o displayName que já trata o fallback
+                profileName: profileData.profilename, // Usar o profilename diretamente do JSON
                 contact: profileData.contato,
                 profilePictureUrl: profileData.fotodoperfil,
                 profilePictureData: profilePictureData
@@ -110,7 +105,7 @@ export const useProfilePolling = ({
               console.error(`❌ DEBUGGING - Detalhes do erro:`, {
                 message: error instanceof Error ? error.message : 'Erro desconhecido',
                 agentId,
-                displayName,
+                profileName: profileData.profilename,
                 contact: profileData.contato,
                 attemptNumber: saveAttempts
               })
