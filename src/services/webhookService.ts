@@ -47,32 +47,22 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     const data = await response.json()
     console.log('📋 Dados brutos recebidos do polling:', JSON.stringify(data, null, 2))
 
-    // Verificar se a resposta é um array e extrair os dados da instância
-    if (!Array.isArray(data) || data.length === 0) {
-      console.log('⚠️ Resposta não está no formato esperado (array)')
+    // O webhook retorna um objeto direto, não um array (baseado na edge function)
+    if (!data || typeof data !== 'object') {
+      console.log('⚠️ Resposta não está no formato esperado (objeto)')
       return null
     }
 
-    const instanceData = data[0]?.instance
-    if (!instanceData) {
-      console.log('⚠️ Dados da instância não encontrados na resposta')
-      return null
-    }
+    console.log('📋 Dados do webhook:', data)
 
-    console.log('📋 Dados da instância extraídos:', instanceData)
-
-    // Extrair campos corretos do JSON da API
-    const { profileName, owner, profilePictureUrl, status } = instanceData
-    
-    // Limpar número de telefone removendo @s.whatsapp.net
-    const cleanContact = owner ? owner.replace('@s.whatsapp.net', '') : null
+    // Extrair campos diretamente do objeto retornado
+    const { profilename, contato, fotodoperfil, status } = data
     
     console.log('🔍 Status da conexão:', status)
     console.log('📋 Dados extraídos:', {
-      profileName,
-      owner,
-      cleanContact,
-      profilePictureUrl,
+      profilename,
+      contato,
+      fotodoperfil,
       status
     })
     
@@ -83,29 +73,31 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     }
     
     // Validar dados essenciais
-    const hasValidContact = cleanContact && cleanContact.trim() !== ''
-    const hasValidPhoto = profilePictureUrl && profilePictureUrl.trim() !== ''
-    const hasValidProfileName = profileName && profileName.trim() !== '' && profileName !== 'not loaded'
+    const hasValidContact = contato && contato.trim() !== ''
+    const hasValidPhoto = fotodoperfil && fotodoperfil.trim() !== ''
     
-    // Aceitar conexão se tem dados básicos (contato + foto) mesmo se profileName for "not loaded"
+    console.log('📋 Validação dos dados essenciais:', {
+      hasValidContact,
+      hasValidPhoto,
+      profilename: profilename || 'não disponível'
+    })
+    
+    // Aceitar conexão se tem dados básicos (contato + foto)
     if (!hasValidContact || !hasValidPhoto) {
       console.log('⚠️ Dados essenciais ausentes, continuando polling...')
-      console.log('📋 Validação:', {
-        hasValidContact,
-        hasValidPhoto,
-        hasValidProfileName
-      })
       return null
     }
     
-    // Usar contato como fallback se profileName for "not loaded"
-    const displayName = hasValidProfileName ? profileName : cleanContact
+    // Usar contato como fallback se profilename for "not loaded" ou vazio
+    const displayName = (profilename && profilename !== 'not loaded' && profilename.trim() !== '') 
+      ? profilename 
+      : contato
     
     // Retornar dados no formato esperado pelo código existente
     const formattedData = {
       profilename: displayName,
-      contato: cleanContact,
-      fotodoperfil: profilePictureUrl,
+      contato: contato,
+      fotodoperfil: fotodoperfil,
       status: status
     }
 

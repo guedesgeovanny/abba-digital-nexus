@@ -29,16 +29,21 @@ export const useProfilePolling = ({
       
       console.log('📋 Dados recebidos do polling:', profileData)
       
-      // Validação melhorada: aceitar "not loaded" como profilename válido
+      // Validação simplificada: se status é 'open' e temos dados básicos, aceitar
       const hasValidContact = profileData?.contato && profileData.contato.trim() !== ''
       const hasValidPhoto = profileData?.fotodoperfil && profileData.fotodoperfil.trim() !== ''
-      const hasValidProfileName = profileData?.profilename && 
-        profileData.profilename.trim() !== '' && 
-        profileData.profilename !== 'not loaded'
-      const isProfileNameNotLoaded = profileData?.profilename === 'not loaded'
+      const isConnectionOpen = profileData?.status === 'open'
       
-      // Aceitar se temos dados básicos (contato + foto) mesmo se profilename for "not loaded"
-      if (profileData && hasValidContact && hasValidPhoto && (hasValidProfileName || isProfileNameNotLoaded)) {
+      console.log('🔍 Validação do perfil recebido:', {
+        hasValidContact,
+        hasValidPhoto,
+        isConnectionOpen,
+        profilename: profileData?.profilename || 'não disponível',
+        status: profileData?.status || 'não disponível'
+      })
+      
+      // Aceitar se conexão está aberta e temos dados básicos
+      if (profileData && isConnectionOpen && hasValidContact && hasValidPhoto) {
         
         console.log('✅ Dados do perfil válidos recebidos via polling!')
         console.log('📋 Dados validados:', {
