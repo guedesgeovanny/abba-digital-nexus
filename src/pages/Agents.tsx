@@ -234,7 +234,7 @@ const Agents = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          className="flex-1"
+                          className="flex-1 hover:bg-red-500 hover:text-white hover:border-red-500"
                           onClick={() => {
                             // TODO: Implementar desconexão
                             toast({
