@@ -143,50 +143,7 @@ export const downloadProfileImage = async (imageUrl: string): Promise<string | n
   }
 }
 
-export const saveProfileToDatabase = async (
-  agentId: string, 
-  profileData: {
-    profileName: string
-    contact: string
-    profilePictureUrl: string
-    profilePictureData: string
-  }
-): Promise<boolean> => {
-  try {
-    console.log('💾 Salvando dados do perfil no banco:', agentId)
-    
-    const { supabase } = await import('@/integrations/supabase/client')
-    
-    const configuration = {
-      connection_status: 'connected',
-      profile_name: profileData.profileName,
-      contact: profileData.contact,
-      profile_picture_url: profileData.profilePictureUrl,
-      profile_picture_data: profileData.profilePictureData,
-      connected_at: new Date().toISOString()
-    }
-    
-    const { error } = await supabase
-      .from('agents')
-      .update({ 
-        configuration,
-        status: 'active'
-      })
-      .eq('id', agentId)
-    
-    if (error) {
-      console.error('❌ Erro ao salvar no banco:', error)
-      return false
-    }
-    
-    console.log('✅ Dados do perfil salvos no banco com sucesso')
-    return true
-    
-  } catch (error) {
-    console.error('❌ Erro ao salvar dados do perfil:', error)
-    return false
-  }
-}
+// saveProfileToDatabase function removed - use updateAgentWhatsAppProfile from useAgents hook instead
 
 export const deleteInstanceConnection = async (instanceName: string): Promise<boolean> => {
   try {

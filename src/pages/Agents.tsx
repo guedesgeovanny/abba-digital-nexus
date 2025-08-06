@@ -4,53 +4,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { MessageSquare, Bot, Users } from "lucide-react"
+import { MessageSquare, Bot, Users, CheckCircle } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { WhatsAppConnection } from "@/components/WhatsAppConnection"
 import { useToast } from "@/hooks/use-toast"
+import { useAgents } from "@/hooks/useAgents"
 import { supabase } from "@/integrations/supabase/client"
-
-interface Module {
-  id: string
-  name: string
-  type: string
-  description: string
-  status: 'active' | 'inactive'
-  channel: string
-}
-
-const FIXED_MODULES: Module[] = [
-  {
-    id: 'atendimento-humano',
-    name: 'Atendimento-Humano',
-    type: 'human',
-    description: 'Módulo para atendimento humanizado com agentes reais',
-    status: 'inactive',
-    channel: 'whatsapp'
-  },
-  {
-    id: 'agente-de-ia',
-    name: 'Agente-de-IA',
-    type: 'ai',
-    description: 'Módulo de atendimento automatizado com inteligência artificial',
-    status: 'inactive',
-    channel: 'whatsapp'
-  }
-]
 
 const Agents = () => {
   const { toast } = useToast()
-  const [modules, setModules] = useState<Module[]>(FIXED_MODULES)
-  const [connectingModule, setConnectingModule] = useState<string | null>(null)
+  const { agents, isLoading, updateAgent } = useAgents()
+  const [connectingAgentId, setConnectingAgentId] = useState<string | null>(null)
 
-  const handleToggleStatus = (moduleId: string) => {
-    setModules(prev => prev.map(module => 
-      module.id === moduleId 
-        ? { ...module, status: module.status === 'active' ? 'inactive' : 'active' }
-        : module
-    ))
+  const handleToggleStatus = (agentId: string) => {
+    const agent = agents.find(a => a.id === agentId)
+    if (!agent) return
     
-    const module = modules.find(m => m.id === moduleId)
-    const newStatus = module?.status === 'active' ? 'inactive' : 'active'
+    const newStatus = agent.status === 'active' ? 'inactive' : 'active'
+    
+    updateAgent({
+      id: agentId,
+      status: newStatus
+    })
     
     toast({
       title: "Status atualizado!",
@@ -58,22 +33,22 @@ const Agents = () => {
     })
   }
 
-  const handleConnectWhatsApp = (moduleId: string) => {
-    setConnectingModule(moduleId)
+  const handleConnectWhatsApp = (agentId: string) => {
+    setConnectingAgentId(agentId)
   }
 
   const handleWhatsAppConnect = async () => {
-    if (!connectingModule) return { success: false }
+    if (!connectingAgentId) return { success: false }
 
-    const module = modules.find(m => m.id === connectingModule)
-    if (!module) return { success: false }
+    const agent = agents.find(a => a.id === connectingAgentId)
+    if (!agent) return { success: false }
 
     try {
-      console.log('🔗 Iniciando conexão WhatsApp para módulo:', module.name)
+      console.log('🔗 Iniciando conexão WhatsApp para agente:', agent.name)
       
       const { data, error } = await supabase.functions.invoke('whatsapp-connect', {
         body: { 
-          instanceName: module.name, // Enviando o nome exato: "Agente-de-IA" ou "Atendimento-Humano"
+          instanceName: agent.name, // Enviando o nome exato: "Agente-de-IA" ou "Atendimento-Humano"
           action: 'connect'
         }
       })
@@ -97,28 +72,31 @@ const Agents = () => {
   }
 
   const handleConnectionSuccess = (profileData: { profileName: string, contact: string, profilePictureUrl: string, profilePictureData?: string }) => {
-    const module = modules.find(m => m.id === connectingModule)
-    console.log('🎉 Conexão WhatsApp bem-sucedida para módulo:', module?.name, profileData)
+    const agent = agents.find(a => a.id === connectingAgentId)
+    console.log('🎉 Conexão WhatsApp bem-sucedida para agente:', agent?.name, profileData)
     
-    setConnectingModule(null)
+    setConnectingAgentId(null)
     toast({
       title: "WhatsApp conectado!",
-      description: `Módulo ${module?.name} conectado com sucesso.`,
+      description: `Módulo ${agent?.name} conectado com sucesso.`,
     })
-
-    // Salvar dados de perfil com o nome do módulo
-    localStorage.setItem(`whatsapp_profile_${module?.name}`, JSON.stringify(profileData))
   }
 
   const getModuleIcon = (type: string) => {
     switch (type) {
-      case 'human':
+      case 'atendimento':
         return <Users className="h-6 w-6" />
-      case 'ai':
+      case 'vendas':
         return <Bot className="h-6 w-6" />
+      case 'marketing':
+        return <MessageSquare className="h-6 w-6" />
       default:
         return <MessageSquare className="h-6 w-6" />
     }
+  }
+
+  const isWhatsAppConnected = (agent: any) => {
+    return agent.whatsapp_profile_name || agent.whatsapp_contact
   }
 
   return (
@@ -132,64 +110,106 @@ const Agents = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {modules.map((module) => (
-          <Card key={module.id} className="relative">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    {getModuleIcon(module.type)}
+      {isLoading ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Carregando módulos...</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2">
+          {agents.map((agent) => (
+            <Card key={agent.id} className="relative">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      {getModuleIcon(agent.type)}
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{agent.name}</CardTitle>
+                      <CardDescription>{agent.description}</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">{module.name}</CardTitle>
-                    <CardDescription>{module.description}</CardDescription>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={agent.status === 'active' ? 'default' : 'secondary'}>
+                      {agent.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </Badge>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant={module.status === 'active' ? 'default' : 'secondary'}>
-                    {module.status === 'active' ? 'Ativo' : 'Inativo'}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
+              </CardHeader>
 
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Status do Módulo</span>
-                <Switch
-                  checked={module.status === 'active'}
-                  onCheckedChange={() => handleToggleStatus(module.id)}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <MessageSquare className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Canal: WhatsApp</span>
-                </div>
-
-                {connectingModule === module.id ? (
-                  <WhatsAppConnection
-                    onConnect={handleWhatsAppConnect}
-                    instanceName={module.name}
-                    onConnectionSuccess={handleConnectionSuccess}
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Status do Módulo</span>
+                  <Switch
+                    checked={agent.status === 'active'}
+                    onCheckedChange={() => handleToggleStatus(agent.id)}
                   />
-                ) : (
-                  <Button 
-                    onClick={() => handleConnectWhatsApp(module.id)}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    disabled={module.status === 'inactive'}
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Conectar WhatsApp
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <MessageSquare className="h-4 w-4 text-green-600" />
+                    <span className="text-sm">Canal: WhatsApp</span>
+                  </div>
+
+                  {isWhatsAppConnected(agent) ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={agent.whatsapp_profile_picture_url || undefined} />
+                          <AvatarFallback>
+                            {(agent.whatsapp_profile_name || agent.whatsapp_contact || 'WA')[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-green-800 dark:text-green-200">
+                            {agent.whatsapp_profile_name || agent.whatsapp_contact || 'WhatsApp Conectado'}
+                          </p>
+                          {agent.whatsapp_contact && (
+                            <p className="text-sm text-green-600 dark:text-green-400">
+                              {agent.whatsapp_contact}
+                            </p>
+                          )}
+                        </div>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      </div>
+                      <Button 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          // TODO: Implementar desconexão
+                          toast({
+                            title: "Desconectar WhatsApp",
+                            description: "Funcionalidade em desenvolvimento.",
+                          })
+                        }}
+                      >
+                        Desconectar WhatsApp
+                      </Button>
+                    </div>
+                  ) : connectingAgentId === agent.id ? (
+                    <WhatsAppConnection
+                      onConnect={handleWhatsAppConnect}
+                      instanceName={agent.name}
+                      agentId={agent.id}
+                      onConnectionSuccess={handleConnectionSuccess}
+                    />
+                  ) : (
+                    <Button 
+                      onClick={() => handleConnectWhatsApp(agent.id)}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      disabled={agent.status === 'inactive'}
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Conectar WhatsApp
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
