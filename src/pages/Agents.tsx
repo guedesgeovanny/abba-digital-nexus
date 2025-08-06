@@ -203,9 +203,11 @@ const Agents = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <p className="font-medium text-green-800 dark:text-green-200">
-                            {agent.whatsapp_profile_name || agent.whatsapp_contact || 'WhatsApp Conectado'}
-                          </p>
+                        <p className="font-medium text-green-800 dark:text-green-200">
+                          {agent.whatsapp_profile_name && agent.whatsapp_profile_name !== 'not loaded' 
+                            ? agent.whatsapp_profile_name 
+                            : 'Perfil não carregado'}
+                        </p>
                           {agent.whatsapp_contact && (
                             <p className="text-sm text-green-600 dark:text-green-400">
                               {agent.whatsapp_contact}

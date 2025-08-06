@@ -161,7 +161,7 @@ export const useAgents = () => {
           configuration: {
             connection_status: 'connected',
             evolution_api_key: null,
-            evolution_instance_name: profileName,
+            evolution_instance_name: contact, // Use contact as the connection name
             last_connection_check: new Date().toISOString()
           }
         })
