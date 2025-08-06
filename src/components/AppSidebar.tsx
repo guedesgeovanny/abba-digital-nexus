@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 // Menu items
-const items = [{
+const allItems = [{
   title: "Dashboard",
   url: "/dashboard",
   icon: Home
@@ -32,6 +32,16 @@ const items = [{
   url: "/settings",
   icon: Settings
 }];
+
+// Filter menu items based on user role
+const getFilteredMenuItems = (userProfile: any) => {
+  if (userProfile?.role === 'admin') {
+    return allItems;
+  }
+  
+  // Remove "Conexões" for non-admin users
+  return allItems.filter(item => item.url !== '/agents');
+};
 
 export function AppSidebar() {
   const location = useLocation();
@@ -58,6 +68,7 @@ export function AppSidebar() {
   };
   
   const isCollapsed = state === "collapsed";
+  const items = getFilteredMenuItems(userProfile);
   
   return (
     <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
