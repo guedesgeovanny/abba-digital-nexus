@@ -145,6 +145,37 @@ export const downloadProfileImage = async (imageUrl: string): Promise<string | n
 
 // saveProfileToDatabase function removed - use updateAgentWhatsAppProfile from useAgents hook instead
 
+export const checkConnectionStatus = async (instanceName: string): Promise<{ connected: boolean; profileData?: any }> => {
+  try {
+    console.log(`🔍 Verificando status de conexão para instância: ${instanceName}`)
+    
+    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    if (!response.ok) {
+      console.log(`⚠️ Resposta não OK para verificação de status: ${response.status}`)
+      return { connected: false }
+    }
+    
+    const data = await response.json()
+    console.log('📋 Dados da verificação de status:', data)
+    
+    const isConnected = data.status === 'open'
+    
+    return {
+      connected: isConnected,
+      profileData: isConnected ? data : null
+    }
+  } catch (error) {
+    console.error(`❌ Erro ao verificar status:`, error)
+    return { connected: false }
+  }
+}
+
 export const deleteInstanceConnection = async (instanceName: string): Promise<boolean> => {
   try {
     console.log(`🗑️ Deletando conexão da instância: ${instanceName}`)

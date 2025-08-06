@@ -203,6 +203,42 @@ export const useAgents = () => {
     }
   })
 
+  // Mutação para desconectar WhatsApp do agente
+  const disconnectAgentWhatsAppMutation = useMutation({
+    mutationFn: async (agentId: string) => {
+      const { error } = await supabase
+        .from('agents')
+        .update({
+          whatsapp_profile_name: null,
+          whatsapp_contact: null,
+          whatsapp_profile_picture_url: null,
+          whatsapp_profile_picture_data: null,
+          whatsapp_connected_at: null,
+          configuration: {
+            connection_status: 'disconnected',
+            evolution_api_key: null,
+            evolution_instance_name: null
+          }
+        })
+        .eq('id', agentId)
+        .eq('user_id', user?.id)
+
+      if (error) {
+        console.error('Erro ao desconectar agente do WhatsApp:', error)
+        throw error
+      }
+
+      return { agentId }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents'] })
+    },
+  })
+
+  const disconnectAgentWhatsApp = async (agentId: string) => {
+    return disconnectAgentWhatsAppMutation.mutateAsync(agentId)
+  }
+
   return {
     agents: agentsQuery.data || [],
     isLoading: agentsQuery.isLoading,
@@ -212,8 +248,10 @@ export const useAgents = () => {
     deleteAgent: deleteAgentMutation.mutate,
     updateAgentMetrics: updateAgentMetricsMutation.mutate,
     updateAgentWhatsAppProfile: updateAgentWhatsAppProfile.mutate,
+    disconnectAgentWhatsApp,
     isCreating: createAgentMutation.isPending,
     isUpdating: updateAgentMutation.isPending,
     isDeleting: deleteAgentMutation.isPending,
+    isDisconnectingWhatsApp: disconnectAgentWhatsAppMutation.isPending,
   }
 }

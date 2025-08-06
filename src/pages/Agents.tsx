@@ -4,17 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { MessageSquare, Bot, Users, CheckCircle } from "lucide-react"
+import { MessageSquare, Bot, Users, CheckCircle, RefreshCw } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { WhatsAppConnection } from "@/components/WhatsAppConnection"
 import { useToast } from "@/hooks/use-toast"
 import { useAgents } from "@/hooks/useAgents"
+import { useWhatsAppStatusCheck } from "@/hooks/useWhatsAppStatusCheck"
 import { supabase } from "@/integrations/supabase/client"
 
 const Agents = () => {
   const { toast } = useToast()
   const { agents, isLoading, updateAgent } = useAgents()
+  const { manualCheck } = useWhatsAppStatusCheck()
   const [connectingAgentId, setConnectingAgentId] = useState<string | null>(null)
+  const [checkingAgentId, setCheckingAgentId] = useState<string | null>(null)
 
   const handleToggleStatus = (agentId: string) => {
     const agent = agents.find(a => a.id === agentId)
@@ -91,6 +94,30 @@ const Agents = () => {
       title: "WhatsApp conectado!",
       description: `Módulo ${agent?.name} conectado com sucesso.`,
     })
+  }
+
+  const handleManualStatusCheck = async (agentId: string, instanceName: string) => {
+    try {
+      setCheckingAgentId(agentId)
+      
+      const isConnected = await manualCheck(agentId, instanceName)
+      
+      toast({
+        title: isConnected ? "Status Verificado" : "WhatsApp Desconectado",
+        description: isConnected 
+          ? "O agente continua conectado no WhatsApp" 
+          : "O agente foi desconectado automaticamente",
+        variant: isConnected ? "default" : "destructive"
+      })
+    } catch (error) {
+      toast({
+        title: "Erro na Verificação",
+        description: "Não foi possível verificar o status do WhatsApp",
+        variant: "destructive"
+      })
+    } finally {
+      setCheckingAgentId(null)
+    }
   }
 
   const getModuleIcon = (type: string) => {
@@ -184,19 +211,40 @@ const Agents = () => {
                         </div>
                         <CheckCircle className="h-5 w-5 text-green-600" />
                       </div>
-                      <Button 
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          // TODO: Implementar desconexão
-                          toast({
-                            title: "Desconectar WhatsApp",
-                            description: "Funcionalidade em desenvolvimento.",
-                          })
-                        }}
-                      >
-                        Desconectar WhatsApp
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            const config = agent.configuration as any
+                            const instanceName = config?.evolution_instance_name || agent.name
+                            handleManualStatusCheck(agent.id, instanceName)
+                          }}
+                          disabled={checkingAgentId === agent.id}
+                        >
+                          {checkingAgentId === agent.id ? (
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                          )}
+                          Verificar Status
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            // TODO: Implementar desconexão
+                            toast({
+                              title: "Desconectar WhatsApp",
+                              description: "Funcionalidade em desenvolvimento.",
+                            })
+                          }}
+                        >
+                          Desconectar
+                        </Button>
+                      </div>
                     </div>
                   ) : connectingAgentId === agent.id ? (
                     <WhatsAppConnection
