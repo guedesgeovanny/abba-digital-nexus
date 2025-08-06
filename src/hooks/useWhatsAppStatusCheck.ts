@@ -10,6 +10,7 @@ export const useWhatsAppStatusCheck = () => {
   const checkAgentStatus = useCallback(async (agentId: string, connectionName: string) => {
     try {
       console.log(`🔍 Verificando status do agente ${agentId} (conexão: ${connectionName})`)
+      console.log(`📡 Enviando instanceName para webhook: "${connectionName}"`)
       
       const profileData = await getInstanceProfile(connectionName)
       
@@ -90,6 +91,7 @@ export const useWhatsAppStatusCheck = () => {
   const manualCheck = useCallback(async (agentId: string, connectionName: string) => {
     try {
       console.log(`🔍 Verificação manual do agente ${agentId} (conexão: ${connectionName})`)
+      console.log(`📡 Enviando instanceName para webhook (manual): "${connectionName}"`)
       
       // Buscar dados completos do perfil
       const profileData = await getInstanceProfile(connectionName)

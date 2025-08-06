@@ -28,6 +28,7 @@ export const sendInstanceData = async (instanceName: string): Promise<void> => {
 export const getInstanceProfile = async (instanceName: string): Promise<any | null> => {
   try {
     console.log(`🔍 Verificando status da instância: "${instanceName}"`)
+    console.log(`📡 Parâmetro instanceName recebido: "${instanceName}"`)
     console.log(`🔗 URL completa: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`)
     
     const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
@@ -148,6 +149,7 @@ export const downloadProfileImage = async (imageUrl: string): Promise<string | n
 export const checkConnectionStatus = async (instanceName: string): Promise<{ connected: boolean; profileData?: any }> => {
   try {
     console.log(`🔍 Verificando status de conexão para instância: ${instanceName}`)
+    console.log(`📡 Parâmetro instanceName no checkConnectionStatus: "${instanceName}"`)
     
     const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
       method: 'GET',
