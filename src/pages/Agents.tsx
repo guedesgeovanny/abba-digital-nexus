@@ -96,11 +96,11 @@ const Agents = () => {
     })
   }
 
-  const handleManualStatusCheck = async (agentId: string, instanceName: string) => {
+  const handleManualStatusCheck = async (agentId: string, connectionName: string) => {
     try {
       setCheckingAgentId(agentId)
       
-      const isConnected = await manualCheck(agentId, instanceName)
+      const isConnected = await manualCheck(agentId, connectionName)
       
       toast({
         title: isConnected ? "Status Verificado" : "WhatsApp Desconectado",
@@ -218,8 +218,10 @@ const Agents = () => {
                           className="flex-1"
                           onClick={() => {
                             const config = agent.configuration as any
-                            const instanceName = config?.evolution_instance_name || agent.name
-                            handleManualStatusCheck(agent.id, instanceName)
+                            // Usar o nome da conexão específica
+                            const connectionName = config?.evolution_instance_name || 
+                                                  (agent.name.includes('Atendimento') ? 'Atendimento-Humano' : 'Agente-de-IA')
+                            handleManualStatusCheck(agent.id, connectionName)
                           }}
                           disabled={checkingAgentId === agent.id}
                         >

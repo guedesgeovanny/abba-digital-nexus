@@ -7,13 +7,13 @@ export const useWhatsAppStatusCheck = () => {
   const { agents, isLoading, disconnectAgentWhatsApp, updateAgentWhatsAppProfile } = useAgents()
   const { toast } = useToast()
 
-  const checkAgentStatus = useCallback(async (agentId: string, instanceName: string) => {
+  const checkAgentStatus = useCallback(async (agentId: string, connectionName: string) => {
     try {
-      console.log(`🔍 Verificando status do agente ${agentId} (${instanceName})`)
+      console.log(`🔍 Verificando status do agente ${agentId} (conexão: ${connectionName})`)
       
-      const result = await checkConnectionStatus(instanceName)
+      const profileData = await getInstanceProfile(connectionName)
       
-      if (!result.connected) {
+      if (!profileData || !profileData.status) {
         console.log(`❌ Agente ${agentId} desconectado, removendo dados WhatsApp`)
         
         await disconnectAgentWhatsApp(agentId)
@@ -27,7 +27,21 @@ export const useWhatsAppStatusCheck = () => {
         return false
       }
       
-      console.log(`✅ Agente ${agentId} ainda conectado`)
+      // Se status for "close" ou "connecting", excluir dados
+      if (profileData.status === 'close' || profileData.status === 'connecting') {
+        console.log(`❌ Status ${profileData.status}, removendo dados WhatsApp`)
+        await disconnectAgentWhatsApp(agentId)
+        
+        toast({
+          title: "WhatsApp Desconectado",
+          description: `O agente foi desconectado automaticamente.`,
+          variant: "destructive"
+        })
+        
+        return false
+      }
+      
+      console.log(`✅ Agente ${agentId} ainda conectado com status: ${profileData.status}`)
       return true
     } catch (error) {
       console.error(`❌ Erro ao verificar status do agente ${agentId}:`, error)
@@ -51,19 +65,21 @@ export const useWhatsAppStatusCheck = () => {
     
     for (const agent of connectedAgents) {
       const config = agent.configuration as any
-      const instanceName = config?.evolution_instance_name || agent.name
-      if (instanceName) {
-        await checkAgentStatus(agent.id, instanceName)
+      // Usar o nome da conexão específica: "Atendimento-Humano" ou "Agente-de-IA"
+      const connectionName = config?.evolution_instance_name || 
+                            (agent.name.includes('Atendimento') ? 'Atendimento-Humano' : 'Agente-de-IA')
+      if (connectionName) {
+        await checkAgentStatus(agent.id, connectionName)
       }
     }
   }, [agents, isLoading, checkAgentStatus])
 
-  const manualCheck = useCallback(async (agentId: string, instanceName: string) => {
+  const manualCheck = useCallback(async (agentId: string, connectionName: string) => {
     try {
-      console.log(`🔍 Verificação manual do agente ${agentId} (${instanceName})`)
+      console.log(`🔍 Verificação manual do agente ${agentId} (conexão: ${connectionName})`)
       
       // Buscar dados completos do perfil
-      const profileData = await getInstanceProfile(instanceName)
+      const profileData = await getInstanceProfile(connectionName)
       
       if (!profileData) {
         console.log(`⚠️ Não foi possível obter dados do perfil`)
@@ -80,12 +96,12 @@ export const useWhatsAppStatusCheck = () => {
         return false
       }
       
-      // Se status for "open", atualizar dados
+      // Se status for "open", atualizar dados usando profileName do retorno
       if (status === 'open') {
         console.log(`✅ Status open, atualizando dados do perfil`)
         await updateAgentWhatsAppProfile({
           agentId,
-          profileName: profileData.profilename,
+          profileName: profileData.profileName, // Usar profileName do JSON de retorno
           contact: profileData.contato,
           profilePictureUrl: profileData.fotodoperfil
         })
