@@ -59,8 +59,18 @@ export const useWhatsAppStatusCheck = () => {
   }, [agents, isLoading, checkAgentStatus])
 
   const manualCheck = useCallback(async (agentId: string, instanceName: string) => {
-    return await checkAgentStatus(agentId, instanceName)
-  }, [checkAgentStatus])
+    try {
+      console.log(`🔍 Verificação manual do agente ${agentId} (${instanceName})`)
+      
+      const result = await checkConnectionStatus(instanceName)
+      
+      console.log(`📊 Status manual verificado: ${result.connected ? 'conectado' : 'desconectado'}`)
+      return result.connected
+    } catch (error) {
+      console.error(`❌ Erro na verificação manual do agente ${agentId}:`, error)
+      return false
+    }
+  }, []) // Sem dependências - função independente para verificação manual
 
   // Verificação automática a cada 30 minutos
   useEffect(() => {
