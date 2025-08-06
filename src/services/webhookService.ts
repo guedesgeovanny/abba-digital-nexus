@@ -89,14 +89,9 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
       return null
     }
     
-    // Usar contato como fallback se profilename for "not loaded" ou vazio
-    const displayName = (profilename && profilename !== 'not loaded' && profilename.trim() !== '') 
-      ? profilename 
-      : contato
-    
-    // Retornar dados no formato esperado pelo código existente
+    // Retornar dados originais sem fallback - deixar lógica de fallback para o frontend
     const formattedData = {
-      profilename: displayName,
+      profilename: profilename, // Manter valor original do webhook, mesmo que seja "not loaded"
       contato: contato,
       fotodoperfil: fotodoperfil,
       status: status
