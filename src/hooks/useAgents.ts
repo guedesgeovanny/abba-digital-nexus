@@ -131,12 +131,20 @@ export const useAgents = () => {
       profilePictureUrl?: string
       profilePictureData?: string
     }) => {
-      console.log('💾 Atualizando perfil WhatsApp do agente:', {
+      console.log('💾 Iniciando atualização do perfil WhatsApp do agente:', {
         agentId,
         profileName,
         contact,
         profilePictureUrl: profilePictureUrl ? 'presente' : 'ausente',
         profilePictureData: profilePictureData ? 'presente' : 'ausente'
+      })
+
+      console.log('📋 Dados que serão salvos nos campos do banco:', {
+        whatsapp_profile_name: profileName,
+        whatsapp_contact: contact,
+        whatsapp_profile_picture_url: profilePictureUrl,
+        whatsapp_connected_at: 'timestamp atual',
+        status: 'active'
       })
 
       const { data, error } = await supabase
@@ -160,11 +168,25 @@ export const useAgents = () => {
         .single()
 
       if (error) {
-        console.error('❌ Erro ao atualizar perfil WhatsApp:', error)
+        console.error('❌ Erro crítico ao salvar perfil WhatsApp no banco:', error)
+        console.error('📋 Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
         throw error
       }
 
-      console.log('✅ Perfil WhatsApp atualizado com sucesso:', data)
+      console.log('✅ Perfil WhatsApp salvo com sucesso no banco de dados!')
+      console.log('📋 Confirmação dos dados salvos:', {
+        id: data.id,
+        whatsapp_profile_name: data.whatsapp_profile_name,
+        whatsapp_contact: data.whatsapp_contact,
+        whatsapp_profile_picture_url: data.whatsapp_profile_picture_url,
+        whatsapp_connected_at: data.whatsapp_connected_at,
+        status: data.status
+      })
       return data
     },
     onSuccess: () => {

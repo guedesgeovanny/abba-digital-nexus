@@ -38,17 +38,14 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     })
 
     console.log(`📡 Status da resposta HTTP: ${response.status}`)
-    console.log(`📡 Headers da resposta:`, Object.fromEntries(response.headers.entries()))
 
     if (!response.ok) {
       console.log(`⚠️ Resposta não OK para perfil da instância: ${response.status}`)
-      const errorText = await response.text()
-      console.log(`📋 Corpo da resposta de erro:`, errorText)
       return null
     }
 
     const data = await response.json()
-    console.log('📋 Dados brutos recebidos do perfil:', JSON.stringify(data, null, 2))
+    console.log('📋 Dados brutos recebidos do polling:', JSON.stringify(data, null, 2))
 
     // Verificar se a resposta é um array e extrair os dados da instância
     if (!Array.isArray(data) || data.length === 0) {
@@ -64,66 +61,55 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
 
     console.log('📋 Dados da instância extraídos:', instanceData)
 
-    // Extrair e mapear os campos corretos
-    const { profileName, owner, profilePictureUrl, instanceName: responseInstanceName } = instanceData
+    // Extrair campos corretos do JSON da API
+    const { profileName, owner, profilePictureUrl, status } = instanceData
     
-    // Extrair número de telefone do campo owner (formato: 559189449701@s.whatsapp.net)
-    const extractedContact = owner ? owner.split('@')[0] : null
+    // Limpar número de telefone removendo @s.whatsapp.net
+    const cleanContact = owner ? owner.replace('@s.whatsapp.net', '') : null
     
-    // Se profileName é "not loaded", usar o instanceName como fallback
-    const finalProfileName = profileName === "not loaded" ? responseInstanceName : profileName
+    console.log('🔍 Status da conexão:', status)
+    console.log('📋 Dados extraídos:', {
+      profileName,
+      owner,
+      cleanContact,
+      profilePictureUrl,
+      status
+    })
     
-    // Verificar status da conexão primeiro
-    const connectionStatus = instanceData.status
-    console.log('🔍 Status da conexão:', connectionStatus)
-    
-    // Se status é "open", aceitar conexão mesmo com "not loaded"
-    if (connectionStatus === 'open') {
-      console.log('✅ Status "open" detectado - conexão ativa!')
+    // Verificar se a conexão está ativa
+    if (status !== 'open') {
+      console.log('⚠️ Status da conexão não é "open", continuando polling...')
+      return null
     }
     
-    // Verificar se os dados existem e não são strings vazias ou "null"
-    const isValidProfilename = finalProfileName && 
-                              typeof finalProfileName === 'string' && 
-                              finalProfileName.trim() !== '' && 
-                              finalProfileName !== 'null' &&
-                              finalProfileName !== 'undefined'
-    // Removida validação para "not loaded" pois já foi tratada no fallback
+    // Validar dados essenciais
+    const hasValidContact = cleanContact && cleanContact.trim() !== ''
+    const hasValidPhoto = profilePictureUrl && profilePictureUrl.trim() !== ''
+    const hasValidProfileName = profileName && profileName.trim() !== '' && profileName !== 'not loaded'
     
-    const isValidContato = extractedContact && 
-                          typeof extractedContact === 'string' && 
-                          extractedContact.trim() !== '' && 
-                          extractedContact !== 'null' &&
-                          extractedContact !== 'undefined'
-    
-    const isValidFoto = profilePictureUrl && 
-                       typeof profilePictureUrl === 'string' && 
-                       profilePictureUrl.trim() !== '' && 
-                       profilePictureUrl !== 'null' &&
-                       profilePictureUrl !== 'undefined'
-    
-    // Se status é "open", aceitar mesmo com dados limitados
-    if (connectionStatus === 'open' && isValidContato && isValidFoto) {
-      console.log('✅ Conexão "open" com dados básicos válidos - prosseguindo!')
-    } else if (!isValidContato || !isValidFoto) {
-      console.log('⚠️ Dados do perfil incompletos ou inválidos, continuando polling...')
-      console.log('📋 Validação detalhada:', {
-        connectionStatus,
-        profileName: { original: profileName, processed: finalProfileName, valid: isValidProfilename },
-        owner: { original: owner, extracted: extractedContact, valid: isValidContato },
-        profilePictureUrl: { value: profilePictureUrl, valid: isValidFoto }
+    // Aceitar conexão se tem dados básicos (contato + foto) mesmo se profileName for "not loaded"
+    if (!hasValidContact || !hasValidPhoto) {
+      console.log('⚠️ Dados essenciais ausentes, continuando polling...')
+      console.log('📋 Validação:', {
+        hasValidContact,
+        hasValidPhoto,
+        hasValidProfileName
       })
       return null
     }
-
-    // Retornar dados formatados para compatibilidade com o código existente
+    
+    // Usar contato como fallback se profileName for "not loaded"
+    const displayName = hasValidProfileName ? profileName : cleanContact
+    
+    // Retornar dados no formato esperado pelo código existente
     const formattedData = {
-      profilename: finalProfileName,
-      contato: extractedContact,
-      fotodoperfil: profilePictureUrl
+      profilename: displayName,
+      contato: cleanContact,
+      fotodoperfil: profilePictureUrl,
+      status: status
     }
 
-    console.log('✅ Dados do perfil válidos recebidos!')
+    console.log('✅ Dados do perfil válidos para persistência!')
     console.log('📋 Dados formatados:', formattedData)
     return formattedData
     
