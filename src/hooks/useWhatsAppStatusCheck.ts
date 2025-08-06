@@ -1,10 +1,10 @@
 import { useEffect, useCallback } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useAgents } from './useAgents'
-import { checkConnectionStatus } from '@/services/webhookService'
+import { checkConnectionStatus, getInstanceProfile } from '@/services/webhookService'
 
 export const useWhatsAppStatusCheck = () => {
-  const { agents, isLoading, disconnectAgentWhatsApp } = useAgents()
+  const { agents, isLoading, disconnectAgentWhatsApp, updateAgentWhatsAppProfile } = useAgents()
   const { toast } = useToast()
 
   const checkAgentStatus = useCallback(async (agentId: string, instanceName: string) => {
@@ -62,15 +62,45 @@ export const useWhatsAppStatusCheck = () => {
     try {
       console.log(`🔍 Verificação manual do agente ${agentId} (${instanceName})`)
       
-      const result = await checkConnectionStatus(instanceName)
+      // Buscar dados completos do perfil
+      const profileData = await getInstanceProfile(instanceName)
       
-      console.log(`📊 Status manual verificado: ${result.connected ? 'conectado' : 'desconectado'}`)
-      return result.connected
+      if (!profileData) {
+        console.log(`⚠️ Não foi possível obter dados do perfil`)
+        return false
+      }
+      
+      const { status } = profileData
+      console.log(`📊 Status obtido: ${status}`)
+      
+      // Se status for "close" ou "connecting", excluir dados
+      if (status === 'close' || status === 'connecting') {
+        console.log(`❌ Status ${status}, removendo dados WhatsApp`)
+        await disconnectAgentWhatsApp(agentId)
+        return false
+      }
+      
+      // Se status for "open", atualizar dados
+      if (status === 'open') {
+        console.log(`✅ Status open, atualizando dados do perfil`)
+        await updateAgentWhatsAppProfile({
+          agentId,
+          profileName: profileData.profilename,
+          contact: profileData.contato,
+          profilePictureUrl: profileData.fotodoperfil
+        })
+        return true
+      }
+      
+      // Para outros status, apenas informar
+      console.log(`⚠️ Status ${status}, sem ação necessária`)
+      return true
+      
     } catch (error) {
       console.error(`❌ Erro na verificação manual do agente ${agentId}:`, error)
       return false
     }
-  }, []) // Sem dependências - função independente para verificação manual
+  }, [disconnectAgentWhatsApp, updateAgentWhatsAppProfile])
 
   // Verificação automática a cada 30 minutos
   useEffect(() => {
