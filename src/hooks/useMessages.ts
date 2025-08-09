@@ -99,7 +99,7 @@ export const useMessages = (conversationId: string | null) => {
     try {
       console.log('Enviando mensagem para webhook:', messageData)
       
-      const response = await fetch('https://webhock-veterinup.abbadigital.com.br/webhook/recebe-mensagem', {
+      const response = await fetch('https://webhook.abbadigital.com.br/webhook/envia-mensagem', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
