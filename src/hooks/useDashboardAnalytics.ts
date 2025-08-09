@@ -7,7 +7,6 @@ interface DashboardKPIs {
   openConversations: number
   closedConversations: number
   messagesToday: number
-  conversationsWithAgent: number
   conversationsWithoutResponse: number
   unreadConversations: number
 }
@@ -22,10 +21,6 @@ interface ConversationsByStatus {
   count: number
 }
 
-interface AgentActivity {
-  agent_name: string
-  conversation_count: number
-}
 
 interface HeatmapData {
   hour: number
@@ -46,13 +41,12 @@ export const useDashboardAnalytics = (filters: {
     openConversations: 0,
     closedConversations: 0,
     messagesToday: 0,
-    conversationsWithAgent: 0,
     conversationsWithoutResponse: 0,
     unreadConversations: 0,
   })
   const [messagesByDate, setMessagesByDate] = useState<MessagesByDate[]>([])
   const [conversationsByStatus, setConversationsByStatus] = useState<ConversationsByStatus[]>([])
-  const [agentActivity, setAgentActivity] = useState<AgentActivity[]>([])
+  
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -107,12 +101,6 @@ export const useDashboardAnalytics = (filters: {
       messagesToday = userConversations?.length || 0
     }
 
-    // Conversations with agent
-    const { data: agentConv } = await supabase
-      .from('conversations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('have_agent', true)
 
     // Unread conversations
     const { data: unreadConv } = await supabase
@@ -126,7 +114,6 @@ export const useDashboardAnalytics = (filters: {
       openConversations: openConv?.length || 0,
       closedConversations: closedConv?.length || 0,
       messagesToday,
-      conversationsWithAgent: agentConv?.length || 0,
       conversationsWithoutResponse: 0, // Will calculate separately
       unreadConversations: unreadConv?.length || 0,
     })
@@ -191,42 +178,6 @@ export const useDashboardAnalytics = (filters: {
     setConversationsByStatus(result)
   }
 
-  const fetchAgentActivity = async () => {
-    if (!user) return
-
-    const { data: conversations } = await supabase
-      .from('conversations')
-      .select('assigned_to')
-      .eq('user_id', user.id)
-      .not('assigned_to', 'is', null)
-
-    if (!conversations?.length) return
-
-    // Get profile data separately
-    const agentIds = [...new Set(conversations.map(c => c.assigned_to))]
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name')
-      .in('id', agentIds)
-
-    const profileMap = profiles?.reduce((acc, profile) => {
-      acc[profile.id] = profile.full_name
-      return acc
-    }, {} as Record<string, string>) || {}
-
-    const grouped = conversations?.reduce((acc, conv) => {
-      const agentName = profileMap[conv.assigned_to!] || 'Agente Desconhecido'
-      acc[agentName] = (acc[agentName] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
-
-    const result = Object.entries(grouped).map(([agent_name, conversation_count]) => ({
-      agent_name,
-      conversation_count
-    }))
-
-    setAgentActivity(result)
-  }
 
   const fetchHeatmapData = async () => {
     if (!user) return
@@ -277,7 +228,6 @@ export const useDashboardAnalytics = (filters: {
         fetchKPIs(),
         fetchMessagesByDate(),
         fetchConversationsByStatus(),
-        fetchAgentActivity(),
         fetchHeatmapData(),
       ])
       setIsLoading(false)
@@ -292,7 +242,6 @@ export const useDashboardAnalytics = (filters: {
     kpis,
     messagesByDate,
     conversationsByStatus,
-    agentActivity,
     heatmapData,
     isLoading,
     refetch: () => {
@@ -300,7 +249,6 @@ export const useDashboardAnalytics = (filters: {
         fetchKPIs()
         fetchMessagesByDate()
         fetchConversationsByStatus()
-        fetchAgentActivity()
         fetchHeatmapData()
       }
     }

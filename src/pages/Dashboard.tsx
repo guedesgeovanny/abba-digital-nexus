@@ -15,7 +15,6 @@ const Dashboard = () => {
     kpis,
     messagesByDate,
     conversationsByStatus,
-    agentActivity,
     heatmapData,
     isLoading: analyticsLoading
   } = useDashboardAnalytics(filters)
@@ -43,7 +42,6 @@ const Dashboard = () => {
       <DashboardCharts 
         messagesByDate={messagesByDate}
         conversationsByStatus={conversationsByStatus}
-        agentActivity={agentActivity}
         isLoading={analyticsLoading}
       />
 

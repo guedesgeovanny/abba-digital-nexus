@@ -1,12 +1,11 @@
 import { KPICard } from "@/components/KPICard"
-import { MessageSquare, Users, CheckCircle, Bot, AlertCircle, Mail } from "lucide-react"
+import { MessageSquare, Users, CheckCircle, Mail } from "lucide-react"
 
 interface DashboardKPIs {
   totalConversations: number
   openConversations: number
   closedConversations: number
   messagesToday: number
-  conversationsWithAgent: number
   conversationsWithoutResponse: number
   unreadConversations: number
 }
@@ -65,16 +64,6 @@ export function DashboardKPICards({ kpis, isLoading }: DashboardKPICardsProps) {
         description="Atividade do dia"
       />
       
-      <KPICard
-        title="Com Agente"
-        value={kpis.conversationsWithAgent}
-        icon={Bot}
-        trend={{ 
-          value: kpis.conversationsWithAgent > 0 ? Math.round((kpis.conversationsWithAgent / kpis.totalConversations) * 100) : 0, 
-          isPositive: true 
-        }}
-        description="Assistidas por IA"
-      />
       
       <KPICard
         title="Não Lidas"

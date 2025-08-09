@@ -2,8 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { 
   LineChart, 
   Line, 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -24,15 +22,10 @@ interface ConversationsByStatus {
   count: number
 }
 
-interface AgentActivity {
-  agent_name: string
-  conversation_count: number
-}
 
 interface DashboardChartsProps {
   messagesByDate: MessagesByDate[]
   conversationsByStatus: ConversationsByStatus[]
-  agentActivity: AgentActivity[]
   isLoading: boolean
 }
 
@@ -41,7 +34,6 @@ const COLORS = ['#43A047', '#66BB6A', '#81C784', '#A5D6A7', '#C8E6C9']
 export function DashboardCharts({ 
   messagesByDate, 
   conversationsByStatus, 
-  agentActivity, 
   isLoading 
 }: DashboardChartsProps) {
   if (isLoading) {
@@ -143,47 +135,6 @@ export function DashboardCharts({
         </CardContent>
       </Card>
 
-      {/* Agent Activity */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-card-foreground">Atividade dos Agentes</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Conversas atribuídas por agente
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={agentActivity} layout="horizontal">
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                type="number" 
-                stroke="hsl(var(--muted-foreground))" 
-                fontSize={12}
-              />
-              <YAxis 
-                dataKey="agent_name" 
-                type="category" 
-                stroke="hsl(var(--muted-foreground))" 
-                fontSize={12}
-                width={100}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                  color: 'hsl(var(--card-foreground))'
-                }}
-              />
-              <Bar 
-                dataKey="conversation_count" 
-                fill="hsl(var(--primary))"
-                radius={[0, 4, 4, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
     </div>
   )
 }
