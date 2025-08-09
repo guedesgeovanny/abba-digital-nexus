@@ -99,13 +99,13 @@ export const useMessages = (conversationId: string | null) => {
     try {
       console.log('Enviando mensagem para webhook:', messageData)
       
-      const response = await fetch('https://webhook.abbadigital.com.br/webhook/envia-mensagem', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messageData)
-      })
+        const response = await fetch('https://webhock-veterinup.abbadigital.com.br/webhook/envia-mensagem', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData)
+        })
 
       if (!response.ok) {
         throw new Error(`Webhook responded with status: ${response.status}`)
@@ -118,7 +118,7 @@ export const useMessages = (conversationId: string | null) => {
     }
   }
 
-  const sendMessage = async ({ content }: { content: string }) => {
+  const sendMessage = async ({ content, connectionName }: { content: string, connectionName?: string }) => {
     if (!conversationId || !user) {
       console.error('Conversa ou usuário não disponível')
       return
@@ -198,6 +198,7 @@ export const useMessages = (conversationId: string | null) => {
             username: conversation.contact_username
           },
           channel: conversation.channel,
+          connectionName: connectionName,
           userId: user.id
         }
         

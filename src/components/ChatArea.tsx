@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { LinkMessage } from "@/components/LinkMessage"
 import { detectLinksInMessage } from "@/utils/linkDetection"
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
+import { useAgents } from "@/hooks/useAgents"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -38,6 +40,23 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const { agents } = useAgents()
+
+  // Conexões disponíveis (apenas conectadas)
+  const connectionOptions = (agents || [])
+    .filter((a: any) => (a?.configuration as any)?.connection_status === 'connected' && (((a?.configuration as any)?.evolution_instance_name) || a?.whatsapp_contact))
+    .map((a: any) => ({
+      name: (a?.configuration as any)?.evolution_instance_name || a?.whatsapp_contact || a?.name,
+      channel: a?.channel as string | null
+    }))
+
+  const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!selectedConnectionName && connectionOptions.length > 0) {
+      setSelectedConnectionName(connectionOptions[0].name)
+    }
+  }, [agents])
 
   // Auto-scroll para o final quando novas mensagens chegam
   useEffect(() => {
@@ -55,7 +74,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     if (!newMessage.trim() || isSending) return
     
     try {
-      await sendMessage({ content: newMessage.trim() })
+      await sendMessage({ content: newMessage.trim(), connectionName: selectedConnectionName })
       setNewMessage("")
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
@@ -328,21 +347,37 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
 
       {/* Campo de entrada de mensagem */}
       <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-card">
-        <div className="flex space-x-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Digite sua mensagem..."
-            className="flex-1 bg-background border-border text-foreground focus:border-abba-green"
-            disabled={isSending || conversation.status === 'fechada'}
-          />
-          <Button 
-            type="submit" 
-            disabled={!newMessage.trim() || isSending || conversation.status === 'fechada'}
-            className="bg-abba-green text-abba-black hover:bg-abba-green/90"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="w-full sm:w-64">
+            <Select value={selectedConnectionName} onValueChange={setSelectedConnectionName}>
+              <SelectTrigger className="bg-background border-border text-foreground">
+                <SelectValue placeholder="Escolha a conexão" />
+              </SelectTrigger>
+              <SelectContent>
+                {connectionOptions.map((opt) => (
+                  <SelectItem key={opt.name} value={opt.name}>
+                    {opt.name} • {getChannelIcon(opt.channel)} {opt.channel}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex w-full gap-2">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Digite sua mensagem..."
+              className="flex-1 bg-background border-border text-foreground focus:border-abba-green"
+              disabled={isSending || conversation.status === 'fechada'}
+            />
+            <Button 
+              type="submit" 
+              disabled={!newMessage.trim() || isSending || conversation.status === 'fechada' || (connectionOptions.length > 0 && !selectedConnectionName)}
+              className="bg-abba-green text-abba-black hover:bg-abba-green/90"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         {conversation.status === 'fechada' && (
           <p className="text-xs text-muted-foreground mt-2">Esta conversa está fechada. Reabra-a para enviar mensagens.</p>

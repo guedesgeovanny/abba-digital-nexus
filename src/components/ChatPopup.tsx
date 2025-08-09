@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -10,6 +9,9 @@ import { useMessages } from "@/hooks/useMessages"
 import { useConversations } from "@/hooks/useConversations"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAgents } from "@/hooks/useAgents"
+
 interface ChatPopupProps {
   isOpen: boolean
   onClose: () => void
@@ -23,6 +25,22 @@ export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
   
   const { conversations, createConversation, isLoading: conversationsLoading } = useConversations()
   const { messages, sendMessage, isSending, isLoading: messagesLoading } = useMessages(conversationId)
+  const { agents } = useAgents()
+
+  const connectionOptions = (agents || [])
+    .filter((a: any) => (a?.configuration as any)?.connection_status === 'connected' && (((a?.configuration as any)?.evolution_instance_name) || a?.whatsapp_contact))
+    .map((a: any) => ({
+      name: (a?.configuration as any)?.evolution_instance_name || a?.whatsapp_contact || a?.name,
+      channel: a?.channel as string | null
+    }))
+
+  const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!selectedConnectionName && connectionOptions.length > 0) {
+      setSelectedConnectionName(connectionOptions[0].name)
+    }
+  }, [agents])
 
   // Buscar ou criar conversa quando a popup abrir
   useEffect(() => {
@@ -85,7 +103,7 @@ export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
     if (!messageInput.trim() || !conversationId) return
 
     try {
-      await sendMessage({ content: messageInput.trim() })
+      await sendMessage({ content: messageInput.trim(), connectionName: selectedConnectionName })
       setMessageInput("")
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
@@ -195,22 +213,38 @@ export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
 
           {/* Input de mensagem */}
           <div className="border-t border-abba-gray p-4">
-            <div className="flex gap-2">
-              <Input
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Digite sua mensagem..."
-                className="flex-1 bg-abba-black border-abba-gray text-abba-text"
-                disabled={!conversationId || isLoadingConversation}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!messageInput.trim() || isSending || !conversationId || isLoadingConversation}
-                className="bg-abba-green text-abba-black hover:bg-abba-green-light"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="w-full sm:w-64">
+                <Select value={selectedConnectionName} onValueChange={setSelectedConnectionName}>
+                  <SelectTrigger className="bg-abba-black border-abba-gray text-abba-text">
+                    <SelectValue placeholder="Escolha a conexão" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {connectionOptions.map((opt) => (
+                      <SelectItem key={opt.name} value={opt.name}>
+                        {opt.name} • {opt.channel}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex w-full gap-2">
+                <Input
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Digite sua mensagem..."
+                  className="flex-1 bg-abba-black border-abba-gray text-abba-text"
+                  disabled={!conversationId || isLoadingConversation}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!messageInput.trim() || isSending || !conversationId || isLoadingConversation || (connectionOptions.length > 0 && !selectedConnectionName)}
+                  className="bg-abba-green text-abba-black hover:bg-abba-green-light"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
