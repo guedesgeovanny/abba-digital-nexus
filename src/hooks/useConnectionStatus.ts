@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useToast } from '@/hooks/use-toast'
-import { getInstanceProfile } from '@/services/webhookService'
 
 interface ProfileData {
   profilePictureUrl: string
@@ -25,6 +24,39 @@ export const useConnectionStatus = ({
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const { toast } = useToast()
 
+  const fetchProfileData = useCallback(async (instanceName: string) => {
+    try {
+      const response = await fetch(
+        `https://api.abbadigital.com.br/instance/fetchInstances?instanceName=${instanceName}`,
+        {
+          headers: {
+            'apikey': '673dc3960df85e704b3db2f1362f0e99'
+          }
+        }
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Profile data response:', data)
+        
+        // Limpar o número removendo o @s.whatsapp.net
+        const cleanNumber = data.owner ? data.owner.replace('@s.whatsapp.net', '') : ''
+        
+        const profile: ProfileData = {
+          profilePictureUrl: data.profilePictureUrl || '',
+          owner: cleanNumber,
+          profileName: data.profileName || ''
+        }
+        
+        setProfileData(profile)
+        return profile
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados do perfil:', error)
+    }
+    return null
+  }, [])
+
   const checkConnectionStatus = useCallback(async () => {
     if (!instanceName || !isActive) {
       return
@@ -32,38 +64,43 @@ export const useConnectionStatus = ({
 
     try {
       setIsChecking(true)
-      console.log(`🔍 Verificando status via webhook para: ${instanceName}`)
-      
-      const profileData = await getInstanceProfile(instanceName)
-      
-      if (profileData && profileData.status === 'open') {
-        console.log('✅ Conexão confirmada via webhook:', profileData)
-        setConnectionStatus('connected')
-        
-        const profile: ProfileData = {
-          profilePictureUrl: profileData.fotodoperfil || '',
-          owner: profileData.contato || '',
-          profileName: profileData.profilename || ''
+      const response = await fetch(
+        `https://api.abbadigital.com.br/instance/connectionState/${instanceName}`,
+        {
+          headers: {
+            'apikey': '673dc3960df85e704b3db2f1362f0e99'
+          }
         }
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Connection status response:', data)
         
-        setProfileData(profile)
-        onConnected?.(profile)
-        
-        toast({
-          title: "WhatsApp Conectado!",
-          description: `Conectado como ${profile.profileName || profile.owner}`,
-        })
-      } else {
-        console.log('❌ Conexão não confirmada via webhook')
-        setConnectionStatus('disconnected')
+        // Verificar se está conectado (ajustar conforme a resposta real da API)
+        if (data.state === 'open' || data.connected === true || data.status === 'connected') {
+          setConnectionStatus('connected')
+          
+          // Buscar dados do perfil
+          const profile = await fetchProfileData(instanceName)
+          if (profile) {
+            onConnected?.(profile)
+            toast({
+              title: "WhatsApp Conectado!",
+              description: `Conectado como ${profile.profileName || profile.owner}`,
+            })
+          }
+        } else {
+          setConnectionStatus('disconnected')
+        }
       }
     } catch (error) {
-      console.error('❌ Erro ao verificar status da conexão via webhook:', error)
+      console.error('Erro ao verificar status da conexão:', error)
       setConnectionStatus('disconnected')
     } finally {
       setIsChecking(false)
     }
-  }, [instanceName, isActive, onConnected, toast])
+  }, [instanceName, isActive, onConnected, toast, fetchProfileData])
 
   useEffect(() => {
     if (!isActive || connectionStatus === 'connected') {
