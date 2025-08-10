@@ -53,12 +53,14 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     console.log('📋 Dados brutos recebidos do polling:', JSON.stringify(raw, null, 2))
 
     // Normalização do retorno do webhook (suporta ambos formatos)
-    // Formato A (atual): [ { instance: { status, owner, profileName, profilePictureUrl, ... } } ]
+    // Formato A (atual): [ { instance: { status, owner, profileName, profilePictureUrl, instanceName, instanceId, ... } } ]
     // Formato B (antigo): { status, contato, profilename, fotodoperfil }
     let status: string | undefined
     let contato: string | undefined
     let profilename: string | undefined
     let fotodoperfil: string | undefined
+    let normalizedInstanceName: string | undefined
+    let normalizedInstanceId: string | undefined
 
     if (Array.isArray(raw) && raw[0]?.instance) {
       const inst = raw[0].instance
@@ -66,6 +68,8 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
       contato = inst?.owner
       profilename = inst?.profileName
       fotodoperfil = inst?.profilePictureUrl
+      normalizedInstanceName = inst?.instanceName
+      normalizedInstanceId = inst?.instanceId
       console.log('🧭 Formato A detectado (array -> instance)')
     } else if (raw?.instance) {
       const inst = raw.instance
@@ -73,6 +77,8 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
       contato = inst?.owner
       profilename = inst?.profileName
       fotodoperfil = inst?.profilePictureUrl
+      normalizedInstanceName = inst?.instanceName
+      normalizedInstanceId = inst?.instanceId
       console.log('🧭 Formato A2 detectado (objeto -> instance)')
     } else if (raw && typeof raw === 'object') {
       // Formato B (antigo)
@@ -87,7 +93,7 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     }
 
     console.log('🔍 Status da conexão normalizado:', status)
-    console.log('📋 Dados normalizados:', { profilename, contato, fotodoperfil, status })
+    console.log('📋 Dados normalizados:', { profilename, contato, fotodoperfil, status, instanceName: normalizedInstanceName, instanceId: normalizedInstanceId })
 
     if (status !== 'open') {
       console.log('⚠️ Status da conexão não é "open", continuando polling...')
@@ -112,7 +118,9 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
       profilename: profilename, // Pode vir "not loaded"; UI decide fallback
       contato: contato,
       fotodoperfil: fotodoperfil,
-      status: status
+      status: status,
+      instanceName: normalizedInstanceName,
+      instanceId: normalizedInstanceId
     }
 
     console.log('✅ Dados do perfil válidos para persistência!')

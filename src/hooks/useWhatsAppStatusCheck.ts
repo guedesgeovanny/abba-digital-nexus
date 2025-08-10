@@ -49,7 +49,8 @@ export const useWhatsAppStatusCheck = () => {
           agentId,
           profileName: profileData.profilename, // Usar profilename original do webhook
           contact: profileData.contato,
-          profilePictureUrl: profileData.fotodoperfil
+          profilePictureUrl: profileData.fotodoperfil,
+          instanceName: connectionName
         })
         return true
       }
@@ -124,7 +125,8 @@ export const useWhatsAppStatusCheck = () => {
             agentId,
             profileName: profileData.profilename, // Usar profilename original do webhook
             contact: profileData.contato,
-            profilePictureUrl: profileData.fotodoperfil
+            profilePictureUrl: profileData.fotodoperfil,
+            instanceName: connectionName
           })
           return true
         }

@@ -124,12 +124,16 @@ export const useAgents = () => {
       contact,
       profilePictureUrl,
       profilePictureData,
+      instanceName,
+      instanceId,
     }: {
       agentId: string
       profileName: string
       contact: string
       profilePictureUrl?: string
       profilePictureData?: string
+      instanceName?: string | null
+      instanceId?: string | null
     }) => {
       console.log('🔍 DEBUGGING - updateAgentWhatsAppProfile chamado com:', {
         agentId,
@@ -138,7 +142,9 @@ export const useAgents = () => {
         profileName,
         contact,
         profilePictureUrl: profilePictureUrl ? 'presente' : 'ausente',
-        profilePictureData: profilePictureData ? 'presente' : 'ausente'
+        profilePictureData: profilePictureData ? 'presente' : 'ausente',
+        instanceName,
+        instanceId,
       })
 
       console.log('🔍 DEBUGGING - Dados que serão salvos nos campos do banco:', {
@@ -146,7 +152,15 @@ export const useAgents = () => {
         whatsapp_contact: contact,
         whatsapp_profile_picture_url: profilePictureUrl,
         whatsapp_connected_at: 'timestamp atual',
-        status: 'active'
+        status: 'active',
+        configuration: {
+          connection_status: 'connected',
+          evolution_api_key: null,
+          evolution_instance_name: instanceName ?? contact,
+          instance_name: instanceName ?? null,
+          instance_id: instanceId ?? null,
+          last_connection_check: new Date().toISOString()
+        }
       })
 
       const { data, error } = await supabase
@@ -161,11 +175,14 @@ export const useAgents = () => {
           configuration: {
             connection_status: 'connected',
             evolution_api_key: null,
-            evolution_instance_name: contact, // Use contact as the connection name
+            evolution_instance_name: instanceName ?? contact,
+            instance_name: instanceName ?? null,
+            instance_id: instanceId ?? null,
             last_connection_check: new Date().toISOString()
           }
         })
         .eq('id', agentId)
+        .eq('user_id', user?.id)
         .select()
         .single()
 
@@ -175,9 +192,9 @@ export const useAgents = () => {
         console.error('❌ DEBUGGING - Erro crítico ao salvar perfil WhatsApp no banco:', error)
         console.error('❌ DEBUGGING - Detalhes completos do erro:', {
           message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          code: (error as any).code,
           agentIdUsed: agentId
         })
         throw error
@@ -185,12 +202,13 @@ export const useAgents = () => {
 
       console.log('✅ DEBUGGING - Perfil WhatsApp salvo com sucesso no banco de dados!')
       console.log('✅ DEBUGGING - Confirmação dos dados salvos:', {
-        id: data.id,
-        whatsapp_profile_name: data.whatsapp_profile_name,
-        whatsapp_contact: data.whatsapp_contact,
-        whatsapp_profile_picture_url: data.whatsapp_profile_picture_url,
-        whatsapp_connected_at: data.whatsapp_connected_at,
-        status: data.status
+        id: (data as any).id,
+        whatsapp_profile_name: (data as any).whatsapp_profile_name,
+        whatsapp_contact: (data as any).whatsapp_contact,
+        whatsapp_profile_picture_url: (data as any).whatsapp_profile_picture_url,
+        whatsapp_connected_at: (data as any).whatsapp_connected_at,
+        status: (data as any).status,
+        configuration: (data as any).configuration
       })
       return data
     },
@@ -247,7 +265,7 @@ export const useAgents = () => {
     updateAgent: updateAgentMutation.mutate,
     deleteAgent: deleteAgentMutation.mutate,
     updateAgentMetrics: updateAgentMetricsMutation.mutate,
-    updateAgentWhatsAppProfile: updateAgentWhatsAppProfile.mutate,
+    updateAgentWhatsAppProfile: updateAgentWhatsAppProfile.mutateAsync,
     disconnectAgentWhatsApp,
     isCreating: createAgentMutation.isPending,
     isUpdating: updateAgentMutation.isPending,

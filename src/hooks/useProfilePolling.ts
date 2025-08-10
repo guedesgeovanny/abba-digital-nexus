@@ -52,19 +52,17 @@ export const useProfilePolling = ({
           fotodoperfil: profileData.fotodoperfil
         })
         
-        // Baixar a imagem do perfil
+        // Baixar a imagem do perfil (não bloquear salvamento se falhar)
         const profilePictureData = await downloadProfileImage(profileData.fotodoperfil)
-        
         if (!profilePictureData) {
-          console.error('❌ Falha ao baixar imagem do perfil')
-          return
+          console.warn('⚠️ Falha ao baixar imagem do perfil. Prosseguindo sem a imagem em base64.')
         }
         
-        const formattedProfileData: ProfileData & { profilePictureData: string } = {
+        const formattedProfileData: ProfileData & { profilePictureData?: string } = {
           profileName: profileData.profilename, // Usar o profilename diretamente sem fallback
           contact: profileData.contato,
           profilePictureUrl: profileData.fotodoperfil,
-          profilePictureData: profilePictureData
+          ...(profilePictureData ? { profilePictureData } : {})
         }
         
         // Salvar no banco se temos um agentId válido
@@ -93,7 +91,9 @@ export const useProfilePolling = ({
                 profileName: profileData.profilename, // Usar o profilename diretamente do JSON
                 contact: profileData.contato,
                 profilePictureUrl: profileData.fotodoperfil,
-                profilePictureData: profilePictureData
+                ...(profilePictureData ? { profilePictureData } : {}),
+                instanceName: instanceName,
+                instanceId: profileData.instanceId
               })
 
               console.log('✅ DEBUGGING - updateAgentWhatsAppProfile resultado:', updateResult)
