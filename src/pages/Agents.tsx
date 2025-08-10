@@ -102,7 +102,7 @@ const Agents = () => {
     
     const config = agent.configuration as any
     const connectionName = config?.evolution_instance_name || 
-      (agent.name.includes('IA') ? 'Agente-de-IA' : 'Atendimento-Humano')
+      (agent.name.includes('Agent') || agent.name.includes('IA') || agent.name.includes('AI') ? 'Agente-de-IA' : 'Atendimento-Humano')
     
     console.log(`🔍 Verificação manual para agente ${agent.name} com conexão: ${connectionName}`)
     console.log(`📡 instanceName que será enviado para o webhook: "${connectionName}"`)
