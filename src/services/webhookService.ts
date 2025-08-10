@@ -29,13 +29,17 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
   try {
     console.log(`🔍 Verificando status da instância: "${instanceName}"`)
     console.log(`📡 Parâmetro instanceName recebido: "${instanceName}"`)
-    console.log(`🔗 URL completa: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`)
+    console.log(`🔗 URL: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil`)
+    console.log(`📦 Body: {"instanceName": "${instanceName}"}`)
     
-    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
-      method: 'GET',
+    const response = await fetch('https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        instanceName: instanceName
+      }),
     })
 
     console.log(`📡 Status da resposta HTTP: ${response.status}`)
@@ -145,12 +149,17 @@ export const checkConnectionStatus = async (instanceName: string): Promise<{ con
   try {
     console.log(`🔍 Verificando status de conexão para instância: ${instanceName}`)
     console.log(`📡 Parâmetro instanceName no checkConnectionStatus: "${instanceName}"`)
+    console.log(`🔗 URL: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil`)
+    console.log(`📦 Body: {"instanceName": "${instanceName}"}`)
     
-    const response = await fetch(`https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil?instanceName=${encodeURIComponent(instanceName)}`, {
-      method: 'GET',
+    const response = await fetch('https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        instanceName: instanceName
+      }),
     })
     
     if (!response.ok) {
