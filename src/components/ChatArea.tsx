@@ -46,7 +46,8 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const connectionOptions = (agents || [])
     .filter((a: any) => (a?.configuration as any)?.connection_status === 'connected' && (((a?.configuration as any)?.evolution_instance_name) || a?.whatsapp_contact))
     .map((a: any) => ({
-      name: (a?.configuration as any)?.evolution_instance_name || a?.whatsapp_contact || a?.name,
+      name: a?.name?.includes('Agent') || a?.name?.includes('IA') || a?.name?.includes('AI') ? 'Agente-de-IA' : 'Atendimento-Humano',
+      originalName: (a?.configuration as any)?.evolution_instance_name || a?.whatsapp_contact || a?.name,
       channel: a?.channel as string | null
     }))
 
