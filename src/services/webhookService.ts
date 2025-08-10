@@ -49,53 +49,67 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
       return null
     }
 
-    const data = await response.json()
-    console.log('📋 Dados brutos recebidos do polling:', JSON.stringify(data, null, 2))
+    const raw = await response.json()
+    console.log('📋 Dados brutos recebidos do polling:', JSON.stringify(raw, null, 2))
 
-    // O webhook retorna um objeto direto, não um array (baseado na edge function)
-    if (!data || typeof data !== 'object') {
-      console.log('⚠️ Resposta não está no formato esperado (objeto)')
+    // Normalização do retorno do webhook (suporta ambos formatos)
+    // Formato A (atual): [ { instance: { status, owner, profileName, profilePictureUrl, ... } } ]
+    // Formato B (antigo): { status, contato, profilename, fotodoperfil }
+    let status: string | undefined
+    let contato: string | undefined
+    let profilename: string | undefined
+    let fotodoperfil: string | undefined
+
+    if (Array.isArray(raw) && raw[0]?.instance) {
+      const inst = raw[0].instance
+      status = inst?.status
+      contato = inst?.owner
+      profilename = inst?.profileName
+      fotodoperfil = inst?.profilePictureUrl
+      console.log('🧭 Formato A detectado (array -> instance)')
+    } else if (raw?.instance) {
+      const inst = raw.instance
+      status = inst?.status
+      contato = inst?.owner
+      profilename = inst?.profileName
+      fotodoperfil = inst?.profilePictureUrl
+      console.log('🧭 Formato A2 detectado (objeto -> instance)')
+    } else if (raw && typeof raw === 'object') {
+      // Formato B (antigo)
+      status = raw.status
+      contato = raw.contato
+      profilename = raw.profilename
+      fotodoperfil = raw.fotodoperfil
+      console.log('🧭 Formato B detectado (objeto plano)')
+    } else {
+      console.log('⚠️ Resposta não está em formato reconhecido')
       return null
     }
 
-    console.log('📋 Dados do webhook:', data)
+    console.log('🔍 Status da conexão normalizado:', status)
+    console.log('📋 Dados normalizados:', { profilename, contato, fotodoperfil, status })
 
-    // Extrair campos diretamente do objeto retornado
-    const { profilename, contato, fotodoperfil, status } = data
-    
-    console.log('🔍 Status da conexão:', status)
-    console.log('📋 Dados extraídos:', {
-      profilename,
-      contato,
-      fotodoperfil,
-      status
-    })
-    
-    // Verificar se a conexão está ativa
     if (status !== 'open') {
       console.log('⚠️ Status da conexão não é "open", continuando polling...')
       return null
     }
-    
-    // Validar dados essenciais
-    const hasValidContact = contato && contato.trim() !== ''
-    const hasValidPhoto = fotodoperfil && fotodoperfil.trim() !== ''
-    
+
+    const hasValidContact = !!(contato && String(contato).trim() !== '')
+    const hasValidPhoto = !!(fotodoperfil && String(fotodoperfil).trim() !== '')
+
     console.log('📋 Validação dos dados essenciais:', {
       hasValidContact,
       hasValidPhoto,
       profilename: profilename || 'não disponível'
     })
-    
-    // Aceitar conexão se tem dados básicos (contato + foto)
+
     if (!hasValidContact || !hasValidPhoto) {
       console.log('⚠️ Dados essenciais ausentes, continuando polling...')
       return null
     }
-    
-    // Retornar dados originais sem fallback - deixar lógica de fallback para o frontend
+
     const formattedData = {
-      profilename: profilename, // Manter valor original do webhook, mesmo que seja "not loaded"
+      profilename: profilename, // Pode vir "not loaded"; UI decide fallback
       contato: contato,
       fotodoperfil: fotodoperfil,
       status: status
@@ -104,12 +118,13 @@ export const getInstanceProfile = async (instanceName: string): Promise<any | nu
     console.log('✅ Dados do perfil válidos para persistência!')
     console.log('📋 Dados formatados:', formattedData)
     return formattedData
-    
+
   } catch (error) {
     console.error('❌ Erro ao buscar dados do perfil:', error)
     return null
   }
 }
+
 
 export const downloadProfileImage = async (imageUrl: string): Promise<string | null> => {
   try {
@@ -148,39 +163,25 @@ export const downloadProfileImage = async (imageUrl: string): Promise<string | n
 export const checkConnectionStatus = async (instanceName: string): Promise<{ connected: boolean; profileData?: any }> => {
   try {
     console.log(`🔍 Verificando status de conexão para instância: ${instanceName}`)
-    console.log(`📡 Parâmetro instanceName no checkConnectionStatus: "${instanceName}"`)
-    console.log(`🔗 URL: https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil`)
-    console.log(`📦 Body: {"instanceName": "${instanceName}"}`)
-    
-    const response = await fetch('https://webhook.abbadigital.com.br/webhook/verifica-status-mp-brasil', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        instanceName: instanceName
-      }),
-    })
-    
-    if (!response.ok) {
-      console.log(`⚠️ Resposta não OK para verificação de status: ${response.status}`)
+    // Reutiliza a normalização do getInstanceProfile para evitar duplicação
+    const normalized = await getInstanceProfile(instanceName)
+
+    if (!normalized) {
+      console.log('⚠️ Sem dados normalizados ou status diferente de "open"')
       return { connected: false }
     }
-    
-    const data = await response.json()
-    console.log('📋 Dados da verificação de status:', data)
-    
-    const isConnected = data.status === 'open'
-    
+
+    const isConnected = normalized.status === 'open'
     return {
       connected: isConnected,
-      profileData: isConnected ? data : null
+      profileData: isConnected ? normalized : null
     }
   } catch (error) {
     console.error(`❌ Erro ao verificar status:`, error)
     return { connected: false }
   }
 }
+
 
 export const deleteInstanceConnection = async (instanceName: string): Promise<boolean> => {
   try {
