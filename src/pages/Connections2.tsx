@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus } from "lucide-react"
 import { NewWhatsAppConnectionDialog } from "@/components/NewWhatsAppConnectionDialog"
 import { supabase } from "@/integrations/supabase/client"
+import { ConnectionCard } from "@/components/ConnectionCard"
 
 interface ConnectionRow {
   id: string
   name: string
   status: string
   created_at: string
+  updated_at?: string
   configuration: any
 }
 
@@ -22,7 +24,7 @@ export default function Connections2() {
     setLoading(true)
     const { data, error } = await supabase
       .from("conexoes")
-      .select("id, name, status, created_at, configuration")
+      .select("id, name, status, created_at, updated_at, configuration")
       .order("created_at", { ascending: false })
     if (!error) setRows(data || [])
     setLoading(false)
@@ -53,13 +55,15 @@ export default function Connections2() {
           ) : (
             <div className="space-y-3">
               {rows.map((r) => (
-                <div key={r.id} className="flex items-center justify-between rounded-md border border-abba-gray p-3">
-                  <div>
-                    <p className="text-abba-text font-medium">{r.name}</p>
-                    <p className="text-xs text-gray-400">Status: {r.status} • Instância: {r.configuration?.evolution_instance_name || '-'}</p>
-                  </div>
-                  <span className="text-xs text-gray-400">{new Date(r.created_at).toLocaleString()}</span>
-                </div>
+                <ConnectionCard
+                  key={r.id}
+                  id={r.id}
+                  name={r.name}
+                  status={r.status}
+                  createdAt={r.created_at}
+                  updatedAt={r.updated_at}
+                  instanceName={r.configuration?.evolution_instance_name}
+                />
               ))}
             </div>
           )}
