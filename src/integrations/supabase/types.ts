@@ -14,95 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      agent_metrics: {
-        Row: {
-          agent_id: string
-          conversations_count: number
-          id: string
-          last_activity: string | null
-          success_rate: number
-          updated_at: string
-        }
-        Insert: {
-          agent_id: string
-          conversations_count?: number
-          id?: string
-          last_activity?: string | null
-          success_rate?: number
-          updated_at?: string
-        }
-        Update: {
-          agent_id?: string
-          conversations_count?: number
-          id?: string
-          last_activity?: string | null
-          success_rate?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agent_metrics_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      agents: {
-        Row: {
-          channel: Database["public"]["Enums"]["agent_channel"] | null
-          configuration: Json | null
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          status: Database["public"]["Enums"]["agent_status"]
-          type: Database["public"]["Enums"]["agent_type"]
-          updated_at: string
-          user_id: string
-          whatsapp_connected_at: string | null
-          whatsapp_contact: string | null
-          whatsapp_profile_name: string | null
-          whatsapp_profile_picture_data: string | null
-          whatsapp_profile_picture_url: string | null
-        }
-        Insert: {
-          channel?: Database["public"]["Enums"]["agent_channel"] | null
-          configuration?: Json | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          status?: Database["public"]["Enums"]["agent_status"]
-          type: Database["public"]["Enums"]["agent_type"]
-          updated_at?: string
-          user_id: string
-          whatsapp_connected_at?: string | null
-          whatsapp_contact?: string | null
-          whatsapp_profile_name?: string | null
-          whatsapp_profile_picture_data?: string | null
-          whatsapp_profile_picture_url?: string | null
-        }
-        Update: {
-          channel?: Database["public"]["Enums"]["agent_channel"] | null
-          configuration?: Json | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          status?: Database["public"]["Enums"]["agent_status"]
-          type?: Database["public"]["Enums"]["agent_type"]
-          updated_at?: string
-          user_id?: string
-          whatsapp_connected_at?: string | null
-          whatsapp_contact?: string | null
-          whatsapp_profile_name?: string | null
-          whatsapp_profile_picture_data?: string | null
-          whatsapp_profile_picture_url?: string | null
-        }
-        Relationships: []
-      }
       conexoes: {
         Row: {
           channel: string
@@ -307,15 +218,7 @@ export type Database = {
           user_id?: string
           value?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "contacts_agent_assigned_fkey"
-            columns: ["agent_assigned"]
-            isOneToOne: false
-            referencedRelation: "agents"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       conversation_attachments: {
         Row: {
