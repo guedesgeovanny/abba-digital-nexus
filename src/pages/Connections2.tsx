@@ -38,17 +38,17 @@ export default function Connections2() {
   }, [])
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-abba-text">Suas Conexões</h1>
           <p className="text-sm text-gray-400">Gerencie suas conexões com o WhatsApp</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="border-abba-gray text-abba-text" onClick={fetchRows}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto border-abba-gray text-abba-text" onClick={fetchRows}>
             <RotateCw className="mr-2 h-4 w-4" /> Verificar Agora
           </Button>
-          <Button className="bg-abba-black text-abba-text border border-abba-gray hover:bg-white/5" onClick={() => setOpen(true)}>
+          <Button className="w-full sm:w-auto bg-abba-black text-abba-text border border-abba-gray hover:bg-white/5" onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Nova Conexão
           </Button>
         </div>
