@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
+import Connections2 from "./pages/Connections2";
 
 import Contacts from "./pages/Contacts";
 import CRM from "./pages/CRM";
@@ -70,6 +71,16 @@ const App = () => {
                   <ProtectedRoute>
                     <AuthenticatedLayout>
                       <Agents />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/connections2" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Connections2 />
                     </AuthenticatedLayout>
                   </ProtectedRoute>
                 } 

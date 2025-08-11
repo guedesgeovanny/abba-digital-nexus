@@ -103,6 +103,42 @@ export type Database = {
         }
         Relationships: []
       }
+      conexoes: {
+        Row: {
+          channel: string
+          configuration: Json
+          created_at: string
+          id: string
+          name: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          configuration?: Json
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          configuration?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_interactions: {
         Row: {
           channel: Database["public"]["Enums"]["contact_channel"] | null
