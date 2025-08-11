@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, RotateCw } from "lucide-react"
 import { NewWhatsAppConnectionDialog } from "@/components/NewWhatsAppConnectionDialog"
 import { supabase } from "@/integrations/supabase/client"
 import { ConnectionCard } from "@/components/ConnectionCard"
+import { useToast } from "@/hooks/use-toast"
+
+// Webhook de verificação (mesmo do polling)
+const CHECK_STATUS_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/verifica-status-mp-brasil"
+const REQUEST_TIMEOUT_MS = 15000
 
 interface ConnectionRow {
   id: string
@@ -21,7 +25,9 @@ interface ConnectionRow {
 export default function Connections2() {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [verifying, setVerifying] = useState(false)
   const [rows, setRows] = useState<ConnectionRow[]>([])
+  const { toast } = useToast()
 
   const fetchRows = async () => {
     setLoading(true)
@@ -37,6 +43,43 @@ export default function Connections2() {
     fetchRows()
   }, [])
 
+  const verifyAll = async () => {
+    setVerifying(true)
+    try {
+      await Promise.allSettled(rows.map(async (r) => {
+        const instanceName = r.configuration?.evolution_instance_name || r.name
+        if (!instanceName) return
+        const res = await Promise.race([
+          fetch(CHECK_STATUS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instanceName })
+          }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), REQUEST_TIMEOUT_MS))
+        ]) as Response
+        if (!res.ok) throw new Error('poll_error')
+        const json = await res.json().catch(() => ({}))
+        const statusRaw = json?.status ?? json?.connection_status ?? json?.state
+        const connected = typeof statusRaw === 'string' && ['open','connected','ready','active'].includes(String(statusRaw).toLowerCase())
+        const profilePicture = json?.profilePictureUrl || json?.profile_picture_url || json?.result?.profilePictureUrl || json?.result?.profile_picture_url || null
+        const profileName = json?.profileName || json?.result?.profileName || null
+        const phone = json?.phone || json?.wid || json?.result?.phone || json?.result?.wid || null
+        await supabase.from('conexoes').update({
+          status: connected ? 'active' : 'inactive',
+          profile_picture_url: profilePicture,
+          profile_name: profileName,
+          contact: phone
+        }).eq('id', r.id)
+      }))
+      toast({ title: 'Verificação concluída' })
+    } catch (e) {
+      toast({ title: 'Falha ao verificar conexões', variant: 'destructive' })
+    } finally {
+      setVerifying(false)
+      fetchRows()
+    }
+  }
+
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -45,8 +88,8 @@ export default function Connections2() {
           <p className="text-sm text-gray-400">Gerencie suas conexões com o WhatsApp</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto border-abba-gray text-abba-text" onClick={fetchRows}>
-            <RotateCw className="mr-2 h-4 w-4" /> Verificar Agora
+          <Button variant="outline" className="w-full sm:w-auto border-abba-gray text-abba-text" onClick={verifyAll} disabled={verifying || loading}>
+            <RotateCw className={`mr-2 h-4 w-4 ${verifying ? 'animate-spin' : ''}`} /> {verifying ? 'Verificando...' : 'Verificar Agora'}
           </Button>
           <Button className="w-full sm:w-auto bg-abba-black text-abba-text border border-abba-gray hover:bg-white/5" onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Nova Conexão
