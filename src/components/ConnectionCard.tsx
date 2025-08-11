@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { useState } from "react"
 
 interface ConnectionCardProps {
   id: string
@@ -42,11 +43,46 @@ export function ConnectionCard({
   avatarUrl
 }: ConnectionCardProps) {
   const { toast } = useToast()
+  const [isDisconnecting, setIsDisconnecting] = useState(false)
 
   const connected = String(status).toLowerCase() === 'active' || String(status).toLowerCase() === 'connected'
 
-  const handleDisconnect = () => {
-    toast({ title: 'Ação indisponível no momento', description: 'Desconectar será implementado em breve.', variant: 'default' })
+  const handleDisconnect = async () => {
+    try {
+      setIsDisconnecting(true)
+
+      const payload = {
+        id,
+        instanceName: instanceName || name,
+        contact: phone,
+        profileName,
+      }
+
+      const res = await fetch(
+        "https://webhock-veterinup.abbadigital.com.br/webhook/desconecta-mp-brasil",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      )
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      toast({
+        title: "Desconexão solicitada",
+        description: "Enviamos sua solicitação ao servidor.",
+      })
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Falha ao desconectar",
+        description: "Não foi possível enviar a solicitação. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDisconnecting(false)
+    }
   }
 
   return (
@@ -125,8 +161,10 @@ export function ConnectionCard({
           variant={connected ? "destructiveOutline" : "outline"}
           className="w-full justify-center"
           onClick={handleDisconnect}
+          disabled={isDisconnecting}
+          aria-busy={isDisconnecting}
         >
-          <Power className="mr-2 h-4 w-4" /> Desconectar
+          <Power className={`mr-2 h-4 w-4 ${isDisconnecting ? "animate-spin" : ""}`} /> {isDisconnecting ? "Desconectando..." : "Desconectar"}
         </Button>
       </CardFooter>
     </Card>
