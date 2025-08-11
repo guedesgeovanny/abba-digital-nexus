@@ -50,7 +50,7 @@ export function ConnectionCard({
 
   return (
     <Card className="p-5 sm:p-6" aria-label={`Conexão ${name}`}>
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-4 md:gap-5 w-full">
         <Avatar className="h-12 w-12">
           {avatarUrl && (
             <AvatarImage src={avatarUrl} alt={`Foto do perfil ${name}`} loading="lazy" />
@@ -109,7 +109,7 @@ export function ConnectionCard({
 
           {/* Rodapé: Botão desconectar */}
           <div className="mt-4 border-t pt-4">
-            <Button variant="outline" className="w-full sm:w-auto" onClick={handleDisconnect}>
+            <Button variant="outline" className="w-full justify-center" onClick={handleDisconnect}>
               <Power className="mr-2 h-4 w-4" /> Desconectar
             </Button>
           </div>
