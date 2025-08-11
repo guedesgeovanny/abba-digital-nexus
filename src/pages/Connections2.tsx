@@ -105,7 +105,7 @@ export default function Connections2() {
           <Button variant="outline" className="w-full sm:w-auto border-abba-gray text-abba-text" onClick={verifyAll} disabled={verifying || loading}>
             <RotateCw className={`mr-2 h-4 w-4 ${verifying ? 'animate-spin' : ''}`} /> {verifying ? 'Verificando...' : 'Verificar Agora'}
           </Button>
-          <Button className="w-full sm:w-auto bg-abba-black text-abba-text border border-abba-gray hover:bg-white/5" onClick={() => setOpen(true)}>
+          <Button className="w-full sm:w-auto bg-abba-green text-abba-black hover:bg-abba-green/90 border border-transparent" onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Nova Conexão
           </Button>
         </div>
