@@ -91,7 +91,13 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
     }
     const json = await response.json().catch(() => ({}))
     const statusRaw = json?.status ?? json?.connection_status ?? json?.state
-    return typeof statusRaw === 'string' ? statusRaw.toLowerCase() : undefined
+    const status = typeof statusRaw === 'string' ? statusRaw.toLowerCase() : undefined
+
+    const profilePicture = json?.profilePictureUrl || json?.profile_picture_url || json?.result?.profilePictureUrl || json?.result?.profile_picture_url
+    const profileName = json?.profileName || json?.result?.profileName
+    const phone = json?.phone || json?.wid || json?.result?.phone || json?.result?.wid
+
+    return { status, profile_picture_url: profilePicture, profile_name: profileName, phone }
   }
 
   const handleContinue = async () => {
@@ -114,17 +120,17 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
         throw new Error("no_auth")
       }
 
-      let polledStatus: string | undefined = undefined
+      let polled: any = undefined
       try {
-        polledStatus = await Promise.race([
+        polled = await Promise.race([
           pollExternalStatus(external.instance_id || name),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), REQUEST_TIMEOUT_MS))
         ])
       } catch (_) {
-        polledStatus = undefined
+        polled = undefined
       }
 
-      const rawStatuses = [external.status, polledStatus].filter(Boolean).map((s) => String(s).toLowerCase())
+      const rawStatuses = [external.status, polled?.status].filter(Boolean).map((s) => String(s).toLowerCase())
       const status = rawStatuses.some((s) => ["ready", "connected", "open", "active"].includes(s)) ? "active" : "inactive"
 
       const insertPayload = {
@@ -133,6 +139,7 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
         channel: "whatsapp",
         name,
         status,
+        profile_picture_url: polled?.profile_picture_url || null,
         configuration: {
           connection_status: "disconnected",
           evolution_api_key: null,

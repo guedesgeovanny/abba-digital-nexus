@@ -12,6 +12,7 @@ interface ConnectionRow {
   status: string
   created_at: string
   updated_at?: string
+  profile_picture_url?: string | null
   configuration: any
 }
 
@@ -24,7 +25,7 @@ export default function Connections2() {
     setLoading(true)
     const { data, error } = await supabase
       .from("conexoes")
-      .select("id, name, status, created_at, updated_at, configuration")
+      .select("id, name, status, created_at, updated_at, profile_picture_url, configuration")
       .order("created_at", { ascending: false })
     if (!error) setRows(data || [])
     setLoading(false)
@@ -63,6 +64,7 @@ export default function Connections2() {
                   createdAt={r.created_at}
                   updatedAt={r.updated_at}
                   instanceName={r.configuration?.evolution_instance_name}
+                  avatarUrl={r.profile_picture_url || undefined}
                 />
               ))}
             </div>
