@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
@@ -23,6 +23,7 @@ interface CreateAgentDialogProps {
   isOpen: boolean
   onClose: () => void
   onCreateAgent: (agentData: {
+    id?: string
     name: string
     type: AgentType
     status: AgentStatus
@@ -73,9 +74,9 @@ export const CreateAgentDialog = ({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isCanceling, setIsCanceling] = useState(false)
   const { toast } = useToast()
+  const formRef = useRef<HTMLFormElement>(null)
 
   console.log('🔍 CreateAgentDialog recebeu createdAgentId:', createdAgentId)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.name && formData.type) {
@@ -207,29 +208,40 @@ export const CreateAgentDialog = ({
       createdAgentId,
       hasCreatedAgentId: !!createdAgentId
     })
-    
-    // Atualizar estado com os dados do perfil
-    setWhatsAppState(prev => ({
-      ...prev,
-      isConnected: true,
-      profileData: {
-        profileName: profileData.profileName,
-        contact: profileData.contact,
-        profilePictureUrl: profileData.profilePictureUrl,
-        profilePictureData: profileData.profilePictureData || ''
-      }
-    }))
-    
-    // Se temos um agentId criado, incluir na descrição do toast
+
     const hasAgentId = createdAgentId && createdAgentId.trim() !== ''
-    const description = hasAgentId 
-      ? `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Os dados foram salvos no agente automaticamente.`
-      : `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Complete a criação do agente para salvar os dados.`
-    
-    toast({
-      title: "WhatsApp Conectado!",
-      description,
-    })
+
+    if (hasAgentId) {
+      onCreateAgent({
+        ...formData,
+        id: createdAgentId!,
+        whatsapp_profile_name: profileData.profileName,
+        whatsapp_contact: profileData.contact,
+        whatsapp_profile_picture_url: profileData.profilePictureUrl,
+        whatsapp_profile_picture_data: profileData.profilePictureData || ''
+      })
+
+      toast({
+        title: "WhatsApp Conectado!",
+        description: `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Os dados foram salvos no agente automaticamente.`,
+      })
+    } else {
+      setWhatsAppState(prev => ({
+        ...prev,
+        isConnected: true,
+        profileData: {
+          profileName: profileData.profileName,
+          contact: profileData.contact,
+          profilePictureUrl: profileData.profilePictureUrl,
+          profilePictureData: profileData.profilePictureData || ''
+        }
+      }))
+
+      toast({
+        title: "WhatsApp Conectado!",
+        description: `Conectado como ${profileData.profileName || 'Perfil sem nome'}. Complete a criação do agente para salvar os dados.`,
+      })
+    }
   }
 
   const handleCancelWithConfirmation = () => {
@@ -321,6 +333,18 @@ export const CreateAgentDialog = ({
   }
 
   const handleCreateAgent = () => {
+    if (createdAgentId && createdAgentId.trim() !== '') {
+      const profile = whatsAppState.profileData
+      onCreateAgent({
+        ...formData,
+        id: createdAgentId!,
+        whatsapp_profile_name: profile?.profileName,
+        whatsapp_contact: profile?.contact,
+        whatsapp_profile_picture_url: profile?.profilePictureUrl,
+        whatsapp_profile_picture_data: profile?.profilePictureData || ''
+      })
+      return
+    }
     // Chamar o callback original que fecha o dialog
     onWhatsAppConnectionSuccess?.()
   }
@@ -336,7 +360,7 @@ export const CreateAgentDialog = ({
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             <AgentForm
               formData={formData}
               setFormData={setFormData}
@@ -355,10 +379,16 @@ export const CreateAgentDialog = ({
                 {isCanceling ? "Cancelando..." : "Cancelar"}
               </Button>
               <Button 
-                type="submit" 
+                type="button" 
                 className="bg-abba-green text-abba-black hover:bg-abba-green-light"
                 disabled={isCreating || !formData.name || !formData.type}
-                onClick={handleCreateAgent}
+                onClick={() => {
+                  if (createdAgentId && createdAgentId.trim() !== '') {
+                    handleCreateAgent()
+                  } else {
+                    formRef.current?.requestSubmit()
+                  }
+                }}
               >
                 {isCreating ? "Criando..." : "Criar Agente"}
               </Button>
