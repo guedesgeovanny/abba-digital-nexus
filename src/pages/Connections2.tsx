@@ -47,7 +47,7 @@ export default function Connections2() {
     setVerifying(true)
     try {
       await Promise.allSettled(rows.map(async (r) => {
-        const instanceName = r.configuration?.evolution_instance_name || r.name
+        const instanceName = r.name
         if (!instanceName) return
         const res = await Promise.race([
           fetch(`${CHECK_STATUS_URL}?instanceName=${encodeURIComponent(instanceName)}`, {
