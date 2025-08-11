@@ -107,9 +107,11 @@ export type Database = {
         Row: {
           channel: string
           configuration: Json
+          contact: string | null
           created_at: string
           id: string
           name: string
+          profile_name: string | null
           profile_picture_url: string | null
           status: string
           type: string
@@ -119,9 +121,11 @@ export type Database = {
         Insert: {
           channel?: string
           configuration?: Json
+          contact?: string | null
           created_at?: string
           id?: string
           name: string
+          profile_name?: string | null
           profile_picture_url?: string | null
           status?: string
           type?: string
@@ -131,9 +135,11 @@ export type Database = {
         Update: {
           channel?: string
           configuration?: Json
+          contact?: string | null
           created_at?: string
           id?: string
           name?: string
+          profile_name?: string | null
           profile_picture_url?: string | null
           status?: string
           type?: string
