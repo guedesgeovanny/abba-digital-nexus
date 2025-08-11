@@ -50,8 +50,8 @@ export function ConnectionCard({
 
   return (
     <Card className="p-5 sm:p-6" aria-label={`Conexão ${name}`}>
-      <div className="flex items-center gap-4 md:gap-5 w-full">
-        <Avatar className="h-12 w-12">
+      <div className="flex items-start gap-4 sm:gap-5 w-full">
+        <Avatar className="h-12 w-12 shrink-0">
           {avatarUrl && (
             <AvatarImage src={avatarUrl} alt={`Foto do perfil ${name}`} loading="lazy" />
           )}
