@@ -6,9 +6,9 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 
 // Configuráveis
-const EVOLUTION_API_BASE_URL = "https://SUA-API-EVOLUTION"
+const CREATE_INSTANCE_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/nova-instancia-mp-brasil"
+const CHECK_STATUS_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/verifica-status-mp-brasil"
 const REQUEST_TIMEOUT_MS = 15000
-
 interface NewWhatsAppConnectionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -50,36 +50,48 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
   }
 
   const createExternalInstance = async (connectionName: string) => {
-    const url = `${EVOLUTION_API_BASE_URL}/instances`
-    const response = await fetch(url, {
+    const response = await fetch(CREATE_INSTANCE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Substitua por Edge Function e secrets do Supabase para guardar a API key com segurança
-        // Authorization: `Bearer ${EVOLUTION_API_KEY}`
       },
-      body: JSON.stringify({ name: connectionName })
+      body: JSON.stringify({ name: connectionName, instanceName: connectionName })
     })
 
     if (!response.ok) {
       throw new Error("api_error")
     }
 
-    const json = await response.json()
-    // Esperado: { instance_id, name, status }
-    if (!json?.instance_id) {
+    const json = await response.json().catch(() => ({}))
+    const instanceId = json?.instance_id || json?.instanceId || json?.instance_name || json?.instance || json?.name || connectionName
+    const statusRaw = json?.status || json?.connection_status || json?.state
+
+    if (!instanceId) {
       throw new Error("invalid_response")
     }
-    return json as { instance_id: string; name: string; status?: string; metadata?: any }
+
+    return { instance_id: String(instanceId), name: String(connectionName), status: typeof statusRaw === 'string' ? statusRaw : undefined, metadata: json }
   }
 
-  const rollbackExternalInstance = async (instanceId: string) => {
+  const rollbackExternalInstance = async (_instanceId: string) => {
     try {
-      const url = `${EVOLUTION_API_BASE_URL}/instances/${instanceId}`
-      await fetch(url, { method: "DELETE" })
+      // Sem endpoint de exclusão para o provedor atual; rollback ignorado
     } catch (e) {
       console.error("Rollback falhou:", e)
     }
+  }
+  const pollExternalStatus = async (instanceName: string) => {
+    const response = await fetch(CHECK_STATUS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ instanceName })
+    })
+    if (!response.ok) {
+      throw new Error("poll_error")
+    }
+    const json = await response.json().catch(() => ({}))
+    const statusRaw = json?.status ?? json?.connection_status ?? json?.state
+    return typeof statusRaw === 'string' ? statusRaw.toLowerCase() : undefined
   }
 
   const handleContinue = async () => {
@@ -102,7 +114,19 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
         throw new Error("no_auth")
       }
 
-      const status = external.status && ["ready", "connected"].includes(external.status) ? "active" : "inactive"
+      let polledStatus: string | undefined = undefined
+      try {
+        polledStatus = await Promise.race([
+          pollExternalStatus(external.instance_id || name),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), REQUEST_TIMEOUT_MS))
+        ])
+      } catch (_) {
+        polledStatus = undefined
+      }
+
+      const rawStatuses = [external.status, polledStatus].filter(Boolean).map((s) => String(s).toLowerCase())
+      const status = rawStatuses.some((s) => ["ready", "connected", "open", "active"].includes(s)) ? "active" : "inactive"
+
       const insertPayload = {
         user_id: userId,
         type: "whatsapp",
