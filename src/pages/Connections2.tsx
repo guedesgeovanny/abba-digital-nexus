@@ -59,9 +59,25 @@ export default function Connections2() {
         const json = await res.json().catch(() => ({}))
         const statusRaw = json?.status ?? json?.connection_status ?? json?.state
         const connected = typeof statusRaw === 'string' && ['open','connected','ready','active'].includes(String(statusRaw).toLowerCase())
-        const profilePicture = json?.profilePictureUrl || json?.profile_picture_url || json?.result?.profilePictureUrl || json?.result?.profile_picture_url || null
-        const profileName = json?.profileName || json?.result?.profileName || null
-        const phone = json?.phone || json?.wid || json?.result?.phone || json?.result?.wid || null
+        const profilePicture = json?.fotodoperfil 
+          || json?.profilePictureUrl 
+          || json?.profile_picture_url 
+          || json?.result?.fotodoperfil 
+          || json?.result?.profilePictureUrl 
+          || json?.result?.profile_picture_url 
+          || null
+        const profileName = json?.profileName 
+          || json?.result?.profileName 
+          || json?.profilename 
+          || json?.result?.profilename 
+          || null
+        const phone = json?.contato 
+          || json?.phone 
+          || json?.wid 
+          || json?.result?.contato 
+          || json?.result?.phone 
+          || json?.result?.wid 
+          || null
         await supabase.from('conexoes').update({
           status: connected ? 'active' : 'inactive',
           profile_picture_url: profilePicture,
