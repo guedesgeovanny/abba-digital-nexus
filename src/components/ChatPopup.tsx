@@ -10,7 +10,7 @@ import { useConversations } from "@/hooks/useConversations"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAgents } from "@/hooks/useAgents"
+import { supabase } from "@/integrations/supabase/client"
 
 interface ChatPopupProps {
   isOpen: boolean
@@ -25,15 +25,25 @@ export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
   
   const { conversations, createConversation, isLoading: conversationsLoading } = useConversations()
   const { messages, sendMessage, isSending, isLoading: messagesLoading } = useMessages(conversationId)
-  const { agents } = useAgents()
+const [connections, setConnections] = useState<any[]>([])
 
-  const connectionOptions = (agents || [])
-    .filter((a: any) => (a?.configuration as any)?.connection_status === 'connected' && (((a?.configuration as any)?.evolution_instance_name) || a?.whatsapp_contact))
-    .map((a: any) => ({
-      name: a?.name?.includes('Agent') || a?.name?.includes('IA') || a?.name?.includes('AI') ? 'Agente-de-IA' : 'Atendimento-Humano',
-      originalName: (a?.configuration as any)?.evolution_instance_name || a?.whatsapp_contact || a?.name,
-      channel: a?.channel as string | null
-    }))
+useEffect(() => {
+  const load = async () => {
+    const { data } = await supabase
+      .from('conexoes')
+      .select('id, name, status, configuration, contact, channel')
+    setConnections(data || [])
+  }
+  load()
+}, [])
+
+const connectionOptions = (connections || [])
+  .filter((c: any) => String(c.status).toLowerCase() === 'active')
+  .map((c: any) => ({
+    name: c?.name?.includes('Agent') || c?.name?.includes('IA') || c?.name?.includes('AI') ? 'Agente-de-IA' : 'Atendimento-Humano',
+    originalName: c?.name,
+    channel: (c as any)?.channel as string | null
+  }))
 
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
 
@@ -41,7 +51,7 @@ export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
     if (!selectedConnectionName && connectionOptions.length > 0) {
       setSelectedConnectionName(connectionOptions[0].name)
     }
-  }, [agents])
+  }, [connections])
 
   // Buscar ou criar conversa quando a popup abrir
   useEffect(() => {

@@ -13,7 +13,7 @@ import { Header } from "@/components/Header";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
-import Agents from "./pages/Agents";
+
 import Connections2 from "./pages/Connections2";
 
 import Contacts from "./pages/Contacts";
@@ -61,16 +61,6 @@ const App = () => {
                   <ProtectedRoute>
                     <AuthenticatedLayout>
                       <Dashboard />
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/agents" 
-                element={
-                  <ProtectedRoute>
-                    <AuthenticatedLayout>
-                      <Agents />
                     </AuthenticatedLayout>
                   </ProtectedRoute>
                 } 

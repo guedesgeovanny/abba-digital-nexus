@@ -26,7 +26,7 @@ import {
 import { LinkMessage } from "@/components/LinkMessage"
 import { detectLinksInMessage } from "@/utils/linkDetection"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import { useAgents } from "@/hooks/useAgents"
+import { supabase } from "@/integrations/supabase/client"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -40,16 +40,26 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const { agents } = useAgents()
+const [connections, setConnections] = useState<any[]>([])
 
-  // Conexões disponíveis (apenas conectadas)
-  const connectionOptions = (agents || [])
-    .filter((a: any) => (a?.configuration as any)?.connection_status === 'connected' && (((a?.configuration as any)?.evolution_instance_name) || a?.whatsapp_contact))
-    .map((a: any) => ({
-      name: a?.name?.includes('Agent') || a?.name?.includes('IA') || a?.name?.includes('AI') ? 'Agente-de-IA' : 'Atendimento-Humano',
-      originalName: (a?.configuration as any)?.evolution_instance_name || a?.whatsapp_contact || a?.name,
-      channel: a?.channel as string | null
-    }))
+useEffect(() => {
+  const load = async () => {
+    const { data } = await supabase
+      .from('conexoes')
+      .select('id, name, status, configuration, contact, channel')
+    setConnections(data || [])
+  }
+  load()
+}, [])
+
+// Conexões disponíveis (apenas conectadas)
+const connectionOptions = (connections || [])
+  .filter((c: any) => String(c.status).toLowerCase() === 'active')
+  .map((c: any) => ({
+    name: c?.name?.includes('Agent') || c?.name?.includes('IA') || c?.name?.includes('AI') ? 'Agente-de-IA' : 'Atendimento-Humano',
+    originalName: c?.name,
+    channel: (c as any)?.channel as string | null
+  }))
 
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
 
@@ -57,7 +67,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     if (!selectedConnectionName && connectionOptions.length > 0) {
       setSelectedConnectionName(connectionOptions[0].name)
     }
-  }, [agents])
+  }, [connections])
 
   // Auto-scroll para o final quando novas mensagens chegam
   useEffect(() => {

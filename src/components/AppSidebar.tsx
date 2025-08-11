@@ -12,10 +12,6 @@ const allItems = [{
   url: "/dashboard",
   icon: Home
 }, {
-  title: "Conexões",
-  url: "/agents",
-  icon: Bot
-}, {
   title: "Conexões 2",
   url: "/connections2",
   icon: Bot
@@ -39,12 +35,7 @@ const allItems = [{
 
 // Filter menu items based on user role
 const getFilteredMenuItems = (userProfile: any) => {
-  if (userProfile?.role === 'admin') {
-    return allItems;
-  }
-  
-  // Remove "Conexões" for non-admin users
-  return allItems.filter(item => item.url !== '/agents');
+  return allItems;
 };
 
 export function AppSidebar() {
