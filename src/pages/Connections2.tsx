@@ -50,10 +50,8 @@ export default function Connections2() {
         const instanceName = r.configuration?.evolution_instance_name || r.name
         if (!instanceName) return
         const res = await Promise.race([
-          fetch(CHECK_STATUS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ instanceName })
+          fetch(`${CHECK_STATUS_URL}?instanceName=${encodeURIComponent(instanceName)}`, {
+            method: 'GET',
           }),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), REQUEST_TIMEOUT_MS))
         ]) as Response
