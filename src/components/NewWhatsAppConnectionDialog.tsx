@@ -151,9 +151,9 @@ const reset = () => {
         channel: "whatsapp",
         name,
         status,
-        profile_picture_url: polled?.profile_picture_url || null,
-        profile_name: polled?.profile_name || null,
-        contact: polled?.phone || null,
+        whatsapp_profile_picture_url: polled?.profile_picture_url || null,
+        whatsapp_profile_name: polled?.profile_name || null,
+        whatsapp_contact: polled?.phone || null,
         configuration: {
           connection_status: "disconnected",
           evolution_api_key: null,

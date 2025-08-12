@@ -275,9 +275,9 @@ export function ConnectionCard({
             
           await supabase.from('conexoes').update({
             status: 'active',
-            profile_picture_url: profilePicture,
-            profile_name: profileNameNext,
-            contact: phoneNext
+            whatsapp_profile_picture_url: profilePicture,
+            whatsapp_profile_name: profileNameNext,
+            whatsapp_contact: phoneNext
           }).eq('id', id)
           
           onSuccess?.({ phone: phoneNext ?? undefined, profileName: profileNameNext ?? undefined, profilePictureUrl: profilePicture ?? undefined })

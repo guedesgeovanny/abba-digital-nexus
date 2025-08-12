@@ -16,9 +16,9 @@ interface ConnectionRow {
   status: string
   created_at: string
   updated_at?: string
-  profile_picture_url?: string | null
-  profile_name?: string | null
-  contact?: string | null
+  whatsapp_profile_picture_url?: string | null
+  whatsapp_profile_name?: string | null
+  whatsapp_contact?: string | null
   configuration: any
 }
 
@@ -80,9 +80,9 @@ export default function Connections2() {
           || null
         await supabase.from('conexoes').update({
           status: connected ? 'active' : 'inactive',
-          profile_picture_url: profilePicture,
-          profile_name: profileName,
-          contact: phone
+          whatsapp_profile_picture_url: profilePicture,
+          whatsapp_profile_name: profileName,
+          whatsapp_contact: phone
         }).eq('id', r.id)
       }))
       toast({ title: 'Verificação concluída' })
@@ -126,9 +126,9 @@ export default function Connections2() {
               createdAt={r.created_at}
               updatedAt={r.updated_at}
               instanceName={r.configuration?.evolution_instance_name}
-              profileName={r.profile_name || undefined}
-              phone={r.contact || undefined}
-              avatarUrl={r.profile_picture_url || undefined}
+              profileName={r.whatsapp_profile_name || undefined}
+              phone={r.whatsapp_contact || undefined}
+              avatarUrl={r.whatsapp_profile_picture_url || undefined}
               onDeleted={fetchRows}
             />
           ))}
