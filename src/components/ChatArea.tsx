@@ -40,7 +40,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const inputBarRef = useRef<HTMLDivElement>(null)
+  const inputBarRef = useRef<HTMLFormElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
   const [connections, setConnections] = useState<any[]>([])
 

@@ -271,7 +271,7 @@ const connectionOptions = (connections || [])
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!messageInput.trim() || isSending || !conversationId || isLoadingConversation || !selectedConnectionName}}
+                  disabled={!messageInput.trim() || isSending || !conversationId || isLoadingConversation || !selectedConnectionName}
                   className="bg-abba-green text-abba-black hover:bg-abba-green-light"
                 >
                   <Send className="w-4 h-4" />
