@@ -22,7 +22,7 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog"
-import { QRCodeModal } from "./QRCodeModal"
+import QrPolling from "./QrPolling"
 import { WEBHOOK_URLS } from "@/utils/connectionValidation"
 import { useToast } from "@/hooks/use-toast"
 
@@ -322,13 +322,22 @@ export function InstanceCard({
         </CardContent>
       </Card>
       
-      <QRCodeModal
-        open={showQrModal}
-        onOpenChange={setShowQrModal}
-        connectionName={name}
-        qrCodeBase64={qrCodeData}
-        onConnected={handleConnected}
-      />
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-background border rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Conectar WhatsApp - {name}</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowQrModal(false)}>
+                ✕
+              </Button>
+            </div>
+            <QrPolling
+              instance={name}
+              endpoint={WEBHOOK_URLS.CHECK_STATUS}
+            />
+          </div>
+        </div>
+      )}
     </>
   )
 }
