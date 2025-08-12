@@ -1,8 +1,8 @@
-import { MoreVertical, Power, Wifi } from "lucide-react"
+import { Trash, Power, Wifi } from "lucide-react"
 import { Card, CardTitle, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog"
 
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
@@ -17,6 +17,7 @@ interface ConnectionCardProps {
   profileName?: string
   phone?: string
   avatarUrl?: string
+  channel?: string
 }
 
 const formatDate = (iso?: string) => {
@@ -44,10 +45,12 @@ export function ConnectionCard({
   instanceName,
   profileName,
   phone,
-  avatarUrl
+  avatarUrl,
+  channel
 }: ConnectionCardProps) {
   const { toast } = useToast()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const connected = String(status).toLowerCase() === 'active' || String(status).toLowerCase() === 'connected'
 
@@ -86,6 +89,38 @@ export function ConnectionCard({
       })
     } finally {
       setIsDisconnecting(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+      const payload = {
+        instanceName: instanceName || name,
+        name,
+      }
+      const res = await fetch(
+        "https://webhock-veterinup.abbadigital.com.br/webhook/exclui-instancia",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      )
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      toast({
+        title: "Exclusão solicitada",
+        description: "Enviamos sua solicitação ao servidor.",
+      })
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Falha ao excluir",
+        description: "Não foi possível enviar a solicitação. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -129,17 +164,33 @@ export function ConnectionCard({
               {connected ? "Conectado" : "Desconectado"}
             </span>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Mais ações">
-                  <MoreVertical className="h-4 w-4" />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Excluir conexão"
+                  className="text-destructive hover:bg-destructive/15"
+                  disabled={isDeleting}
+                >
+                  <Trash className="h-4 w-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Renomear</DropdownMenuItem>
-                <DropdownMenuItem>Excluir</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir conexão</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir a conexão "{name}"? Esta ação não poderá ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
@@ -150,6 +201,9 @@ export function ConnectionCard({
         <section aria-label="Informações" className="mt-4 grid grid-cols-2 gap-y-2">
           <div className="text-sm text-muted-foreground">Status:</div>
           <div className="text-sm text-foreground">{connected ? "Conectado" : "Desconectado"}</div>
+
+          <div className="text-sm text-muted-foreground">Canal:</div>
+          <div className="text-sm text-foreground">{channel || "—"}</div>
 
           <div className="text-sm text-muted-foreground">Criado em:</div>
           <div className="text-sm text-foreground">{formatDate(createdAt)}</div>
