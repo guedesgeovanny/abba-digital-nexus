@@ -26,6 +26,7 @@ export function QRCodeModal({
   const [retryCount, setRetryCount] = useState(0)
   const [isGeneratingNewQR, setIsGeneratingNewQR] = useState(false)
   const [currentQRCode, setCurrentQRCode] = useState(qrCodeBase64)
+  const [connectionSuccess, setConnectionSuccess] = useState(false)
   const pollingIntervalRef = useRef<NodeJS.Timeout>()
   const { toast } = useToast()
 
@@ -33,7 +34,7 @@ export function QRCodeModal({
     isActive: open && !isPolling,
     duration: POLLING_CONFIG.qrExpiration,
     onExpire: () => {
-      handleQRExpired()
+      console.log("QR Code expirou, mas modal continua aberto")
     }
   })
 
@@ -43,20 +44,22 @@ export function QRCodeModal({
   }, [qrCodeBase64, reset])
 
   useEffect(() => {
-    if (open && currentQRCode) {
-      console.log('Iniciando polling para verificar conexão:', connectionName)
+    if (open && currentQRCode && !connectionSuccess) {
+      console.log('QR Code modal aberto - iniciando polling:', connectionName)
       startPolling()
-    } else {
-      stopPolling()
-      setRetryCount(0)
     }
 
-    return () => stopPolling()
-  }, [open, currentQRCode, connectionName])
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+      }
+    }
+  }, [open, currentQRCode, connectionName, connectionSuccess])
 
   const startPolling = () => {
     if (isPolling) return
     
+    console.log('Iniciando polling para:', connectionName)
     setIsPolling(true)
     setRetryCount(0)
     
@@ -66,6 +69,7 @@ export function QRCodeModal({
   }
 
   const stopPolling = () => {
+    console.log('Parando polling')
     setIsPolling(false)
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current)
@@ -96,64 +100,34 @@ export function QRCodeModal({
                           ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
 
       if (isConnected) {
-        console.log('Conexão estabelecida com sucesso!')
+        console.log('CONEXÃO ESTABELECIDA! Fechando modal em 2 segundos...')
+        setConnectionSuccess(true)
+        stopPolling()
+        
         const profileData = {
           profileName: data.profilename || data.profileName || null,
           contact: data.contato || data.phone || data.wid || null,
           profilePictureUrl: data.fotodoperfil || data.profilePictureUrl || null
         }
 
-        stopPolling()
         toast({
           title: "WhatsApp Conectado!",
           description: `Conexão "${connectionName}" estabelecida com sucesso.`
         })
         
-        // Só fecha o modal após conexão bem-sucedida
+        // Aguarda 2 segundos para mostrar o sucesso, depois fecha
         setTimeout(() => {
           onConnected(profileData)
-        }, 1000)
+        }, 2000)
         return
       }
 
-      const newRetryCount = retryCount + 1
-      setRetryCount(newRetryCount)
+      setRetryCount(prev => prev + 1)
       
-      if (newRetryCount >= POLLING_CONFIG.maxRetries) {
-        console.log('Limite de tentativas atingido')
-        stopPolling()
-        toast({
-          title: "Tempo limite excedido",
-          description: "Escaneie o QR Code para conectar ou gere um novo código.",
-          variant: "destructive"
-        })
-        // NÃO fecha o modal - deixa o usuário decidir
-      }
     } catch (error) {
       console.error('Erro no polling:', error)
-      const newRetryCount = retryCount + 1
-      setRetryCount(newRetryCount)
-      
-      if (newRetryCount >= POLLING_CONFIG.maxRetries) {
-        console.log('Limite de tentativas atingido por erro')
-        stopPolling()
-        toast({
-          title: "Erro na verificação",
-          description: "Verifique sua conexão. O QR Code continua válido.",
-          variant: "destructive"
-        })
-        // NÃO fecha o modal - deixa o usuário decidir
-      }
+      setRetryCount(prev => prev + 1)
     }
-  }
-
-  const handleQRExpired = () => {
-    toast({
-      title: "QR Code expirado",
-      description: "Gerando um novo código QR...",
-      variant: "destructive"
-    })
-    generateNewQRCode()
   }
 
   const generateNewQRCode = async () => {
@@ -178,6 +152,7 @@ export function QRCodeModal({
           : `data:image/png;base64,${newQRCode}`
         
         setCurrentQRCode(base64Url)
+        setRetryCount(0)
         reset()
         startPolling()
         
@@ -200,28 +175,39 @@ export function QRCodeModal({
     }
   }
 
-  const handleClose = () => {
-    console.log('Modal fechado pelo usuário')
+  const handleManualClose = () => {
+    console.log('Usuário fechou o modal manualmente')
+    setConnectionSuccess(false)
     stopPolling()
     onOpenChange(false)
   }
 
-  return (
-    <Dialog open={open} onOpenChange={() => {}} modal={true}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5" />
-            Conectar WhatsApp
-          </DialogTitle>
-          <DialogDescription>
-            Escaneie o QR Code com seu WhatsApp para conectar "{connectionName}"
-          </DialogDescription>
-        </DialogHeader>
+  // FORÇAR O MODAL A PERMANECER ABERTO
+  const handleDialogChange = (openState: boolean) => {
+    console.log('Dialog tentou mudar estado para:', openState)
+    // NÃO PERMITIR FECHAR AUTOMATICAMENTE
+    if (!openState && !connectionSuccess) {
+      console.log('Bloqueando fechamento automático do modal')
+      return
+    }
+  }
 
-        <div className="space-y-4">
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+      <div className="bg-background border rounded-lg shadow-lg max-w-md w-full mx-4">
+        <div className="p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Smartphone className="h-5 w-5" />
+            <h2 className="text-lg font-semibold">Conectar WhatsApp</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-6">
+            Escaneie o QR Code com seu WhatsApp para conectar "{connectionName}"
+          </p>
+
           {/* QR Code */}
-          <div className="flex justify-center p-4 bg-muted rounded-lg">
+          <div className="flex justify-center p-4 bg-muted rounded-lg mb-4">
             {isGeneratingNewQR ? (
               <div className="flex flex-col items-center justify-center h-64 w-64">
                 <RefreshCw className="h-8 w-8 animate-spin text-primary mb-2" />
@@ -237,9 +223,14 @@ export function QRCodeModal({
           </div>
 
           {/* Status e Timer */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              {isPolling && !isExpired ? (
+              {connectionSuccess ? (
+                <Badge className="bg-emerald-500 text-white">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Conectado!
+                </Badge>
+              ) : isPolling && !isExpired ? (
                 <Badge variant="secondary" className="animate-pulse">
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Aguardando...
@@ -258,22 +249,22 @@ export function QRCodeModal({
             </div>
             
             <div className="text-sm text-muted-foreground">
-              {isExpired ? "00:00" : formattedTime}
+              {connectionSuccess ? "Sucesso!" : isExpired ? "00:00" : formattedTime}
             </div>
           </div>
 
           {/* Instruções */}
-          <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+          <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1 mb-4">
             <p className="font-medium">Como conectar:</p>
             <p>1. Abra o WhatsApp no seu celular</p>
-            <p>2. Toque em Mais opções &gt; Aparelhos conectados</p>
+            <p>2. Toque em Mais opções → Aparelhos conectados</p>
             <p>3. Toque em "Conectar um aparelho"</p>
             <p>4. Escaneie este código QR</p>
           </div>
 
           {/* Botões */}
           <div className="flex gap-2">
-            {isExpired && (
+            {isExpired && !connectionSuccess && (
               <Button
                 onClick={generateNewQRCode}
                 disabled={isGeneratingNewQR}
@@ -284,16 +275,18 @@ export function QRCodeModal({
               </Button>
             )}
             
-            <Button
-              variant="outline"
-              onClick={handleClose}
-              className={isExpired ? "flex-1" : "w-full"}
-            >
-              Cancelar
-            </Button>
+            {!connectionSuccess && (
+              <Button
+                variant="outline"
+                onClick={handleManualClose}
+                className={isExpired ? "flex-1" : "w-full"}
+              >
+                Cancelar
+              </Button>
+            )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }
