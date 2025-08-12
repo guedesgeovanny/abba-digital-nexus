@@ -43,7 +43,8 @@ export function QRCodeModal({
   }, [qrCodeBase64, reset])
 
   useEffect(() => {
-    if (open) {
+    if (open && currentQRCode) {
+      console.log('Iniciando polling para verificar conexão:', connectionName)
       startPolling()
     } else {
       stopPolling()
@@ -51,7 +52,7 @@ export function QRCodeModal({
     }
 
     return () => stopPolling()
-  }, [open])
+  }, [open, currentQRCode, connectionName])
 
   const startPolling = () => {
     if (isPolling) return
@@ -74,6 +75,8 @@ export function QRCodeModal({
 
   const checkConnectionStatus = async () => {
     try {
+      console.log(`Verificando status da conexão: ${connectionName} (tentativa ${retryCount + 1}/${POLLING_CONFIG.maxRetries})`)
+      
       const response = await Promise.race([
         fetch(`${WEBHOOK_URLS.CHECK_STATUS}?instanceName=${encodeURIComponent(connectionName)}`),
         new Promise<never>((_, reject) => 
@@ -86,12 +89,14 @@ export function QRCodeModal({
       }
 
       const data: StatusResponse = await response.json()
+      console.log('Resposta do webhook de status:', data)
       
       const isConnected = data.connected === true || 
                          (typeof data.status === 'string' && 
                           ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
 
       if (isConnected) {
+        console.log('Conexão estabelecida com sucesso!')
         const profileData = {
           profileName: data.profilename || data.profileName || null,
           contact: data.contato || data.phone || data.wid || null,
@@ -108,9 +113,11 @@ export function QRCodeModal({
         return
       }
 
-      setRetryCount(prev => prev + 1)
+      const newRetryCount = retryCount + 1
+      setRetryCount(newRetryCount)
       
-      if (retryCount >= POLLING_CONFIG.maxRetries) {
+      if (newRetryCount >= POLLING_CONFIG.maxRetries) {
+        console.log('Limite de tentativas atingido')
         stopPolling()
         toast({
           title: "Tempo limite excedido",
@@ -119,10 +126,12 @@ export function QRCodeModal({
         })
       }
     } catch (error) {
-      console.error('Polling error:', error)
-      setRetryCount(prev => prev + 1)
+      console.error('Erro no polling:', error)
+      const newRetryCount = retryCount + 1
+      setRetryCount(newRetryCount)
       
-      if (retryCount >= POLLING_CONFIG.maxRetries) {
+      if (newRetryCount >= POLLING_CONFIG.maxRetries) {
+        console.log('Limite de tentativas atingido por erro')
         stopPolling()
         toast({
           title: "Erro na verificação",
