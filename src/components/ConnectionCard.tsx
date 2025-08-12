@@ -13,7 +13,7 @@ import { WhatsAppQRCodeTimer } from "@/components/WhatsAppQRCodeTimer"
 
 // Webhook endpoints
 const CREATE_INSTANCE_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/nova-instancia-mp-brasil"
-const DISCONNECT_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/desconecta-contato"
+const DISCONNECT_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/desconecta-mp-brasil"
 const CONNECT_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/conecta-mp-brasil"
 const CHECK_STATUS_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/verifica-status-mp-brasil"
 const REQUEST_TIMEOUT_MS = 15000
@@ -126,9 +126,7 @@ export function ConnectionCard({
       setIsDisconnecting(true)
 
       const payload = {
-        instanceName: name,
-        contact: phone,
-        profileName,
+        instanceName: instanceName || name
       }
 
       const res = await fetch(DISCONNECT_URL, {
@@ -137,16 +135,17 @@ export function ConnectionCard({
         body: JSON.stringify(payload),
       })
 
-      const text = await res.text().catch(() => "")
-      if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-      toast({ title: "Desconexão solicitada" })
+      // Atualiza status local e no banco
+      setLocalConnected(false)
+      setButtonMode('connect')
+      
+      await supabase.from('conexoes').update({
+        status: 'inactive'
+      }).eq('id', id)
 
-      if (String(text).toLowerCase().includes("desconectado")) {
-        setLocalConnected(false)
-        setButtonMode('connect')
-        await startConnectionFlow()
-      }
+      toast({ title: "Desconectado com sucesso!" })
     } catch (error) {
       console.error(error)
       toast({
@@ -235,8 +234,10 @@ export function ConnectionCard({
   // Polling periódico do status enquanto o QR estiver ativo
   useEffect(() => {
     if (!isPolling || isExpired || connected) return
-    const instance = instanceName || name
+    
+    const instance = createdInstanceName || instanceName || name
     let stopped = false
+    
     const interval = setInterval(async () => {
       if (stopped) return
       try {
@@ -244,10 +245,13 @@ export function ConnectionCard({
           fetch(`${CHECK_STATUS_URL}?instanceName=${encodeURIComponent(instance)}`, { method: 'GET' }),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), REQUEST_TIMEOUT_MS))
         ]) as Response
+        
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json().catch(() => ({}))
+        
         const statusStr = String(json?.connection_status ?? json?.status ?? '').toLowerCase()
         const gotConnected = statusStr === 'connected' || json?.connected === true
+        
         if (gotConnected) {
           const profilePicture = json?.fotodoperfil 
             || json?.profilePictureUrl 
@@ -268,12 +272,14 @@ export function ConnectionCard({
             || json?.result?.phone 
             || json?.result?.wid 
             || null
+            
           await supabase.from('conexoes').update({
             status: 'active',
             profile_picture_url: profilePicture,
             profile_name: profileNameNext,
             contact: phoneNext
           }).eq('id', id)
+          
           onSuccess?.({ phone: phoneNext ?? undefined, profileName: profileNameNext ?? undefined, profilePictureUrl: profilePicture ?? undefined })
           setLocalConnected(true)
           setButtonMode('disconnect')
@@ -290,8 +296,9 @@ export function ConnectionCard({
         }
       }
     }, 3000)
+    
     return () => { stopped = true; clearInterval(interval) }
-  }, [isPolling, isExpired, connected, instanceName, name, id])
+  }, [isPolling, isExpired, connected, createdInstanceName, instanceName, name, id, onSuccess])
 
   return (
     <Card aria-label={`Conexão ${name}`} className="bg-card border-border rounded-xl">
