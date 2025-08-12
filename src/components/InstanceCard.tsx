@@ -83,11 +83,8 @@ export function InstanceCard({
       const qrCode = data.base64 || data.result?.base64
       
       if (qrCode) {
-        const base64Url = qrCode.startsWith('data:image') 
-          ? qrCode 
-          : `data:image/png;base64,${qrCode}`
-        
-        setQrCodeData(base64Url)
+        // Usar o QR como está, já que agora o QrPolling lida com ambos os formatos
+        setQrCodeData(qrCode)
         setShowQrModal(true)
         onStatusChange(id, 'connecting')
         
@@ -334,6 +331,7 @@ export function InstanceCard({
             <QrPolling
               instance={name}
               endpoint={WEBHOOK_URLS.CHECK_STATUS}
+              initialQr={qrCodeData}
             />
           </div>
         </div>
