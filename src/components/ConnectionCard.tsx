@@ -3,10 +3,15 @@ import { Card, CardTitle, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useState } from "react"
+
+// Webhook endpoints
+const CREATE_INSTANCE_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/nova-instancia-mp-brasil"
+const DISCONNECT_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/desconecta-contato"
 
 interface ConnectionCardProps {
   id: string
@@ -55,7 +60,54 @@ export function ConnectionCard({
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const connected = String(status).toLowerCase() === 'active' || String(status).toLowerCase() === 'connected'
+  const initialConnected = String(status).toLowerCase() === 'active' || String(status).toLowerCase() === 'connected'
+  const [localConnected, setLocalConnected] = useState(initialConnected)
+  const connected = localConnected
+  const [buttonMode, setButtonMode] = useState<'disconnect' | 'connect'>(initialConnected ? 'disconnect' : 'connect')
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const [qrData, setQrData] = useState<{ base64: string; code?: string } | null>(null)
+  const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(instanceName || name)
+
+  const startConnectionFlow = async () => {
+    try {
+      setIsConnecting(true)
+      const response = await fetch(CREATE_INSTANCE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, instanceName: name })
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const json = await response.json().catch(() => ({}))
+      const instanceId = json?.instanceId || json?.instance_id || json?.instance_name || json?.name || name
+      const rawBase64 = json?.base64 || json?.result?.base64
+      const rawCode = json?.code || json?.result?.code
+      const base64Url = typeof rawBase64 === 'string' && rawBase64.startsWith('data:image') ? rawBase64 : (rawBase64 ? `data:image/png;base64,${rawBase64}` : null)
+
+      if (base64Url) {
+        setQrData({ base64: base64Url, code: rawCode })
+        setCreatedInstanceName(String(instanceId))
+        setShowQR(true)
+      }
+
+      // Atualiza local/DB
+      setLocalConnected(false)
+      setButtonMode('connect')
+      await supabase.from('conexoes').update({
+        status: 'inactive',
+        configuration: {
+          connection_status: 'disconnected',
+          evolution_api_key: null,
+          evolution_instance_name: instanceId
+        }
+      }).eq('id', id)
+    } catch (e) {
+      console.error(e)
+      toast({ title: "Não foi possível gerar o QR Code agora.", variant: "destructive" })
+    } finally {
+      setIsConnecting(false)
+    }
+  }
 
   const handleDisconnect = async () => {
     try {
@@ -67,26 +119,27 @@ export function ConnectionCard({
         profileName,
       }
 
-      const res = await fetch(
-        "https://webhock-veterinup.abbadigital.com.br/webhook/desconecta-mp-brasil",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      )
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-
-      toast({
-        title: "Desconexão solicitada",
-        description: "Enviamos sua solicitação ao servidor.",
+      const res = await fetch(DISCONNECT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       })
+
+      const text = await res.text().catch(() => "")
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${text}`)
+
+      toast({ title: "Desconexão solicitada" })
+
+      if (String(text).toLowerCase().includes("desconectado")) {
+        setLocalConnected(false)
+        setButtonMode('connect')
+        await startConnectionFlow()
+      }
     } catch (error) {
       console.error(error)
       toast({
         title: "Falha ao desconectar",
-        description: "Não foi possível enviar a solicitação. Tente novamente.",
+        description: "Não foi possível completar a solicitação.",
         variant: "destructive",
       })
     } finally {
@@ -220,18 +273,51 @@ export function ConnectionCard({
           <div className="text-sm text-foreground">{formatDate(updatedAt || createdAt)}</div>
         </section>
 
-        {/* Disconnect button */}
+        {/* Action button */}
         <div className="mt-5">
           <Button
             variant="outline"
-            className="w-full justify-center border-destructive/50 text-destructive hover:bg-destructive/50"
-            onClick={handleDisconnect}
-            disabled={isDisconnecting}
-            aria-busy={isDisconnecting}
+            className="w-full justify-center border-input text-foreground hover:bg-accent"
+            onClick={buttonMode === 'disconnect' ? handleDisconnect : startConnectionFlow}
+            disabled={buttonMode === 'disconnect' ? isDisconnecting : isConnecting}
+            aria-busy={buttonMode === 'disconnect' ? isDisconnecting : isConnecting}
           >
-            <Power className={`mr-2 h-4 w-4 ${isDisconnecting ? "animate-spin" : ""}`} /> {isDisconnecting ? "Desconectando..." : "Desconectar"}
+            {buttonMode === 'disconnect' ? (
+              <>
+                <Power className={`mr-2 h-4 w-4 ${isDisconnecting ? "animate-spin" : ""}`} /> {isDisconnecting ? "Desconectando..." : "Desconectar"}
+              </>
+            ) : (
+              <>
+                <Wifi className={`mr-2 h-4 w-4 ${isConnecting ? "animate-spin" : ""}`} /> {isConnecting ? "Conectando..." : "Conectar"}
+              </>
+            )}
           </Button>
         </div>
+
+        {/* QR Code Dialog */}
+        <Dialog open={showQR} onOpenChange={setShowQR}>
+          <DialogContent className="bg-card border-border text-foreground">
+            <DialogHeader>
+              <DialogTitle>Escaneie o QR Code</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Instância: {createdInstanceName || name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="w-full flex flex-col items-center gap-3">
+              {qrData?.base64 ? (
+                <img src={qrData.base64} alt="QR Code WhatsApp" className="w-48 h-48 bg-white p-2 rounded" />
+              ) : (
+                <p className="text-sm text-muted-foreground">QR Code não disponível.</p>
+              )}
+              {qrData?.code && (
+                <p className="text-xs text-muted-foreground break-all">Código: {qrData.code}</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowQR(false)}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   )
