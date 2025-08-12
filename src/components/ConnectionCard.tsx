@@ -100,7 +100,7 @@ export function ConnectionCard({
         name,
       }
       const res = await fetch(
-        "https://webhock-veterinup.abbadigital.com.br/webhook/exclui-instancia",
+        "https://webhock-veterinup.abbadigital.com.br/webhook/desconecta-contato",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
