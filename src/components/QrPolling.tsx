@@ -85,9 +85,12 @@ export default function QrPolling({
         setQr(data.qr);
       } else if (["QRCODE", "UNPAIRED", "PAIRING", "CONNECTING"].includes(data.status.toUpperCase())) {
         // Manter o último QR válido enquanto está conectando
-        setQr(lastQrRef.current);
+        // NÃO limpar o QR se já temos um válido
+        if (lastQrRef.current) {
+          setQr(lastQrRef.current);
+        }
       } else if (data.status.toUpperCase() === "CONNECTED") {
-        // Limpar QR quando conectado
+        // Limpar QR apenas quando conectado
         lastQrRef.current = null;
         setQr(null);
       }
@@ -114,16 +117,22 @@ export default function QrPolling({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance, endpoint, intervalMs]);
 
-  const showQr = ["QRCODE", "UNPAIRED", "PAIRING", "CONNECTING"].includes(status.toUpperCase()) && !!qr;
+  // QR deve aparecer se temos um QR válido E o status não é CONNECTED
+  const showQr = !!qr && status.toUpperCase() !== "CONNECTED";
 
   return (
     <div className="flex flex-col items-center gap-3">
       {showQr && (
-        <img
-          alt="QR para conectar"
-          src={qr?.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`}
-          className="w-64 h-64 border rounded-xl"
-        />
+        <>
+          <img
+            alt="QR para conectar"
+            src={qr?.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`}
+            className="w-64 h-64 border rounded-xl"
+          />
+          <p className="text-sm text-muted-foreground text-center">
+            Abra o WhatsApp → Dispositivos conectados → Conectar dispositivo
+          </p>
+        </>
       )}
 
       {!showQr && pairingCode && (

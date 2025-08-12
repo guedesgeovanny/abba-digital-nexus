@@ -323,7 +323,10 @@ export function InstanceCard({
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
           <div className="bg-background border rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Conectar WhatsApp - {name}</h2>
+              <div>
+                <h2 className="text-lg font-semibold">Conectar WhatsApp</h2>
+                <p className="text-sm text-muted-foreground">Escaneie o QR Code com seu WhatsApp para conectar</p>
+              </div>
               <Button variant="ghost" size="sm" onClick={() => setShowQrModal(false)}>
                 ✕
               </Button>
@@ -333,6 +336,11 @@ export function InstanceCard({
               endpoint={WEBHOOK_URLS.CONNECT}
               initialQr={qrCodeData}
             />
+            <div className="mt-4 pt-4 border-t flex justify-end">
+              <Button variant="outline" onClick={() => setShowQrModal(false)}>
+                Cancelar
+              </Button>
+            </div>
           </div>
         </div>
       )}
