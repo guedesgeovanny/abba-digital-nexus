@@ -94,7 +94,7 @@ export function ConnectionCard({
       <CardContent className="p-4 sm:p-5">
         {/* Top header */}
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
             <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0">
               {avatarUrl && (
                 <AvatarImage src={avatarUrl} alt={`Foto do perfil ${name}`} loading="lazy" />
@@ -107,10 +107,10 @@ export function ConnectionCard({
             <div className="min-w-0">
               <CardTitle className="text-base sm:text-lg font-semibold text-foreground leading-5 truncate">{name}</CardTitle>
               {(profileName || instanceName) && (
-                <p className="text-sm text-muted-foreground leading-5 truncate">{profileName || instanceName}</p>
+                <p className="text-sm text-muted-foreground leading-5 break-words">{profileName || instanceName}</p>
               )}
               {phone && (
-                <p className="text-sm text-muted-foreground leading-5 truncate">{phone}</p>
+                <p className="text-sm text-muted-foreground leading-5 break-words">{phone}</p>
               )}
             </div>
           </div>
