@@ -196,12 +196,13 @@ export function QRCodeModal({
   }
 
   const handleClose = () => {
+    console.log('Modal fechado pelo usuário')
     stopPolling()
     onOpenChange(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={() => {}} modal={true}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
