@@ -44,24 +44,13 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const messageInputRef = useRef<HTMLInputElement>(null)
   const [connections, setConnections] = useState<any[]>([])
 
-useEffect(() => {
-  const load = async () => {
-    const { data } = await supabase
-      .from('conexoes')
-      .select('id, name, status, configuration, contact, channel')
-    setConnections(data || [])
-  }
-  load()
-}, [])
+// Removed connections loading since conexoes table no longer exists
 
-// Conexões disponíveis (apenas conectadas)
-const connectionOptions = (connections || [])
-  .filter((c: any) => String(c.status).toLowerCase() === 'active')
-  .map((c: any) => ({
-    name: c?.name?.includes('Agent') || c?.name?.includes('IA') || c?.name?.includes('AI') ? 'Agente-de-IA' : 'Atendimento-Humano',
-    originalName: c?.name,
-    channel: (c as any)?.channel as string | null
-  }))
+// Conexões disponíveis (mockado para manter compatibilidade)
+const connectionOptions = [
+  { name: 'Atendimento-Humano', originalName: 'manual', channel: 'whatsapp' },
+  { name: 'Agente-de-IA', originalName: 'ai-agent', channel: 'whatsapp' }
+]
 
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
 

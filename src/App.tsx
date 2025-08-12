@@ -12,10 +12,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Header } from "@/components/Header";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
-import Dashboard from "./pages/Dashboard";
-
-import Connections2 from "./pages/Connections2";
-
 import Contacts from "./pages/Contacts";
 import CRM from "./pages/CRM";
 import Chat from "./pages/Chat";
@@ -60,17 +56,7 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <AuthenticatedLayout>
-                      <Dashboard />
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/connections2" 
-                element={
-                  <ProtectedRoute>
-                    <AuthenticatedLayout>
-                      <Connections2 />
+                      <CRM />
                     </AuthenticatedLayout>
                   </ProtectedRoute>
                 } 
