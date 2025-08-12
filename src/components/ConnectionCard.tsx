@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useQRCodeTimer } from "@/hooks/useQRCodeTimer"
 import { WhatsAppQRCodeTimer } from "@/components/WhatsAppQRCodeTimer"
 
@@ -30,6 +30,7 @@ interface ConnectionCardProps {
   avatarUrl?: string
   channel?: string
   onDeleted?: (id: string) => void
+  onSuccess?: (profile: { phone?: string; profileName?: string; profilePictureUrl?: string }) => void
 }
 
 const formatDate = (iso?: string) => {
@@ -59,7 +60,8 @@ export function ConnectionCard({
   phone,
   avatarUrl,
   channel,
-  onDeleted
+  onDeleted,
+  onSuccess
 }: ConnectionCardProps) {
   const { toast } = useToast()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -75,6 +77,7 @@ export function ConnectionCard({
   const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(instanceName || name)
   const [isPolling, setIsPolling] = useState(false)
   const { timeLeft, isExpired, resetTimer, formattedTime } = useQRCodeTimer({ duration: 60, isActive: showQR, onExpire: () => setIsPolling(false) })
+  const pollErrorShownRef = useRef(false)
 
   const startConnectionFlow = async () => {
     try {
@@ -221,7 +224,10 @@ export function ConnectionCard({
 
   // Inicia indicador de polling ao abrir o QR
   useEffect(() => {
-    if (showQR) setIsPolling(true)
+    if (showQR) {
+      setIsPolling(true)
+      pollErrorShownRef.current = false
+    }
   }, [showQR])
 
   // Polling periódico do status enquanto o QR estiver ativo
@@ -236,10 +242,10 @@ export function ConnectionCard({
           fetch(`${CHECK_STATUS_URL}?instanceName=${encodeURIComponent(instance)}`, { method: 'GET' }),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), REQUEST_TIMEOUT_MS))
         ]) as Response
-        if (!res.ok) return
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json().catch(() => ({}))
-        const statusRaw = json?.status ?? json?.connection_status ?? json?.state
-        const gotConnected = typeof statusRaw === 'string' && ['open','connected','ready','active'].includes(String(statusRaw).toLowerCase())
+        const statusStr = String(json?.connection_status ?? json?.status ?? '').toLowerCase()
+        const gotConnected = statusStr === 'connected' || json?.connected === true
         if (gotConnected) {
           const profilePicture = json?.fotodoperfil 
             || json?.profilePictureUrl 
@@ -266,6 +272,7 @@ export function ConnectionCard({
             profile_name: profileNameNext,
             contact: phoneNext
           }).eq('id', id)
+          onSuccess?.({ phone: phoneNext ?? undefined, profileName: profileNameNext ?? undefined, profilePictureUrl: profilePicture ?? undefined })
           setLocalConnected(true)
           setButtonMode('disconnect')
           setIsPolling(false)
@@ -274,8 +281,11 @@ export function ConnectionCard({
           clearInterval(interval)
           stopped = true
         }
-      } catch (_) {
-        // silêncio em timeouts
+      } catch (err) {
+        if (!pollErrorShownRef.current) {
+          toast({ title: 'Falha ao verificar status', description: 'Tentando novamente...', variant: 'default' })
+          pollErrorShownRef.current = true
+        }
       }
     }, 3000)
     return () => { stopped = true; clearInterval(interval) }
