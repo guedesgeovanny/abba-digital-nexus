@@ -235,7 +235,7 @@ export function ConnectionCard({
   // Polling periódico do status enquanto o QR estiver ativo
   useEffect(() => {
     if (!isPolling || isExpired || connected) return
-    const instance = createdInstanceName || name
+    const instance = instanceName || name
     let stopped = false
     const interval = setInterval(async () => {
       if (stopped) return
@@ -291,7 +291,7 @@ export function ConnectionCard({
       }
     }, 3000)
     return () => { stopped = true; clearInterval(interval) }
-  }, [isPolling, isExpired, connected, createdInstanceName, name, id])
+  }, [isPolling, isExpired, connected, instanceName, name, id])
 
   return (
     <Card aria-label={`Conexão ${name}`} className="bg-card border-border rounded-xl">
