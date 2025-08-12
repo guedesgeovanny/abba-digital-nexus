@@ -57,21 +57,31 @@ export default function Connections2() {
         ]) as Response
         if (!res.ok) throw new Error('poll_error')
         const json = await res.json().catch(() => ({}))
-        const statusRaw = json?.status ?? json?.connection_status ?? json?.state
+        
+        // Handle both direct response and array response with instance object
+        const instanceData = Array.isArray(json) && json.length > 0 ? json[0].instance : json
+        
+        const statusRaw = instanceData?.status ?? json?.status ?? json?.connection_status ?? json?.state
         const connected = typeof statusRaw === 'string' && ['open','connected','ready','active'].includes(String(statusRaw).toLowerCase())
-        const profilePicture = json?.fotodoperfil 
+        
+        const profilePicture = instanceData?.profilePictureUrl 
+          || json?.fotodoperfil 
           || json?.profilePictureUrl 
           || json?.profile_picture_url 
           || json?.result?.fotodoperfil 
           || json?.result?.profilePictureUrl 
           || json?.result?.profile_picture_url 
           || null
-        const profileName = json?.profileName 
+          
+        const profileName = instanceData?.profileName 
+          || json?.profileName 
           || json?.result?.profileName 
           || json?.profilename 
           || json?.result?.profilename 
           || null
-        const phone = json?.contato 
+          
+        const phone = instanceData?.owner?.replace('@s.whatsapp.net', '')
+          || json?.contato 
           || json?.phone 
           || json?.wid 
           || json?.result?.contato 
