@@ -104,12 +104,15 @@ export function QRCodeModal({
         }
 
         stopPolling()
-        onConnected(profileData)
-        
         toast({
           title: "WhatsApp Conectado!",
           description: `Conexão "${connectionName}" estabelecida com sucesso.`
         })
+        
+        // Só fecha o modal após conexão bem-sucedida
+        setTimeout(() => {
+          onConnected(profileData)
+        }, 1000)
         return
       }
 
@@ -121,9 +124,10 @@ export function QRCodeModal({
         stopPolling()
         toast({
           title: "Tempo limite excedido",
-          description: "A conexão não foi estabelecida no tempo esperado.",
+          description: "Escaneie o QR Code para conectar ou gere um novo código.",
           variant: "destructive"
         })
+        // NÃO fecha o modal - deixa o usuário decidir
       }
     } catch (error) {
       console.error('Erro no polling:', error)
@@ -135,9 +139,10 @@ export function QRCodeModal({
         stopPolling()
         toast({
           title: "Erro na verificação",
-          description: "Não foi possível verificar o status da conexão.",
+          description: "Verifique sua conexão. O QR Code continua válido.",
           variant: "destructive"
         })
+        // NÃO fecha o modal - deixa o usuário decidir
       }
     }
   }
