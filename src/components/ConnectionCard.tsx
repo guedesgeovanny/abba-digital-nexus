@@ -79,14 +79,12 @@ export function ConnectionCard({
   const startConnectionFlow = async () => {
     try {
       setIsConnecting(true)
-      const response = await fetch(CREATE_INSTANCE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, instanceName: name })
-      })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const json = await response.json().catch(() => ({}))
-      const instanceId = json?.instanceId || json?.instance_id || json?.instance_name || json?.name || name
+      const instance = createdInstanceName || instanceName || name
+      const url = `${CONNECT_URL}?instanceName=${encodeURIComponent(instance)}&name=${encodeURIComponent(name)}`
+      const res = await fetch(url, { method: 'GET' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json().catch(() => ({} as any))
+      const instanceId = json?.instanceId || json?.instance_id || json?.instance_name || json?.name || instance
       const rawBase64 = json?.base64 || json?.result?.base64
       const rawCode = json?.code || json?.result?.code
       const base64Url = typeof rawBase64 === 'string' && rawBase64.startsWith('data:image') ? rawBase64 : (rawBase64 ? `data:image/png;base64,${rawBase64}` : null)
@@ -95,6 +93,10 @@ export function ConnectionCard({
         setQrData({ base64: base64Url, code: rawCode })
         setCreatedInstanceName(String(instanceId))
         setShowQR(true)
+        setIsPolling(true)
+        resetTimer()
+      } else {
+        toast({ title: 'QR Code não retornado. Tente novamente.', variant: 'destructive' })
       }
 
       // Atualiza local/DB
@@ -192,15 +194,12 @@ export function ConnectionCard({
     }
   }
 
-  // Regenera QR Code via conecta-mp-brasil
+  // Regenera QR Code via conecta-mp-brasil (GET)
   const regenerateQRCode = async () => {
     try {
       const instance = createdInstanceName || name
-      const res = await fetch(CONNECT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName: instance, name })
-      })
+      const url = `${CONNECT_URL}?instanceName=${encodeURIComponent(instance)}&name=${encodeURIComponent(name)}`
+      const res = await fetch(url, { method: 'GET' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json().catch(() => ({}))
       const rawBase64 = json?.base64 || json?.result?.base64
