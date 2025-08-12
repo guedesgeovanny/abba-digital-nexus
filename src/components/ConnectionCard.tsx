@@ -62,8 +62,7 @@ export function ConnectionCard({
       setIsDisconnecting(true)
 
       const payload = {
-        id,
-        instanceName: instanceName || name,
+        instanceName: name,
         contact: phone,
         profileName,
       }

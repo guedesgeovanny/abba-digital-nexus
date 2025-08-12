@@ -183,23 +183,23 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!submitting) { onOpenChange(v); if (!v) reset(); } }}>
-      <DialogContent className="bg-abba-black border-abba-gray">
+      <DialogContent className="bg-card border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-abba-text">Nova Conexão WhatsApp</DialogTitle>
-          <DialogDescription className="text-gray-400">Informe um nome para a conexão</DialogDescription>
+          <DialogTitle className="text-foreground">Nova Conexão WhatsApp</DialogTitle>
+          <DialogDescription className="text-muted-foreground">Informe um nome para a conexão</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2">
-          <label className="text-sm text-abba-text">Nome da Conexão</label>
+          <label className="text-sm text-muted-foreground">Nome da Conexão</label>
           <Input
             value={name}
             onChange={(e) => { setName(e.target.value); setError(validateName(e.target.value)); }}
             disabled={disabled}
             placeholder="ex.: atendimento_principal"
-            className="bg-abba-black border-abba-gray text-abba-text placeholder:text-gray-500"
+            className="bg-background border-input text-foreground placeholder:text-muted-foreground"
           />
-          <p className="text-xs text-gray-400">Apenas letras, números, underscore (_) e hífen (-). Sem espaços.</p>
-          {error && (<p className="text-xs text-red-400">{error}</p>)}
+          <p className="text-xs text-muted-foreground">Apenas letras, números, underscore (_) e hífen (-). Sem espaços.</p>
+          {error && (<p className="text-xs text-destructive">{error}</p>)}
         </div>
 
         <DialogFooter className="gap-2">
