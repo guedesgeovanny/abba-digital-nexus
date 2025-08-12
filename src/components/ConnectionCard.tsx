@@ -235,7 +235,7 @@ export function ConnectionCard({
   useEffect(() => {
     if (!isPolling || isExpired || connected) return
     
-    const instance = createdInstanceName || instanceName || name
+    const instance = name  // Sempre usar o nome da conexão
     let stopped = false
     
     const interval = setInterval(async () => {
@@ -298,7 +298,7 @@ export function ConnectionCard({
     }, 3000)
     
     return () => { stopped = true; clearInterval(interval) }
-  }, [isPolling, isExpired, connected, createdInstanceName, instanceName, name, id, onSuccess])
+  }, [isPolling, isExpired, connected, name, id, onSuccess])
 
   return (
     <Card aria-label={`Conexão ${name}`} className="bg-card border-border rounded-xl">
