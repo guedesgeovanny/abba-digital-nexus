@@ -33,7 +33,7 @@ export default function Connections2() {
     setLoading(true)
     const { data, error } = await supabase
       .from("conexoes")
-      .select("id, name, status, created_at, updated_at, profile_picture_url, profile_name, contact, configuration")
+      .select("id, name, status, created_at, updated_at, whatsapp_profile_picture_url, whatsapp_profile_name, whatsapp_contact, configuration")
       .order("created_at", { ascending: false })
     if (!error) setRows(data || [])
     setLoading(false)

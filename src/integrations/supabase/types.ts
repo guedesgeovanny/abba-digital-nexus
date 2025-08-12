@@ -16,6 +16,60 @@ export type Database = {
     Tables: {
       conexoes: {
         Row: {
+          channel: string | null
+          configuration: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+          whatsapp_connected_at: string | null
+          whatsapp_contact: string | null
+          whatsapp_profile_name: string | null
+          whatsapp_profile_picture_data: string | null
+          whatsapp_profile_picture_url: string | null
+        }
+        Insert: {
+          channel?: string | null
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+          whatsapp_connected_at?: string | null
+          whatsapp_contact?: string | null
+          whatsapp_profile_name?: string | null
+          whatsapp_profile_picture_data?: string | null
+          whatsapp_profile_picture_url?: string | null
+        }
+        Update: {
+          channel?: string | null
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp_connected_at?: string | null
+          whatsapp_contact?: string | null
+          whatsapp_profile_name?: string | null
+          whatsapp_profile_picture_data?: string | null
+          whatsapp_profile_picture_url?: string | null
+        }
+        Relationships: []
+      }
+      conexoes2: {
+        Row: {
           channel: string
           configuration: Json
           contact: string | null
