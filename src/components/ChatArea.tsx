@@ -44,7 +44,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const messageInputRef = useRef<HTMLInputElement>(null)
   const [connections, setConnections] = useState<any[]>([])
 
-// Removed connections loading since conexoes table no longer exists
+// Removed connections loading since conexoes table is now managed in WhatsAppConnections
 
 // Conexões disponíveis (mockado para manter compatibilidade)
 const connectionOptions = [

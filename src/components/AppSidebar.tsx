@@ -8,9 +8,9 @@ import { cn } from "@/lib/utils";
 
 // Menu items
 const allItems = [{
-  title: "Dashboard",
+  title: "WhatsApp",
   url: "/dashboard",
-  icon: Home
+  icon: Bot
 }, {
   title: "Contatos",
   url: "/contacts",

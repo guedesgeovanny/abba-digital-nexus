@@ -30,7 +30,7 @@ const inputBarRef = useRef<HTMLDivElement>(null)
 const messageInputRef = useRef<HTMLInputElement>(null)
 const [connections, setConnections] = useState<any[]>([])
 
-// Removed connections loading since conexoes table no longer exists
+// Removed connections loading since conexoes table is now managed in WhatsAppConnections
 
 // Connection options (mockado para manter compatibilidade)
 const connectionOptions = [

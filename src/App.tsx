@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Header } from "@/components/Header";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import WhatsAppConnections from "./pages/WhatsAppConnections";
 import Contacts from "./pages/Contacts";
 import CRM from "./pages/CRM";
 import Chat from "./pages/Chat";
@@ -56,7 +57,7 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <AuthenticatedLayout>
-                      <CRM />
+                      <WhatsAppConnections />
                     </AuthenticatedLayout>
                   </ProtectedRoute>
                 } 
