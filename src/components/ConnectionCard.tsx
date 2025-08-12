@@ -98,7 +98,7 @@ export function ConnectionCard({
     try {
       setIsDeleting(true)
       const payload = {
-        instanceName: instanceName || name,
+        instanceName: name,
         name,
       }
       const res = await fetch(

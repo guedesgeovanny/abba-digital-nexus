@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
+import { QRCodeData } from "@/utils/whatsappUtils"
 
 // Configuráveis
 const CREATE_INSTANCE_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/nova-instancia-mp-brasil"
@@ -20,6 +21,9 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
   const [name, setName] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [step, setStep] = useState<'form' | 'qr'>('form')
+  const [qrData, setQrData] = useState<QRCodeData | null>(null)
+  const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(null)
 
   const validateName = (value: string): string | null => {
     if (!value) return "Nome da conexão é obrigatório"
@@ -32,10 +36,13 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
 
   const disabled = useMemo(() => submitting, [submitting])
 
-  const reset = () => {
-    setName("")
-    setError(null)
-  }
+const reset = () => {
+  setName("")
+  setError(null)
+  setQrData(null)
+  setCreatedInstanceName(null)
+  setStep('form')
+}
 
   const withTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T> => {
     const controller = new AbortController()
@@ -111,7 +118,7 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
       const external = await Promise.race([
         createExternalInstance(name),
         new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), REQUEST_TIMEOUT_MS))
-      ]) as { instance_id: string; status?: string }
+      ]) as { instance_id: string; status?: string; metadata?: any }
 
       // 2) Inserir no Supabase
       const { data: authData } = await supabase.auth.getUser()
@@ -129,6 +136,11 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
       } catch (_) {
         polled = undefined
       }
+
+      // Captura QR Code do retorno inicial
+      const qrBase64Raw = external.metadata?.base64 || external.metadata?.result?.base64
+      const qrCodeRaw = external.metadata?.code || external.metadata?.result?.code
+      const qrBase64 = typeof qrBase64Raw === 'string' && qrBase64Raw.startsWith('data:image') ? qrBase64Raw : (qrBase64Raw ? `data:image/png;base64,${qrBase64Raw}` : null)
 
       const rawStatuses = [external.status, polled?.status].filter(Boolean).map((s) => String(s).toLowerCase())
       const status = rawStatuses.some((s) => ["ready", "connected", "open", "active"].includes(s)) ? "active" : "inactive"
@@ -159,6 +171,13 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
       }
 
       toast({ title: "Conexão criada com sucesso!" })
+      if (qrBase64) {
+        setQrData({ base64: qrBase64, code: qrCodeRaw || '' })
+        setCreatedInstanceName(external.instance_id || name)
+        setStep('qr')
+        onCreated?.()
+        return
+      }
       reset()
       onOpenChange(false)
       onCreated?.()
@@ -184,30 +203,54 @@ export function NewWhatsAppConnectionDialog({ open, onOpenChange, onCreated }: N
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!submitting) { onOpenChange(v); if (!v) reset(); } }}>
       <DialogContent className="bg-card border-border text-foreground">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">Nova Conexão WhatsApp</DialogTitle>
-          <DialogDescription className="text-muted-foreground">Informe um nome para a conexão</DialogDescription>
-        </DialogHeader>
+        {step === 'form' ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Nova Conexão WhatsApp</DialogTitle>
+              <DialogDescription className="text-muted-foreground">Informe um nome para a conexão</DialogDescription>
+            </DialogHeader>
 
-        <div className="space-y-2">
-          <label className="text-sm text-muted-foreground">Nome da Conexão</label>
-          <Input
-            value={name}
-            onChange={(e) => { setName(e.target.value); setError(validateName(e.target.value)); }}
-            disabled={disabled}
-            placeholder="ex.: atendimento_principal"
-            className="bg-background border-input text-foreground placeholder:text-muted-foreground"
-          />
-          <p className="text-xs text-muted-foreground">Apenas letras, números, underscore (_) e hífen (-). Sem espaços.</p>
-          {error && (<p className="text-xs text-destructive">{error}</p>)}
-        </div>
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">Nome da Conexão</label>
+              <Input
+                value={name}
+                onChange={(e) => { setName(e.target.value); setError(validateName(e.target.value)); }}
+                disabled={disabled}
+                placeholder="ex.: atendimento_principal"
+                className="bg-background border-input text-foreground placeholder:text-muted-foreground"
+              />
+              <p className="text-xs text-muted-foreground">Apenas letras, números, underscore (_) e hífen (-). Sem espaços.</p>
+              {error && (<p className="text-xs text-destructive">{error}</p>)}
+            </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={disabled}>Cancelar</Button>
-          <Button className="bg-abba-green text-abba-black hover:bg-abba-green-light" onClick={handleContinue} disabled={disabled}>
-            {submitting ? "Criando…" : "Continuar"}
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={disabled}>Cancelar</Button>
+              <Button className="bg-abba-green text-abba-black hover:bg-abba-green-light" onClick={handleContinue} disabled={disabled}>
+                {submitting ? "Criando…" : "Continuar"}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Escaneie o QR Code</DialogTitle>
+              <DialogDescription className="text-muted-foreground">Abra o WhatsApp no celular e escaneie para conectar: {createdInstanceName}</DialogDescription>
+            </DialogHeader>
+            <div className="w-full flex flex-col items-center gap-3">
+              {qrData?.base64 ? (
+                <img src={qrData.base64} alt="QR Code WhatsApp" className="w-48 h-48 bg-white p-2 rounded" />
+              ) : (
+                <p className="text-sm text-muted-foreground">QR Code não disponível.</p>
+              )}
+              {qrData?.code && (
+                <p className="text-xs text-muted-foreground break-all">Código: {qrData.code}</p>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Fechar</Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )
