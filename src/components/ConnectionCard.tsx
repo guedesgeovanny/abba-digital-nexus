@@ -76,7 +76,7 @@ export function ConnectionCard({
   const [qrData, setQrData] = useState<{ base64: string; code?: string } | null>(null)
   const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(instanceName || name)
   const [isPolling, setIsPolling] = useState(false)
-  const { timeLeft, isExpired, resetTimer, formattedTime } = useQRCodeTimer({ duration: 60, isActive: showQR, onExpire: () => setIsPolling(false) })
+  const { timeLeft, isExpired, resetTimer, formattedTime } = useQRCodeTimer({ duration: 60, isActive: isPolling, onExpire: () => setIsPolling(false) })
   const pollErrorShownRef = useRef(false)
 
   const startConnectionFlow = async () => {
@@ -227,12 +227,14 @@ export function ConnectionCard({
     if (showQR) {
       setIsPolling(true)
       pollErrorShownRef.current = false
+    } else {
+      setIsPolling(false)
     }
   }, [showQR])
 
   // Polling periódico do status enquanto o QR estiver ativo
   useEffect(() => {
-    if (!showQR || isExpired || connected) return
+    if (!isPolling || isExpired || connected) return
     const instance = createdInstanceName || name
     let stopped = false
     const interval = setInterval(async () => {
@@ -289,7 +291,7 @@ export function ConnectionCard({
       }
     }, 3000)
     return () => { stopped = true; clearInterval(interval) }
-  }, [showQR, isExpired, connected, createdInstanceName, name, id])
+  }, [isPolling, isExpired, connected, createdInstanceName, name, id])
 
   return (
     <Card aria-label={`Conexão ${name}`} className="bg-card border-border rounded-xl">
