@@ -40,7 +40,9 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-const [connections, setConnections] = useState<any[]>([])
+  const inputBarRef = useRef<HTMLDivElement>(null)
+  const messageInputRef = useRef<HTMLInputElement>(null)
+  const [connections, setConnections] = useState<any[]>([])
 
 useEffect(() => {
   const load = async () => {
@@ -63,21 +65,32 @@ const connectionOptions = (connections || [])
 
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
 
-  useEffect(() => {
-    if (!selectedConnectionName && connectionOptions.length > 0) {
-      setSelectedConnectionName(connectionOptions[0].name)
-    }
-  }, [connections])
-
   // Auto-scroll para o final quando novas mensagens chegam
   useEffect(() => {
     if (scrollAreaRef.current && messages.length > 0) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight
+        ;(scrollContainer as any).scrollTop = (scrollContainer as any).scrollHeight
       }
     }
   }, [messages])
+
+  // Ao selecionar conversa, garantir que a barra de digitação apareça
+  useEffect(() => {
+    // scroll mensagens para o final
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
+      if (viewport) viewport.scrollTop = viewport.scrollHeight
+    }
+    // scroll da página até a barra de digitação
+    if (inputBarRef.current) {
+      inputBarRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }
+    // focar o input
+    if (messageInputRef.current) {
+      setTimeout(() => messageInputRef.current?.focus(), 50)
+    }
+  }, [conversation.id])
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -357,7 +370,7 @@ const connectionOptions = (connections || [])
       </ScrollArea>
 
       {/* Campo de entrada de mensagem */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-card">
+      <form ref={inputBarRef} onSubmit={handleSendMessage} className="p-4 border-t border-border bg-card">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <div className="w-full sm:w-64">
             <Select value={selectedConnectionName} onValueChange={setSelectedConnectionName}>
@@ -375,6 +388,7 @@ const connectionOptions = (connections || [])
           </div>
           <div className="flex w-full gap-2">
             <Input
+              ref={messageInputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Digite sua mensagem..."
@@ -383,7 +397,7 @@ const connectionOptions = (connections || [])
             />
             <Button 
               type="submit" 
-              disabled={!newMessage.trim() || isSending || conversation.status === 'fechada' || (connectionOptions.length > 0 && !selectedConnectionName)}
+              disabled={!newMessage.trim() || isSending || conversation.status === 'fechada' || !selectedConnectionName}
               className="bg-abba-green text-abba-black hover:bg-abba-green/90"
             >
               <Send className="h-4 w-4" />

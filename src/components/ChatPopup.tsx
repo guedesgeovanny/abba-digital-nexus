@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,9 @@ export const ChatPopup = ({ isOpen, onClose, deal }: ChatPopupProps) => {
   
   const { conversations, createConversation, isLoading: conversationsLoading } = useConversations()
   const { messages, sendMessage, isSending, isLoading: messagesLoading } = useMessages(conversationId)
+const scrollAreaRef = useRef<HTMLDivElement>(null)
+const inputBarRef = useRef<HTMLDivElement>(null)
+const messageInputRef = useRef<HTMLInputElement>(null)
 const [connections, setConnections] = useState<any[]>([])
 
 useEffect(() => {
@@ -47,12 +50,6 @@ const connectionOptions = (connections || [])
 
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
 
-  useEffect(() => {
-    if (!selectedConnectionName && connectionOptions.length > 0) {
-      setSelectedConnectionName(connectionOptions[0].name)
-    }
-  }, [connections])
-
   // Buscar ou criar conversa quando a popup abrir
   useEffect(() => {
     if (isOpen && deal && !conversationId) {
@@ -67,6 +64,29 @@ const connectionOptions = (connections || [])
       setMessageInput("")
     }
   }, [isOpen])
+
+  // Auto-scroll para o final quando novas mensagens chegam
+  useEffect(() => {
+    if (scrollAreaRef.current && messages.length > 0) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
+      if (viewport) viewport.scrollTop = viewport.scrollHeight
+    }
+  }, [messages])
+
+  // Ao abrir/alterar conversa, garantir que a barra de digitação apareça
+  useEffect(() => {
+    if (!isOpen) return
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
+      if (viewport) viewport.scrollTop = viewport.scrollHeight
+    }
+    if (inputBarRef.current) {
+      inputBarRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }
+    if (messageInputRef.current) {
+      setTimeout(() => messageInputRef.current?.focus(), 50)
+    }
+  }, [conversationId, isOpen])
 
   const findOrCreateConversation = async () => {
     if (!deal) return
@@ -179,7 +199,7 @@ const connectionOptions = (connections || [])
 
         {/* Área de mensagens */}
         <div className="flex-1 flex flex-col min-h-0">
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
             {isLoadingConversation || conversationsLoading ? (
               <div className="flex items-center justify-center h-32">
                 <div className="text-gray-400">Carregando conversa...</div>
@@ -223,7 +243,7 @@ const connectionOptions = (connections || [])
           </ScrollArea>
 
           {/* Input de mensagem */}
-          <div className="border-t border-abba-gray p-4">
+          <div ref={inputBarRef} className="border-t border-abba-gray p-4">
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="w-full sm:w-64">
                 <Select value={selectedConnectionName} onValueChange={setSelectedConnectionName}>
@@ -241,6 +261,7 @@ const connectionOptions = (connections || [])
               </div>
               <div className="flex w-full gap-2">
                 <Input
+                  ref={messageInputRef}
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -250,7 +271,7 @@ const connectionOptions = (connections || [])
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!messageInput.trim() || isSending || !conversationId || isLoadingConversation || (connectionOptions.length > 0 && !selectedConnectionName)}
+                  disabled={!messageInput.trim() || isSending || !conversationId || isLoadingConversation || !selectedConnectionName}}
                   className="bg-abba-green text-abba-black hover:bg-abba-green-light"
                 >
                   <Send className="w-4 h-4" />
