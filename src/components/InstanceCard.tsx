@@ -330,7 +330,7 @@ export function InstanceCard({
             </div>
             <QrPolling
               instance={name}
-              endpoint={WEBHOOK_URLS.CHECK_STATUS}
+              endpoint={WEBHOOK_URLS.CONNECT}
               initialQr={qrCodeData}
             />
           </div>
