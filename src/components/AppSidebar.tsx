@@ -12,10 +12,6 @@ const allItems = [{
   url: "/dashboard",
   icon: Home
 }, {
-  title: "Conexões",
-  url: "/connections2",
-  icon: Bot
-}, {
   title: "Contatos",
   url: "/contacts",
   icon: Contact
