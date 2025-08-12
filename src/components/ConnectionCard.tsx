@@ -7,11 +7,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useQRCodeTimer } from "@/hooks/useQRCodeTimer"
+import { WhatsAppQRCodeTimer } from "@/components/WhatsAppQRCodeTimer"
 
 // Webhook endpoints
 const CREATE_INSTANCE_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/nova-instancia-mp-brasil"
 const DISCONNECT_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/desconecta-contato"
+const CONNECT_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/conecta-mp-brasil"
+const CHECK_STATUS_URL = "https://webhock-veterinup.abbadigital.com.br/webhook/verifica-status-mp-brasil"
+const REQUEST_TIMEOUT_MS = 15000
 
 interface ConnectionCardProps {
   id: string
@@ -68,6 +73,8 @@ export function ConnectionCard({
   const [showQR, setShowQR] = useState(false)
   const [qrData, setQrData] = useState<{ base64: string; code?: string } | null>(null)
   const [createdInstanceName, setCreatedInstanceName] = useState<string | null>(instanceName || name)
+  const [isPolling, setIsPolling] = useState(false)
+  const { timeLeft, isExpired, resetTimer, formattedTime } = useQRCodeTimer({ duration: 60, isActive: showQR, onExpire: () => setIsPolling(false) })
 
   const startConnectionFlow = async () => {
     try {
@@ -184,6 +191,96 @@ export function ConnectionCard({
       setIsDeleting(false)
     }
   }
+
+  // Regenera QR Code via conecta-mp-brasil
+  const regenerateQRCode = async () => {
+    try {
+      const instance = createdInstanceName || name
+      const res = await fetch(CONNECT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceName: instance, name })
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json().catch(() => ({}))
+      const rawBase64 = json?.base64 || json?.result?.base64
+      const rawCode = json?.code || json?.result?.code
+      const base64Url = typeof rawBase64 === 'string' && rawBase64.startsWith('data:image') ? rawBase64 : (rawBase64 ? `data:image/png;base64,${rawBase64}` : null)
+      if (base64Url) {
+        setQrData({ base64: base64Url, code: rawCode })
+        setShowQR(true)
+        setIsPolling(true)
+        resetTimer()
+      } else {
+        toast({ title: 'QR Code não retornado. Tente novamente.', variant: 'destructive' })
+      }
+    } catch (e) {
+      console.error(e)
+      toast({ title: 'Falha ao gerar novo QR Code.', variant: 'destructive' })
+    }
+  }
+
+  // Inicia indicador de polling ao abrir o QR
+  useEffect(() => {
+    if (showQR) setIsPolling(true)
+  }, [showQR])
+
+  // Polling periódico do status enquanto o QR estiver ativo
+  useEffect(() => {
+    if (!showQR || isExpired || connected) return
+    const instance = createdInstanceName || name
+    let stopped = false
+    const interval = setInterval(async () => {
+      if (stopped) return
+      try {
+        const res = await Promise.race([
+          fetch(`${CHECK_STATUS_URL}?instanceName=${encodeURIComponent(instance)}`, { method: 'GET' }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), REQUEST_TIMEOUT_MS))
+        ]) as Response
+        if (!res.ok) return
+        const json = await res.json().catch(() => ({}))
+        const statusRaw = json?.status ?? json?.connection_status ?? json?.state
+        const gotConnected = typeof statusRaw === 'string' && ['open','connected','ready','active'].includes(String(statusRaw).toLowerCase())
+        if (gotConnected) {
+          const profilePicture = json?.fotodoperfil 
+            || json?.profilePictureUrl 
+            || json?.profile_picture_url 
+            || json?.result?.fotodoperfil 
+            || json?.result?.profilePictureUrl 
+            || json?.result?.profile_picture_url 
+            || null
+          const profileNameNext = json?.profileName 
+            || json?.result?.profileName 
+            || json?.profilename 
+            || json?.result?.profilename 
+            || null
+          const phoneNext = json?.contato 
+            || json?.phone 
+            || json?.wid 
+            || json?.result?.contato 
+            || json?.result?.phone 
+            || json?.result?.wid 
+            || null
+          await supabase.from('conexoes').update({
+            status: 'active',
+            profile_picture_url: profilePicture,
+            profile_name: profileNameNext,
+            contact: phoneNext
+          }).eq('id', id)
+          setLocalConnected(true)
+          setButtonMode('disconnect')
+          setIsPolling(false)
+          setShowQR(false)
+          toast({ title: 'Conectado com sucesso!' })
+          clearInterval(interval)
+          stopped = true
+        }
+      } catch (_) {
+        // silêncio em timeouts
+      }
+    }, 3000)
+    return () => { stopped = true; clearInterval(interval) }
+  }, [showQR, isExpired, connected, createdInstanceName, name, id])
 
   return (
     <Card aria-label={`Conexão ${name}`} className="bg-card border-border rounded-xl">
@@ -311,6 +408,13 @@ export function ConnectionCard({
               )}
               {qrData?.code && (
                 <p className="text-xs text-muted-foreground break-all">Código: {qrData.code}</p>
+              )}
+              <WhatsAppQRCodeTimer timeLeft={timeLeft} isExpired={isExpired} formattedTime={formattedTime} />
+              {isPolling && !isExpired && (
+                <p className="text-xs text-muted-foreground">Verificando conexão…</p>
+              )}
+              {isExpired && (
+                <Button variant="outline" onClick={regenerateQRCode}>Gerar novo QR Code</Button>
               )}
             </div>
             <DialogFooter>
