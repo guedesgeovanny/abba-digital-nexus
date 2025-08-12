@@ -162,7 +162,7 @@ export function ConnectionCard({
         <div className="mt-5">
           <Button
             variant="outline"
-            className="w-full justify-center border-destructive/50 text-destructive hover:bg-destructive/15"
+            className="w-full justify-center border-destructive/50 text-destructive hover:bg-destructive/50"
             onClick={handleDisconnect}
             disabled={isDisconnecting}
             aria-busy={isDisconnecting}
