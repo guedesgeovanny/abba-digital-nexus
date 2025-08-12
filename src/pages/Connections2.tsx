@@ -129,6 +129,7 @@ export default function Connections2() {
               profileName={r.profile_name || undefined}
               phone={r.contact || undefined}
               avatarUrl={r.profile_picture_url || undefined}
+              onDeleted={fetchRows}
             />
           ))}
         </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog"
 
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
 import { useState } from "react"
 
 interface ConnectionCardProps {
@@ -18,6 +19,7 @@ interface ConnectionCardProps {
   phone?: string
   avatarUrl?: string
   channel?: string
+  onDeleted?: (id: string) => void
 }
 
 const formatDate = (iso?: string) => {
@@ -46,7 +48,8 @@ export function ConnectionCard({
   profileName,
   phone,
   avatarUrl,
-  channel
+  channel,
+  onDeleted
 }: ConnectionCardProps) {
   const { toast } = useToast()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -108,15 +111,21 @@ export function ConnectionCard({
         }
       )
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      // Exclui também do banco de dados
+      const { error: dbError } = await supabase.from('conexoes').delete().eq('id', id)
+      if (dbError) throw dbError
+
       toast({
-        title: "Exclusão solicitada",
-        description: "Enviamos sua solicitação ao servidor.",
+        title: "Conexão excluída",
+        description: "A conexão foi removida do banco de dados.",
       })
+      onDeleted?.(id)
     } catch (error) {
       console.error(error)
       toast({
         title: "Falha ao excluir",
-        description: "Não foi possível enviar a solicitação. Tente novamente.",
+        description: "Não foi possível excluir a conexão. Tente novamente.",
         variant: "destructive",
       })
     } finally {
