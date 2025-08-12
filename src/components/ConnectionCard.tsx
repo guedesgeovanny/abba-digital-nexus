@@ -93,7 +93,7 @@ export function ConnectionCard({
     <Card aria-label={`Conexão ${name}`} className="bg-card border-border rounded-xl">
       <CardContent className="p-4 sm:p-5">
         {/* Top header */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
             <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0">
               {avatarUrl && (
@@ -104,18 +104,16 @@ export function ConnectionCard({
               </AvatarFallback>
             </Avatar>
 
-            <div className="min-w-0">
-              <CardTitle className="text-base sm:text-lg font-semibold text-foreground leading-5 truncate">{name}</CardTitle>
+            <div className="min-w-0 flex-1 text-sm text-foreground leading-5 overflow-hidden text-ellipsis whitespace-nowrap">
+              <span className="font-semibold">{name}</span>
               {(profileName || instanceName) && (
-                <p className="text-sm text-muted-foreground leading-5 break-words">{profileName || instanceName}</p>
+                <span> • {profileName || instanceName}</span>
               )}
-              {phone && (
-                <p className="text-sm text-muted-foreground leading-5 break-words">{phone}</p>
-              )}
+              {phone && <span> • {phone}</span>}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span
               className={[
                 "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
