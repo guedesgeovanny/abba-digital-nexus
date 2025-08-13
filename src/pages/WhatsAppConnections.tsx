@@ -206,6 +206,8 @@ export default function WhatsAppConnections() {
     profileData?: any
   ) => {
     try {
+      console.log('🔄 [handleStatusChange] Called with:', { id, newStatus, profileData });
+      
       // Quando for 'connecting', não tocar no banco nem refazer o fetch; apenas atualizar em memória
       if (newStatus === 'connecting') {
         setConnections(prev => prev.map(c => c.id === id ? { ...c, status: 'connecting' } : c))
@@ -215,22 +217,33 @@ export default function WhatsAppConnections() {
       const updateData: any = { status: newStatus }
       
       if (newStatus === 'connected' && profileData) {
-        updateData.whatsapp_profile_name = profileData.profileName || null
-        updateData.whatsapp_contact = profileData.contato || profileData.phone || null
-        updateData.whatsapp_profile_picture_url = profileData.profilePictureUrl || null
+        // CORRIGIDO: Usar campos corretos do formato especificado
+        updateData.whatsapp_profile_name = profileData.profileName === "not loaded" ? null : (profileData.profileName || null)
+        updateData.whatsapp_contact = profileData.contact || null  // Corrigido: usar 'contact' não 'contato'
+        updateData.whatsapp_profile_picture_url = profileData.profilePictureUrl || null  // Corrigido: usar 'profilePictureUrl'
         updateData.whatsapp_connected_at = new Date().toISOString()
+        
+        console.log('💾 [handleStatusChange] Updating with data:', updateData);
       } else if (newStatus === 'disconnected') {
         updateData.whatsapp_connected_at = null
       }
+      
+      console.log('📤 [handleStatusChange] Sending to database:', updateData);
       
       const { error } = await supabase
         .from('conexoes')
         .update(updateData)
         .eq('id', id)
       
-      if (error) throw error
+      if (error) {
+        console.error('❌ [handleStatusChange] Database error:', error);
+        throw error;
+      }
+      
+      console.log('✅ [handleStatusChange] Database updated successfully');
       
       await fetchConnections()
+      console.log('🔄 [handleStatusChange] Connections refreshed');
     } catch (error) {
       console.error('Error updating connection status:', error)
       toast({
