@@ -89,6 +89,20 @@ export const useContacts = () => {
     mutationFn: async (contactData: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
       if (!user?.id) throw new Error('User not authenticated')
 
+      // Check for duplicates based on phone or email
+      if (contactData.phone || contactData.email) {
+        const { data: existingContacts } = await supabase
+          .from('contacts')
+          .select('id, name, phone, email')
+          .eq('user_id', user.id)
+          .or(`phone.eq.${contactData.phone || ''}, email.eq.${contactData.email || ''}`)
+
+        if (existingContacts && existingContacts.length > 0) {
+          const duplicate = existingContacts[0]
+          throw new Error(`Contato duplicado encontrado: ${duplicate.name} (${duplicate.phone || duplicate.email})`)
+        }
+      }
+
       const { data, error } = await supabase
         .from('contacts')
         .insert({
@@ -173,6 +187,32 @@ export const useContacts = () => {
     },
   })
 
+  const deleteBulkContactsMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('contacts')
+        .delete()
+        .in('id', ids)
+
+      if (error) throw error
+    },
+    onSuccess: (_, ids) => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] })
+      toast({
+        title: "Contatos excluídos",
+        description: `${ids.length} contato(s) foram excluídos com sucesso`,
+      })
+    },
+    onError: (error) => {
+      console.error('Error deleting contacts:', error)
+      toast({
+        title: "Erro ao excluir contatos",
+        description: "Ocorreu um erro ao excluir os contatos",
+        variant: "destructive",
+      })
+    },
+  })
+
   return {
     contacts,
     isLoading,
@@ -180,8 +220,10 @@ export const useContacts = () => {
     createContact: createContactMutation.mutate,
     updateContact: updateContactMutation.mutate,
     deleteContact: deleteContactMutation.mutate,
+    deleteBulkContacts: deleteBulkContactsMutation.mutate,
     isCreating: createContactMutation.isPending,
     isUpdating: updateContactMutation.isPending,
     isDeleting: deleteContactMutation.isPending,
+    isDeletingBulk: deleteBulkContactsMutation.isPending,
   }
 }

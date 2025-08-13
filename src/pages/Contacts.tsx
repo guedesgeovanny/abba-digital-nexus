@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, MessageCircle, Instagram, Phone, Mail, Calendar, User, Building2, MapPin, Tag, Edit, Trash2, Download, FileSpreadsheet } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
@@ -18,7 +19,7 @@ import { usePagination } from "@/hooks/usePagination"
 import { useContactExport } from "@/hooks/useContactExport"
 
 const Contacts = () => {
-  const { contacts, isLoading, deleteContact } = useContacts()
+  const { contacts, isLoading, deleteContact, deleteBulkContacts, isDeletingBulk } = useContacts()
   const { tags } = useContactTags()
   const { exportToCSV } = useContactExport()
   const [searchTerm, setSearchTerm] = useState("")
@@ -27,6 +28,8 @@ const Contacts = () => {
   const [filterTag, setFilterTag] = useState("all")
   const [selectedContact, setSelectedContact] = useState<ContactWithTags | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([])
+  const [selectAll, setSelectAll] = useState(false)
 
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = 
@@ -138,6 +141,32 @@ const Contacts = () => {
 
   const handleExportCSV = () => {
     exportToCSV(filteredContacts)
+  }
+
+  const handleSelectContact = (contactId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedContacts(prev => [...prev, contactId])
+    } else {
+      setSelectedContacts(prev => prev.filter(id => id !== contactId))
+      setSelectAll(false)
+    }
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked)
+    if (checked) {
+      setSelectedContacts(paginatedContacts.map(contact => contact.id))
+    } else {
+      setSelectedContacts([])
+    }
+  }
+
+  const handleDeleteSelected = () => {
+    if (selectedContacts.length > 0) {
+      deleteBulkContacts(selectedContacts)
+      setSelectedContacts([])
+      setSelectAll(false)
+    }
   }
 
   const renderPaginationItems = () => {
@@ -257,29 +286,65 @@ const Contacts = () => {
       {/* Contacts Table */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-foreground">
-                Contatos ({filteredContacts.length})
-              </CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Lista de todos os contatos e suas informações
-              </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-foreground">
+                  Contatos ({filteredContacts.length})
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Lista de todos os contatos e suas informações
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {selectedContacts.length > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={isDeletingBulk}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Excluir Selecionados ({selectedContacts.length})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Contatos</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir {selectedContacts.length} contato(s) selecionado(s)? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteSelected}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                <Button 
+                  variant="outline" 
+                  onClick={handleExportCSV}
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Exportar CSV
+                </Button>
+              </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={handleExportCSV}
-            >
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Exportar CSV
-            </Button>
-          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectAll}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Selecionar todos"
+                    />
+                  </TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Canal</TableHead>
                   <TableHead>Contato</TableHead>
@@ -297,6 +362,13 @@ const Contacts = () => {
                     className="cursor-pointer"
                     onClick={() => handleContactClick(contact)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedContacts.includes(contact.id)}
+                        onCheckedChange={(checked) => handleSelectContact(contact.id, checked as boolean)}
+                        aria-label={`Selecionar ${contact.name}`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium">{contact.name}</div>
                       <div className="text-sm text-muted-foreground">{contact.company || 'N/A'}</div>
@@ -392,7 +464,7 @@ const Contacts = () => {
                 ))}
                 {paginatedContacts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       Nenhum contato encontrado
                     </TableCell>
                   </TableRow>
