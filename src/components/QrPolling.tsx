@@ -25,32 +25,40 @@ function normalizeResp(resp: RawResp): Sessao {
   return { status, qr, pairingCode };
 }
 
-// Detecta conexão APENAS no formato objeto direto especificado
+// Detecta conexão na nova estrutura retornada pelo webhook
 function isTargetConnectedPayload(raw: any): boolean {
   console.log('🔍 [isTargetConnectedPayload] Checking payload:', JSON.stringify(raw, null, 2));
   
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    console.log('❌ [isTargetConnectedPayload] Invalid format - expecting direct object');
+  const data = Array.isArray(raw) ? raw[0] : raw;
+  const target = data.instance || data;
+  
+  if (!target || typeof target !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Invalid target object');
     return false;
   }
   
-  // Verifica se tem as propriedades esperadas: profileName, contato, fotodoperfil, status
-  const hasRequiredProps = 'profileName' in raw && 'contato' in raw && 'fotodoperfil' in raw && 'status' in raw;
+  // Considera conectado se status é "open"
+  const isConnected = target.status && target.status.toLowerCase() === "open";
   
-  if (!hasRequiredProps) {
-    console.log('❌ [isTargetConnectedPayload] Missing required properties');
-    return false;
-  }
-  
-  // Considera conectado APENAS se status é "open"
-  const isConnected = raw.status === "open";
-  
-  console.log('🎯 [isTargetConnectedPayload] Status:', raw.status);
-  console.log('🎯 [isTargetConnectedPayload] ProfileName:', raw.profileName);
-  console.log('🎯 [isTargetConnectedPayload] Contato:', raw.contato);
+  console.log('🎯 [isTargetConnectedPayload] Status:', target.status);
   console.log('🎯 [isTargetConnectedPayload] Result:', isConnected ? "✅ CONNECTED" : "❌ NOT CONNECTED");
   
   return isConnected;
+}
+
+// Extrai dados de perfil da nova estrutura
+function extractProfileData(raw: any) {
+  const data = Array.isArray(raw) ? raw[0] : raw;
+  const target = data.instance || data;
+  
+  return {
+    profileName: target.profileName && target.profileName !== "not loaded"
+      ? target.profileName
+      : "Usuário WhatsApp",
+    profilePictureUrl: target.profilePictureUrl || "",
+    contact: target.owner || "",
+    connectedAt: target.status === "open" ? new Date().toISOString() : null,
+  };
 }
 
 export default function QrPolling({
@@ -138,15 +146,9 @@ export default function QrPolling({
         stopAllTimers();
         abortRef.current?.abort();
         
-        // Extrair dados da conexão - formato objeto direto
+        // Extrair dados da conexão usando a nova função
         console.log('💾 [QrPolling] Extracting connection data from:', raw);
-        
-        const connectionData = {
-          profileName: raw.profileName === "not loaded" ? 'Usuário WhatsApp' : (raw.profileName || 'Usuário WhatsApp'),
-          profilePictureUrl: raw.fotodoperfil || '',
-          contact: raw.contato || ''
-        };
-        
+        const connectionData = extractProfileData(raw);
         console.log('📋 [QrPolling] Final connection data:', connectionData);
         
         if (onConnected) onConnected(connectionData);

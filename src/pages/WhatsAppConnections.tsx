@@ -217,11 +217,11 @@ export default function WhatsAppConnections() {
       const updateData: any = { status: newStatus }
       
       if (newStatus === 'connected' && profileData) {
-        // Mapeamento correto conforme especificado
-        updateData.whatsapp_profile_name = profileData.profileName === "not loaded" ? null : (profileData.profileName || null)
-        updateData.whatsapp_contact = profileData.contato || null
-        updateData.whatsapp_profile_picture_url = profileData.fotodoperfil || null
-        updateData.whatsapp_connected_at = new Date().toISOString()
+        // Mapeamento usando dados extraídos pela função extractProfileData
+        updateData.whatsapp_profile_name = profileData.profileName || null
+        updateData.whatsapp_contact = profileData.contact || null
+        updateData.whatsapp_profile_picture_url = profileData.profilePictureUrl || null
+        updateData.whatsapp_connected_at = profileData.connectedAt || new Date().toISOString()
         
         console.log('💾 [handleStatusChange] Updating with data:', updateData);
       } else if (newStatus === 'disconnected') {
