@@ -65,7 +65,6 @@ function extractProfileData(raw: any) {
         : "Usuário WhatsApp",
       profilePictureUrl: target.profilePictureUrl || "",
       contact: target.owner ? target.owner.replace('@s.whatsapp.net', '') : "",
-      connectedAt: target.status === "open" ? new Date().toISOString() : null,
     };
   } else {
     // Estrutura antiga: usar dados diretos
@@ -73,7 +72,6 @@ function extractProfileData(raw: any) {
       profileName: target.profileName === "not loaded" ? "Usuário WhatsApp" : (target.profileName || "Usuário WhatsApp"),
       profilePictureUrl: target.fotodoperfil || "",
       contact: target.contato || "",
-      connectedAt: target.status === "open" ? new Date().toISOString() : null,
     };
   }
 }

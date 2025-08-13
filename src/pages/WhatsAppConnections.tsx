@@ -108,7 +108,7 @@ export default function WhatsAppConnections() {
       whatsapp_profile_name: profileData.profileName,
       whatsapp_contact: profileData.contact,
       whatsapp_profile_picture_url: profileData.profilePictureUrl,
-      whatsapp_connected_at: isConnected ? new Date().toISOString() : null,
+      ...(isConnected ? {} : { whatsapp_connected_at: null }),
     }
 
     console.log('🔧 [updateConnectionStatus] Raw data:', rawData)
