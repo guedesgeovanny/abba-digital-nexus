@@ -44,8 +44,8 @@ function isTargetConnectedPayload(raw: any): boolean {
       const inst = firstItem.instance;
       console.log('🏢 [isTargetConnectedPayload] Instance object:', inst);
       
-      // Considera conectado se status é "open" E tem owner
-      const isConnected = inst.status === "open" && inst.owner;
+      // NOVA LÓGICA: Considera conectado APENAS se status é "open"
+      const isConnected = inst.status === "open";
       
       console.log('🎯 [isTargetConnectedPayload] Status:', inst.status);
       console.log('🎯 [isTargetConnectedPayload] Owner:', inst.owner);
