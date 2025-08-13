@@ -25,41 +25,39 @@ function normalizeResp(resp: RawResp): Sessao {
   return { status, qr, pairingCode };
 }
 
-// Simplificada - considera conectado quando recebe o JSON com dados de conexão
+// Detecta conexão baseado no JSON fornecido pelo usuário
 function isTargetConnectedPayload(raw: any): boolean {
-  console.log('🔍 [isTargetConnectedPayload] Checking payload:', raw);
+  console.log('🔍 [isTargetConnectedPayload] Checking payload:', JSON.stringify(raw, null, 2));
   
-  // Aceita tanto array quanto objeto direto
-  const data = Array.isArray(raw) ? raw[0] : raw;
-  if (!data || typeof data !== 'object') {
-    console.log('❌ [isTargetConnectedPayload] Invalid data format');
+  if (!raw) {
+    console.log('❌ [isTargetConnectedPayload] No payload received');
     return false;
   }
   
-  // Verifica se tem instance object ou dados diretos
-  const inst = data.instance || data;
-  if (!inst || typeof inst !== 'object') {
-    console.log('❌ [isTargetConnectedPayload] Missing instance data');
-    return false;
+  // Verifica se é array (formato esperado)
+  if (Array.isArray(raw) && raw.length > 0) {
+    const firstItem = raw[0];
+    console.log('📦 [isTargetConnectedPayload] First item:', firstItem);
+    
+    // Verifica se tem a propriedade 'instance'
+    if (firstItem && firstItem.instance) {
+      const inst = firstItem.instance;
+      console.log('🏢 [isTargetConnectedPayload] Instance object:', inst);
+      
+      // Considera conectado se status é "open" E tem owner
+      const isConnected = inst.status === "open" && inst.owner;
+      
+      console.log('🎯 [isTargetConnectedPayload] Status:', inst.status);
+      console.log('🎯 [isTargetConnectedPayload] Owner:', inst.owner);
+      console.log('🎯 [isTargetConnectedPayload] ProfileName:', inst.profileName);
+      console.log('🎯 [isTargetConnectedPayload] Result:', isConnected ? "✅ CONNECTED" : "❌ NOT CONNECTED");
+      
+      return isConnected;
+    }
   }
   
-  console.log('📋 [isTargetConnectedPayload] Instance data:', inst);
-  
-  // Considera conectado se tem dados que indicam conexão estabelecida
-  const isConnected = (
-    inst.status === 'open' || 
-    inst.status === 'connected' ||
-    (typeof inst.owner === 'string' && inst.owner.length > 0) ||
-    (typeof inst.profileName === 'string' && inst.profileName.length > 0) ||
-    (typeof inst.profilePictureUrl === 'string' && inst.profilePictureUrl.length > 0) ||
-    (typeof inst.contato === 'string' && inst.contato.length > 0)
-  );
-  
-  console.log('🎯 [isTargetConnectedPayload] isConnected:', isConnected);
-  console.log('🎯 [isTargetConnectedPayload] status:', inst.status);
-  console.log('🎯 [isTargetConnectedPayload] profileName:', inst.profileName);
-  
-  return isConnected;
+  console.log('❌ [isTargetConnectedPayload] Invalid format - expecting array with instance object');
+  return false;
 }
 
 export default function QrPolling({
@@ -150,11 +148,16 @@ export default function QrPolling({
         // Extrair dados da conexão para salvar
         const data = Array.isArray(raw) ? raw[0] : raw;
         const inst = data.instance || data;
+        
+        console.log('💾 [QrPolling] Extracting connection data from:', inst);
+        
         const connectionData = {
-          profileName: inst.profileName || inst.contato || '',
-          profilePictureUrl: inst.profilePictureUrl || inst.fotodoperfil || '',
-          contact: inst.owner || inst.contato || ''
+          profileName: inst.profileName === "not loaded" ? 'Usuário WhatsApp' : (inst.profileName || 'Usuário WhatsApp'),
+          profilePictureUrl: inst.profilePictureUrl || '',
+          contact: inst.owner ? inst.owner.replace('@s.whatsapp.net', '') : ''
         };
+        
+        console.log('📋 [QrPolling] Final connection data:', connectionData);
         
         if (onConnected) onConnected(connectionData);
         return;
