@@ -46,19 +46,30 @@ function isTargetConnectedPayload(raw: any): boolean {
   return isConnected;
 }
 
-// Extrai dados de perfil da nova estrutura
+// Extrai dados de perfil da nova estrutura unificada
 function extractProfileData(raw: any) {
   const data = Array.isArray(raw) ? raw[0] : raw;
   const target = data.instance || data;
   
-  return {
-    profileName: target.profileName && target.profileName !== "not loaded"
-      ? target.profileName
-      : "Usuário WhatsApp",
-    profilePictureUrl: target.profilePictureUrl || "",
-    contact: target.owner || "",
-    connectedAt: target.status === "open" ? new Date().toISOString() : null,
-  };
+  if (data.instance) {
+    // Nova estrutura: usar dados do objeto instance
+    return {
+      profileName: target.profileName && target.profileName !== "not loaded"
+        ? target.profileName
+        : "Usuário WhatsApp",
+      profilePictureUrl: target.profilePictureUrl || "",
+      contact: target.owner ? target.owner.replace('@s.whatsapp.net', '') : "",
+      connectedAt: target.status === "open" ? new Date().toISOString() : null,
+    };
+  } else {
+    // Estrutura antiga: usar dados diretos
+    return {
+      profileName: target.profileName === "not loaded" ? "Usuário WhatsApp" : (target.profileName || "Usuário WhatsApp"),
+      profilePictureUrl: target.fotodoperfil || "",
+      contact: target.contato || "",
+      connectedAt: target.status === "open" ? new Date().toISOString() : null,
+    };
+  }
 }
 
 export default function QrPolling({

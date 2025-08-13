@@ -68,14 +68,41 @@ export default function WhatsAppConnections() {
   }, [])
 
   // Função reutilizável para atualizar status de conexão no banco
-  const updateConnectionStatus = async (connectionId: string, data: any, isConnected: boolean) => {
+  const updateConnectionStatus = async (connectionId: string, rawData: any, isConnected: boolean) => {
+    // Detectar e normalizar os dados conforme a estrutura recebida
+    let profileData
+    
+    // Verificar se é a nova estrutura com array/instance
+    const data = Array.isArray(rawData) ? rawData[0] : rawData
+    const target = data.instance || data
+    
+    if (data.instance) {
+      // Nova estrutura: usar dados do objeto instance
+      profileData = {
+        profileName: target.profileName && target.profileName !== "not loaded" ? target.profileName : null,
+        contact: target.owner ? target.owner.replace('@s.whatsapp.net', '') : null,
+        profilePictureUrl: target.profilePictureUrl || null
+      }
+    } else {
+      // Estrutura antiga: usar dados diretos
+      profileData = {
+        profileName: target.profileName === "not loaded" ? null : (target.profileName || null),
+        contact: target.contato || null,
+        profilePictureUrl: target.fotodoperfil || null
+      }
+    }
+
     const updateData: any = {
       status: isConnected ? 'connected' : 'disconnected',
-      whatsapp_profile_name: data.profileName === 'not loaded' ? null : (data.profileName || null),
-      whatsapp_contact: data.contato || null,
-      whatsapp_profile_picture_url: data.fotodoperfil || null,
+      whatsapp_profile_name: profileData.profileName,
+      whatsapp_contact: profileData.contact,
+      whatsapp_profile_picture_url: profileData.profilePictureUrl,
       whatsapp_connected_at: isConnected ? new Date().toISOString() : null,
     }
+
+    console.log('🔧 [updateConnectionStatus] Raw data:', rawData)
+    console.log('🔧 [updateConnectionStatus] Parsed profile data:', profileData)
+    console.log('🔧 [updateConnectionStatus] Final update data:', updateData)
 
     await supabase
       .from('conexoes')
@@ -101,50 +128,33 @@ export default function WhatsAppConnections() {
       const data = await response.json()
       console.log(`[verifyConnectionStatus] Raw data for ${instanceName}:`, data)
       
-      // Detectar conexão usando a mesma lógica do QrPolling
+      // Detectar conexão usando lógica unificada
       let isConnected = false
-      let profileData: any = null
       
       // Verificar se é a nova estrutura com array/instance
       const parsedData = Array.isArray(data) ? data[0] : data
       const target = parsedData.instance || parsedData
       
-      if (target && target.status && target.status.toLowerCase() === 'open') {
-        isConnected = true
-        profileData = {
-          profileName: target.profileName && target.profileName !== "not loaded"
-            ? target.profileName
-            : "Usuário WhatsApp",
-          contact: target.owner || "",
-          profilePictureUrl: target.profilePictureUrl || "",
-          connectedAt: new Date().toISOString()
-        }
+      if (parsedData.instance) {
+        // Nova estrutura: verificar instance.status
+        isConnected = target.status && target.status.toLowerCase() === 'open'
       } else {
-        // Fallback para estrutura antiga
+        // Estrutura antiga: verificar campos diretos
         isConnected = data.connected === true || 
                      (typeof data.status === 'string' && 
                       ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
-        
-        if (isConnected) {
-          profileData = {
-            profileName: data.profileName === "not loaded" ? "Usuário WhatsApp" : (data.profileName || "Usuário WhatsApp"),
-            contact: data.contato || "",
-            profilePictureUrl: data.fotodoperfil || "",
-            connectedAt: new Date().toISOString()
-          }
-        }
       }
       
       const newStatus = isConnected ? 'connected' : 'disconnected'
       
-      // Usar a função reutilizável para atualização
-      await updateConnectionStatus(connectionId, target, isConnected)
+      // Usar função reutilizável para atualização (passar dados originais)
+      await updateConnectionStatus(connectionId, data, isConnected)
       
       if (!silent) {
         console.log(`[verifyConnectionStatus] Updated ${instanceName} status to ${newStatus}`)
       }
       
-      return { statusChanged: true, newStatus, profileData }
+      return { statusChanged: true, newStatus }
       
     } catch (error) {
       console.error(`Error verifying connection ${instanceName}:`, error)
@@ -171,9 +181,22 @@ export default function WhatsAppConnections() {
             
             const data = await response.json()
             
-            const connected = data.connected === true || 
-                             (typeof data.status === 'string' && 
-                              ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
+            // Detectar conexão usando lógica unificada
+            let connected = false
+            
+            // Verificar se é a nova estrutura com array/instance
+            const parsedData = Array.isArray(data) ? data[0] : data
+            const target = parsedData.instance || parsedData
+            
+            if (parsedData.instance) {
+              // Nova estrutura: verificar instance.status
+              connected = target.status && target.status.toLowerCase() === 'open'
+            } else {
+              // Estrutura antiga: verificar campos diretos
+              connected = data.connected === true || 
+                         (typeof data.status === 'string' && 
+                          ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
+            }
             
             const newStatus = connected ? 'connected' : 'disconnected'
             
