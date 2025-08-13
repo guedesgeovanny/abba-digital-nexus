@@ -171,8 +171,12 @@ export function InstanceCard({
   }
 
   const handleConnected = (profileData: any) => {
-    console.log('WhatsApp connected successfully:', profileData)
+    console.log('🎉 [InstanceCard] WhatsApp connected successfully:', profileData)
+    
+    // Fechar modal após conexão bem-sucedida
     setShowQrModal(false)
+    
+    // Atualizar status no banco
     onStatusChange(id, 'connected', profileData)
     
     toast({
@@ -336,7 +340,10 @@ export function InstanceCard({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setShowQrModal(false)}
+                onClick={() => {
+                  console.log('❌ [InstanceCard] User manually closed QR modal');
+                  setShowQrModal(false);
+                }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 ✕
@@ -348,12 +355,16 @@ export function InstanceCard({
               endpoint={WEBHOOK_URLS.CONNECT}
               initialQr={qrCodeData}
               onConnected={handleConnected}
+              intervalMs={3000}
             />
             
             <div className="mt-6 pt-4 border-t flex justify-end">
               <Button 
                 variant="outline" 
-                onClick={() => setShowQrModal(false)}
+                onClick={() => {
+                  console.log('❌ [InstanceCard] User clicked Cancel button');
+                  setShowQrModal(false);
+                }}
                 className="w-full sm:w-auto"
               >
                 Cancelar

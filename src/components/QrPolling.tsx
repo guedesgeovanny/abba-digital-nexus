@@ -73,54 +73,74 @@ export default function QrPolling({
     abortRef.current?.abort();
     const ac = new AbortController();
     abortRef.current = ac;
+    
     try {
       // Usar endpoint de verificação de status específico
       const statusUrl = endpoint.replace('conecta-mp-brasil', 'verifica-status-mp-brasil');
       const url = `${statusUrl}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
       
-      console.log('Polling status for instance:', instance, 'URL:', url);
+      console.log('🔄 [QrPolling] Checking status for:', instance);
+      console.log('🔗 [QrPolling] URL:', url);
       
       const r = await fetch(url, { 
         signal: ac.signal, 
-        headers: { "cache-control": "no-cache" } 
+        headers: { "cache-control": "no-cache" },
+        method: 'GET'
       });
       
       if (!r.ok) {
-        console.error('Status check failed:', r.status, r.statusText);
+        console.warn('⚠️ [QrPolling] Status check failed:', r.status, r.statusText);
+        // Não alterar o estado em caso de erro de rede
         return;
       }
       
       const raw = await r.json();
-      console.log('Status response:', raw);
+      console.log('📊 [QrPolling] Raw response:', raw);
       
       const data = normalizeResp(raw);
-      console.log('Normalized status:', data);
+      console.log('✅ [QrPolling] Normalized data:', data);
 
+      // Atualizar status
       setStatus(data.status);
       setPairingCode(data.pairingCode ?? null);
 
-      // Manter o QR inicial sempre visível até conectar
-      if (data.qr) {
-        lastQrRef.current = data.qr;
-        setQr(data.qr);
-      } else if (data.status.toUpperCase() === "CONNECTED") {
+      // Lógica crítica para manter QR visível
+      if (data.status.toUpperCase() === "CONNECTED") {
+        console.log('🎉 [QrPolling] Connection established! Notifying parent...');
         // Só limpar QR quando realmente conectado
-        console.log('Connection established, clearing QR');
         lastQrRef.current = null;
         setQr(null);
+        
+        // Parar polling antes de notificar
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        
         // Notificar sobre a conexão estabelecida
         if (onConnected) {
           onConnected(raw);
         }
       } else {
-        // Para todos os outros status, manter o QR inicial
-        if (lastQrRef.current) {
+        console.log('🔄 [QrPolling] Not connected yet, status:', data.status);
+        
+        // Se há novo QR na resposta, usar ele
+        if (data.qr && data.qr !== lastQrRef.current) {
+          console.log('🆕 [QrPolling] New QR received, updating...');
+          lastQrRef.current = data.qr;
+          setQr(data.qr);
+        } else if (!qr && lastQrRef.current) {
+          // Se perdemos o QR mas temos um backup, restaurar
+          console.log('🔄 [QrPolling] Restoring QR from backup...');
           setQr(lastQrRef.current);
         }
+        // NUNCA limpar o QR se não estivermos conectados
       }
+      
     } catch (error) {
       if (error.name !== 'AbortError') {
-        console.error('Polling error:', error);
+        console.error('❌ [QrPolling] Polling error:', error);
+        // Em caso de erro, não alterar o estado do QR
       }
     }
   };
@@ -129,14 +149,28 @@ export default function QrPolling({
     if (isPollingRef.current) return;
     isPollingRef.current = true;
 
+    console.log('🚀 [QrPolling] Starting polling for instance:', instance);
+    console.log('⏱️ [QrPolling] Interval:', intervalMs + 'ms');
+    console.log('📱 [QrPolling] Initial QR available:', !!initialQr);
+
     // Se não temos QR inicial, fazer fetch imediatamente
     if (!initialQr) {
+      console.log('🔍 [QrPolling] No initial QR, fetching status immediately...');
       fetchStatus();
     }
-    timerRef.current = window.setInterval(fetchStatus, intervalMs);
+    
+    // Iniciar polling
+    timerRef.current = window.setInterval(() => {
+      console.log('⏰ [QrPolling] Polling tick...');
+      fetchStatus();
+    }, intervalMs);
 
     return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
+      console.log('🛑 [QrPolling] Cleanup: stopping polling...');
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       abortRef.current?.abort();
       isPollingRef.current = false;
     };
