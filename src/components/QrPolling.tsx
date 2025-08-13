@@ -24,53 +24,40 @@ function normalizeResp(resp: RawResp): Sessao {
   return { status, qr, pairingCode };
 }
 
-// Considera "conectado" quando recebe payload indicando conexão estabelecida
-// Suporta dois formatos:
-// 1. Array: [{ instance: { status: "open", owner: "...", ... } }]
-// 2. Objeto direto: { status: "open", contato: "...", ... }
+// Considera "conectado" SOMENTE quando payload tem o formato exato:
+// [{ instance: { instanceName, instanceId, status: "open", owner, ... } }]
 function isTargetConnectedPayload(raw: any): boolean {
   console.log('🔍 [isTargetConnectedPayload] Checking payload:', raw);
   
-  // Formato 1: Array com instance object
-  if (Array.isArray(raw) && raw[0] && typeof raw[0] === 'object') {
-    const inst = (raw[0] as any).instance;
-    if (inst && typeof inst === 'object') {
-      console.log('📋 [isTargetConnectedPayload] Array format - Instance object:', inst);
-      
-      const hasBasics = typeof inst.instanceName === 'string' && typeof inst.instanceId === 'string' && typeof inst.status === 'string';
-      const isConnected = hasBasics && (
-        inst.status === 'open' || 
-        (typeof inst.owner === 'string' && inst.owner.length > 0) ||
-        (typeof inst.profileName === 'string' && inst.profileName.length > 0) ||
-        (typeof inst.profilePictureUrl === 'string' && inst.profilePictureUrl.length > 0)
-      );
-      
-      console.log('🎯 [isTargetConnectedPayload] Array format - hasBasics:', hasBasics);
-      console.log('🎯 [isTargetConnectedPayload] Array format - isConnected:', isConnected);
-      
-      return isConnected;
-    }
+  if (!Array.isArray(raw) || !raw[0] || typeof raw[0] !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Not an array or missing first element');
+    return false;
   }
   
-  // Formato 2: Objeto direto (formato atual do backend)
-  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    console.log('📋 [isTargetConnectedPayload] Direct object format:', raw);
-    
-    // Considera conectado se status é "open" e tem dados de contato
-    const isConnected = (
-      raw.status === 'open' && 
-      (typeof raw.contato === 'string' && raw.contato.length > 0)
-    );
-    
-    console.log('🎯 [isTargetConnectedPayload] Direct format - status:', raw.status);
-    console.log('🎯 [isTargetConnectedPayload] Direct format - contato:', raw.contato);
-    console.log('🎯 [isTargetConnectedPayload] Direct format - isConnected:', isConnected);
-    
-    return isConnected;
+  const inst = (raw[0] as any).instance;
+  if (!inst || typeof inst !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Missing instance object');
+    return false;
   }
   
-  console.log('❌ [isTargetConnectedPayload] No valid format detected');
-  return false;
+  console.log('📋 [isTargetConnectedPayload] Instance object:', inst);
+  
+  // Verifica se tem os campos básicos necessários
+  const hasBasics = (
+    typeof inst.instanceName === 'string' && 
+    typeof inst.instanceId === 'string' && 
+    typeof inst.status === 'string'
+  );
+  
+  // Considera conectado se status é "open" e tem owner
+  const isConnected = hasBasics && inst.status === 'open' && typeof inst.owner === 'string';
+  
+  console.log('🎯 [isTargetConnectedPayload] hasBasics:', hasBasics);
+  console.log('🎯 [isTargetConnectedPayload] status:', inst.status);
+  console.log('🎯 [isTargetConnectedPayload] owner:', inst.owner);
+  console.log('🎯 [isTargetConnectedPayload] isConnected:', isConnected);
+  
+  return isConnected;
 }
 
 export default function QrPolling({
