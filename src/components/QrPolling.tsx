@@ -25,14 +25,43 @@ function normalizeResp(resp: RawResp): Sessao {
 }
 
 // Considera "conectado" SOMENTE quando payload tem o formato exigido:
-// [ { instance: { ... } } ]
+// [ { instance: { ... } } ] E com campos indicando conexão estabelecida
 function isTargetConnectedPayload(raw: any): boolean {
-  if (!Array.isArray(raw) || !raw[0] || typeof raw[0] !== 'object') return false;
+  console.log('🔍 [isTargetConnectedPayload] Checking payload:', raw);
+  
+  if (!Array.isArray(raw) || !raw[0] || typeof raw[0] !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Not an array or missing first element');
+    return false;
+  }
+  
   const inst = (raw[0] as any).instance;
-  if (!inst || typeof inst !== 'object') return false;
+  if (!inst || typeof inst !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Missing instance object');
+    return false;
+  }
+  
+  console.log('📋 [isTargetConnectedPayload] Instance object:', inst);
+  
   // Checagem mínima de campos esperados
   const hasBasics = typeof inst.instanceName === 'string' && typeof inst.instanceId === 'string' && typeof inst.status === 'string';
-  return !!hasBasics;
+  
+  // Considera conectado se:
+  // 1. Tem campos básicos E
+  // 2. status é "open" OU tem campos que indicam conexão estabelecida (owner, profileName, profilePictureUrl)
+  const isConnected = hasBasics && (
+    inst.status === 'open' || 
+    (typeof inst.owner === 'string' && inst.owner.length > 0) ||
+    (typeof inst.profileName === 'string' && inst.profileName.length > 0) ||
+    (typeof inst.profilePictureUrl === 'string' && inst.profilePictureUrl.length > 0)
+  );
+  
+  console.log('🎯 [isTargetConnectedPayload] hasBasics:', hasBasics);
+  console.log('🎯 [isTargetConnectedPayload] status:', inst.status);
+  console.log('🎯 [isTargetConnectedPayload] owner:', inst.owner);
+  console.log('🎯 [isTargetConnectedPayload] profileName:', inst.profileName);
+  console.log('🎯 [isTargetConnectedPayload] isConnected:', isConnected);
+  
+  return isConnected;
 }
 
 export default function QrPolling({
