@@ -154,30 +154,7 @@ export default function QrPolling({
         if (onConnected) onConnected(connectionData);
         return;
       }
-      
-      // A cada ciclo de polling, também executar verificação completa
-      // (isso garante que mesmo sem mudança de status, os dados sejam sincronizados)
       const normalizedData = normalizeResp(raw);
-      if (normalizedData.status && ['QRCODE', 'PAIRING', 'LOADING'].includes(normalizedData.status) && onConnected) {
-        // Fazer uma verificação silenciosa em paralelo para manter dados atualizados
-        // sem bloquear o polling atual
-        setTimeout(async () => {
-          try {
-            const statusUrl = endpoint.replace('conecta-mp-brasil', 'verifica-status-mp-brasil');
-            const checkUrl = `${statusUrl}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
-            const checkResponse = await fetch(checkUrl);
-            if (checkResponse.ok) {
-              const checkData = await checkResponse.json();
-              if (isTargetConnectedPayload(checkData)) {
-                const connectionData = extractProfileData(checkData);
-                onConnected(connectionData);
-              }
-            }
-          } catch (error) {
-            console.log('🔄 [QrPolling] Silent check failed:', error);
-          }
-        }, 0);
-      }
       console.log('✅ [QrPolling] Normalized data:', normalizedData);
 
       // Atualizar status e pairing code (exibir status vindo de instance.status se presente)
