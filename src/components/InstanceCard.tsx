@@ -228,9 +228,9 @@ export function InstanceCard({
         
         // Criar objeto profileData no formato esperado
         const profileData = {
-          profilename: data.profilename || null,
+          profileName: data.profilename || null,
           contato: data.contato || null,
-          fotodoperfil: data.fotodoperfil || null
+          profilePictureUrl: data.fotodoperfil || null
         }
         
         // Atualizar status no banco

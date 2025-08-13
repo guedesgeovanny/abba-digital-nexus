@@ -134,9 +134,9 @@ export default function QrPolling({
         
         // Passar os dados no formato esperado pelo handleConnected (igual ao "Verificar Agora")
         const profileData = {
-          profilename: raw.profilename || null,
+          profileName: raw.profilename || null,
           contato: raw.contato || null,
-          fotodoperfil: raw.fotodoperfil || null
+          profilePictureUrl: raw.fotodoperfil || null
         };
         
         if (onConnected) onConnected(profileData);
