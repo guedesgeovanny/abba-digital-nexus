@@ -88,7 +88,7 @@ export function InstanceCard({
       setIsConnecting(true)
       
       const response = await fetch(
-        `${WEBHOOK_URLS.CONNECT}?connectionName=${encodeURIComponent(name)}`
+        `${WEBHOOK_URLS.CONNECT}?instanceName=${encodeURIComponent(name)}`
       )
       
       if (!response.ok) throw new Error(`HTTP ${response.status}`)

@@ -206,11 +206,17 @@ export default function WhatsAppConnections() {
     profileData?: any
   ) => {
     try {
+      // Quando for 'connecting', não tocar no banco nem refazer o fetch; apenas atualizar em memória
+      if (newStatus === 'connecting') {
+        setConnections(prev => prev.map(c => c.id === id ? { ...c, status: 'connecting' } : c))
+        return
+      }
+
       const updateData: any = { status: newStatus }
       
       if (newStatus === 'connected' && profileData) {
         updateData.whatsapp_profile_name = profileData.profileName || null
-        updateData.whatsapp_contact = profileData.contact || null
+        updateData.whatsapp_contact = profileData.contato || profileData.phone || null
         updateData.whatsapp_profile_picture_url = profileData.profilePictureUrl || null
         updateData.whatsapp_connected_at = new Date().toISOString()
       } else if (newStatus === 'disconnected') {
