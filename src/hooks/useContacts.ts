@@ -69,11 +69,6 @@ export const useContacts = () => {
               color,
               created_at
             )
-          ),
-          agents (
-            id,
-            name,
-            status
           )
         `)
         .eq('user_id', user.id)
@@ -81,11 +76,10 @@ export const useContacts = () => {
 
       if (error) throw error
 
-      // Transform the data to include tags and agent properly
+      // Transform the data to include tags properly
       return data.map(contact => ({
         ...contact,
-        tags: contact.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || [],
-        agent: contact.agents || undefined
+        tags: contact.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || []
       })) as ContactWithTags[]
     },
     enabled: !!user?.id,
