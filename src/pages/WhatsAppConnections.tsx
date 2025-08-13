@@ -72,14 +72,25 @@ export default function WhatsAppConnections() {
     // Detectar e normalizar os dados conforme a estrutura recebida
     let profileData
     
+    console.log('🔧 [updateConnectionStatus] Processing data:', JSON.stringify(rawData, null, 2))
+    
     // Verificar se é a nova estrutura com array/instance
     const data = Array.isArray(rawData) ? rawData[0] : rawData
     const target = data.instance || data
     
+    console.log('🔧 [updateConnectionStatus] Target object:', JSON.stringify(target, null, 2))
+    
     if (data.instance) {
       // Nova estrutura: usar dados do objeto instance
+      // O profileName pode vir como "not loaded" ou null quando não está disponível
+      let processedProfileName = target.profileName;
+      if (!processedProfileName || processedProfileName === "not loaded") {
+        // Tentar usar o owner como fallback para o nome
+        processedProfileName = target.owner ? target.owner.replace('@s.whatsapp.net', '').replace(/\d+/g, '').trim() : null;
+      }
+      
       profileData = {
-        profileName: target.profileName && target.profileName !== "not loaded" ? target.profileName : null,
+        profileName: processedProfileName,
         contact: target.owner ? target.owner.replace('@s.whatsapp.net', '') : null,
         profilePictureUrl: target.profilePictureUrl || null
       }
@@ -104,10 +115,22 @@ export default function WhatsAppConnections() {
     console.log('🔧 [updateConnectionStatus] Parsed profile data:', profileData)
     console.log('🔧 [updateConnectionStatus] Final update data:', updateData)
 
-    await supabase
-      .from('conexoes')
-      .update(updateData)
-      .eq('id', connectionId)
+    try {
+      const { error } = await supabase
+        .from('conexoes')
+        .update(updateData)
+        .eq('id', connectionId)
+      
+      if (error) {
+        console.error('🔧 [updateConnectionStatus] Database update error:', error)
+        throw error
+      }
+      
+      console.log('✅ [updateConnectionStatus] Database updated successfully')
+    } catch (error) {
+      console.error('❌ [updateConnectionStatus] Failed to update database:', error)
+      throw error
+    }
   }
 
   // Função unificada para verificar status de uma conexão e atualizar banco
