@@ -24,7 +24,8 @@ function normalizeResp(resp: RawResp): Sessao {
   return { status, qr, pairingCode };
 }
 
-// Usa a MESMA lógica do botão "Verificar Agora" de WhatsAppConnections.tsx
+// Considera "conectado" SOMENTE quando payload tem o formato exato:
+// { "profileName": "...", "contato": "...", "fotodoperfil": "...", "status": "open" }
 function isTargetConnectedPayload(raw: any): boolean {
   console.log('🔍 [isTargetConnectedPayload] Checking payload:', raw);
   
@@ -36,20 +37,24 @@ function isTargetConnectedPayload(raw: any): boolean {
   
   console.log('📋 [isTargetConnectedPayload] Direct object:', raw);
   
-  // MESMA lógica do verifyAllConnections: 
-  // data.connected === true OU status em ['open', 'connected', 'ready', 'active']
-  const connected = raw.connected === true || 
-                   (typeof raw.status === 'string' && 
-                    ['open', 'connected', 'ready', 'active'].includes(raw.status.toLowerCase()));
+  // Verifica se tem os campos obrigatórios
+  const hasRequiredFields = (
+    typeof raw.status === 'string' &&
+    typeof raw.contato === 'string' &&
+    typeof raw.profileName === 'string'
+  );
   
-  console.log('🎯 [isTargetConnectedPayload] connected:', raw.connected);
+  // Considera conectado se status é "open" e tem contato válido
+  const isConnected = hasRequiredFields && raw.status === 'open' && raw.contato.length > 0;
+  
   console.log('🎯 [isTargetConnectedPayload] status:', raw.status);
   console.log('🎯 [isTargetConnectedPayload] contato:', raw.contato);
-  console.log('🎯 [isTargetConnectedPayload] profilename:', raw.profilename);
+  console.log('🎯 [isTargetConnectedPayload] profileName:', raw.profileName);
   console.log('🎯 [isTargetConnectedPayload] fotodoperfil:', raw.fotodoperfil);
-  console.log('🎯 [isTargetConnectedPayload] isConnected:', connected);
+  console.log('🎯 [isTargetConnectedPayload] hasRequiredFields:', hasRequiredFields);
+  console.log('🎯 [isTargetConnectedPayload] isConnected:', isConnected);
   
-  return connected;
+  return isConnected;
 }
 
 export default function QrPolling({
@@ -102,8 +107,8 @@ export default function QrPolling({
     abortRef.current = ac;
 
     try {
-      // Usar endpoint de verificação de status específico (sempre)
-      const statusUrl = 'https://webhock-veterinup.abbadigital.com.br/webhook/verifica-status-mp-brasil';
+      // Usar endpoint de verificação de status específico
+      const statusUrl = endpoint.replace('conecta-mp-brasil', 'verifica-status-mp-brasil');
       const url = `${statusUrl}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
 
       console.log('🔄 [QrPolling] Checking status for:', instance);
@@ -123,7 +128,7 @@ export default function QrPolling({
       const raw = await r.json();
       console.log('📊 [QrPolling] Raw response:', raw);
 
-      // Condição de sucesso usando a MESMA lógica do "Verificar Agora"
+      // Condição de sucesso EXATA conforme requisito: payload em array com { instance }
       if (isTargetConnectedPayload(raw)) {
         console.log('🎯 [QrPolling] Target connected payload detected.');
         setStatus('CONNECTED');
@@ -131,15 +136,7 @@ export default function QrPolling({
         setQr(null);
         stopAllTimers();
         abortRef.current?.abort();
-        
-        // Passar os dados no formato esperado pelo handleConnected (igual ao "Verificar Agora")
-        const profileData = {
-          profileName: raw.profilename || null,
-          contato: raw.contato || null,
-          profilePictureUrl: raw.fotodoperfil || null
-        };
-        
-        if (onConnected) onConnected(profileData);
+        if (onConnected) onConnected(raw);
         return;
       }
 
