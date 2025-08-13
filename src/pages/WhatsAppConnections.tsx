@@ -137,7 +137,7 @@ export default function WhatsAppConnections() {
       
       if (parsedData.instance) {
         // Nova estrutura: verificar instance.status
-        isConnected = target.status && target.status.toLowerCase() === 'open'
+        isConnected = target.status && ['open', 'connected', 'ready', 'active'].includes(target.status.toLowerCase())
       } else {
         // Estrutura antiga: verificar campos diretos
         isConnected = data.connected === true || 
@@ -190,7 +190,7 @@ export default function WhatsAppConnections() {
             
             if (parsedData.instance) {
               // Nova estrutura: verificar instance.status
-              connected = target.status && target.status.toLowerCase() === 'open'
+              connected = target.status && ['open', 'connected', 'ready', 'active'].includes(target.status.toLowerCase())
             } else {
               // Estrutura antiga: verificar campos diretos
               connected = data.connected === true || 
