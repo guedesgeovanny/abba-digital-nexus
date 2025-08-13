@@ -190,8 +190,17 @@ export function InstanceCard({
     // Fechar modal após conexão bem-sucedida
     setShowQrModal(false)
     
+    // Usar dados já formatados pelo QrPolling com campos corretos
+    const connectionData = {
+      profileName: profileData.profileName || '',
+      profilePictureUrl: profileData.profilePictureUrl || '',
+      contact: profileData.contact || ''
+    }
+    
+    console.log('📋 [InstanceCard] Formatted connection data:', connectionData)
+    
     // Atualizar status no banco
-    onStatusChange(id, 'connected', profileData)
+    onStatusChange(id, 'connected', connectionData)
     
     toast({
       title: "WhatsApp conectado!",

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useQRCodeTimer } from "@/hooks/useQRCodeTimer";
 
 type RawResp = any;
 type Sessao = { status: string; qr?: string | null; pairingCode?: string | null; error?: string };
@@ -24,42 +25,39 @@ function normalizeResp(resp: RawResp): Sessao {
   return { status, qr, pairingCode };
 }
 
-// Considera "conectado" SOMENTE quando payload tem o formato exigido:
-// [ { instance: { ... } } ] E com campos indicando conexão estabelecida
+// Simplificada - considera conectado quando recebe o JSON com dados de conexão
 function isTargetConnectedPayload(raw: any): boolean {
   console.log('🔍 [isTargetConnectedPayload] Checking payload:', raw);
   
-  if (!Array.isArray(raw) || !raw[0] || typeof raw[0] !== 'object') {
-    console.log('❌ [isTargetConnectedPayload] Not an array or missing first element');
+  // Aceita tanto array quanto objeto direto
+  const data = Array.isArray(raw) ? raw[0] : raw;
+  if (!data || typeof data !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Invalid data format');
     return false;
   }
   
-  const inst = (raw[0] as any).instance;
+  // Verifica se tem instance object ou dados diretos
+  const inst = data.instance || data;
   if (!inst || typeof inst !== 'object') {
-    console.log('❌ [isTargetConnectedPayload] Missing instance object');
+    console.log('❌ [isTargetConnectedPayload] Missing instance data');
     return false;
   }
   
-  console.log('📋 [isTargetConnectedPayload] Instance object:', inst);
+  console.log('📋 [isTargetConnectedPayload] Instance data:', inst);
   
-  // Checagem mínima de campos esperados
-  const hasBasics = typeof inst.instanceName === 'string' && typeof inst.instanceId === 'string' && typeof inst.status === 'string';
-  
-  // Considera conectado se:
-  // 1. Tem campos básicos E
-  // 2. status é "open" OU tem campos que indicam conexão estabelecida (owner, profileName, profilePictureUrl)
-  const isConnected = hasBasics && (
+  // Considera conectado se tem dados que indicam conexão estabelecida
+  const isConnected = (
     inst.status === 'open' || 
+    inst.status === 'connected' ||
     (typeof inst.owner === 'string' && inst.owner.length > 0) ||
     (typeof inst.profileName === 'string' && inst.profileName.length > 0) ||
-    (typeof inst.profilePictureUrl === 'string' && inst.profilePictureUrl.length > 0)
+    (typeof inst.profilePictureUrl === 'string' && inst.profilePictureUrl.length > 0) ||
+    (typeof inst.contato === 'string' && inst.contato.length > 0)
   );
   
-  console.log('🎯 [isTargetConnectedPayload] hasBasics:', hasBasics);
-  console.log('🎯 [isTargetConnectedPayload] status:', inst.status);
-  console.log('🎯 [isTargetConnectedPayload] owner:', inst.owner);
-  console.log('🎯 [isTargetConnectedPayload] profileName:', inst.profileName);
   console.log('🎯 [isTargetConnectedPayload] isConnected:', isConnected);
+  console.log('🎯 [isTargetConnectedPayload] status:', inst.status);
+  console.log('🎯 [isTargetConnectedPayload] profileName:', inst.profileName);
   
   return isConnected;
 }
@@ -80,11 +78,20 @@ export default function QrPolling({
   const [status, setStatus] = useState<string>("LOADING");
   const [qr, setQr] = useState<string | null>(initialQr || null);
   const [pairingCode, setPairingCode] = useState<string | null>(null);
-  const [expired, setExpired] = useState<boolean>(false);
+  const [isGeneratingNewQr, setIsGeneratingNewQr] = useState<boolean>(false);
+
+  // Timer de 1 minuto para expiração do QR
+  const { timeLeft, formattedTime, isExpired, reset: resetTimer } = useQRCodeTimer({
+    isActive: !!qr && status !== 'CONNECTED',
+    duration: 60, // 1 minuto
+    onExpire: () => {
+      console.log('⏳ [QrPolling] QR Code expired after 1 minute');
+      setStatus('EXPIRED');
+    }
+  });
 
   const lastQrRef = useRef<string | null>(initialQr || null);
   const timerRef = useRef<number | null>(null); // polling interval
-  const timeoutRef = useRef<number | null>(null); // timeout de 120s
   const abortRef = useRef<AbortController | null>(null);
   const isPollingRef = useRef<boolean>(false);
 
@@ -101,10 +108,6 @@ export default function QrPolling({
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
     }
   };
 
@@ -135,15 +138,25 @@ export default function QrPolling({
       const raw = await r.json();
       console.log('📊 [QrPolling] Raw response:', raw);
 
-      // Condição de sucesso EXATA conforme requisito: payload em array com { instance }
+      // Verifica se recebeu dados de conexão bem-sucedida
       if (isTargetConnectedPayload(raw)) {
-        console.log('🎯 [QrPolling] Target connected payload detected.');
+        console.log('🎯 [QrPolling] Connection successful!');
         setStatus('CONNECTED');
         lastQrRef.current = null;
         setQr(null);
         stopAllTimers();
         abortRef.current?.abort();
-        if (onConnected) onConnected(raw);
+        
+        // Extrair dados da conexão para salvar
+        const data = Array.isArray(raw) ? raw[0] : raw;
+        const inst = data.instance || data;
+        const connectionData = {
+          profileName: inst.profileName || inst.contato || '',
+          profilePictureUrl: inst.profilePictureUrl || inst.fotodoperfil || '',
+          contact: inst.owner || inst.contato || ''
+        };
+        
+        if (onConnected) onConnected(connectionData);
         return;
       }
 
@@ -179,7 +192,7 @@ export default function QrPolling({
     console.log('⏱️ [QrPolling] Interval:', intervalMs + 'ms');
     console.log('📱 [QrPolling] Initial QR available:', !!initialQr);
 
-    setExpired(false);
+    // Timer será resetado pelo resetTimer() abaixo
 
     // Se não temos QR inicial, fazer fetch imediatamente
     if (!initialQr) {
@@ -193,11 +206,8 @@ export default function QrPolling({
       fetchStatus();
     }, intervalMs);
 
-    // Timeout de 120s para exibir opção de tentar novamente (sem fechar modal)
-    timeoutRef.current = window.setTimeout(() => {
-      console.log('⏳ [QrPolling] Timeout reached (120s).');
-      setExpired(true);
-    }, 120000);
+    // Resetar timer quando começar novo polling
+    resetTimer();
 
     return () => {
       console.log('🛑 [QrPolling] Cleanup: stopping polling...');
@@ -208,19 +218,39 @@ export default function QrPolling({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance, endpoint, intervalMs]);
 
-  const retryTimeout = () => {
-    console.log('🔁 [QrPolling] Retry requested by user.');
-    setExpired(false);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => {
-      console.log('⏳ [QrPolling] Timeout reached (120s) after retry.');
-      setExpired(true);
-    }, 120000);
-    fetchStatus();
+  const generateNewQrCode = async () => {
+    console.log('🔁 [QrPolling] Generating new QR code...');
+    setIsGeneratingNewQr(true);
+    setStatus('LOADING');
+    
+    try {
+      // Fazer chamada para gerar novo QR code
+      const url = `${endpoint}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const normalized = normalizeResp(data);
+        
+        if (normalized.qr) {
+          setQr(normalized.qr);
+          lastQrRef.current = normalized.qr;
+          setStatus('QRCODE');
+          resetTimer(); // Reiniciar o timer de 1 minuto
+        }
+      }
+    } catch (error) {
+      console.error('❌ [QrPolling] Error generating new QR:', error);
+    }
+    
+    setIsGeneratingNewQr(false);
   };
 
-  // QR deve aparecer se temos um QR válido E o status não é CONNECTED
-  const showQr = !!qr && status.toUpperCase() !== "CONNECTED";
+  // QR deve aparecer se temos um QR válido E o status não é CONNECTED nem EXPIRED
+  const showQr = !!qr && status !== "CONNECTED" && status !== "EXPIRED";
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -233,8 +263,15 @@ export default function QrPolling({
               className="w-64 h-64 rounded-lg"
             />
           </div>
+          
           <div className="text-center space-y-2">
-            <p className="text-sm font-medium">Escaneie o QR Code com seu WhatsApp</p>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-sm font-medium">Escaneie o QR Code com seu WhatsApp</p>
+              <div className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                {formattedTime}
+              </div>
+            </div>
+            
             <div className="text-xs text-muted-foreground space-y-1">
               <p>1. Abra o WhatsApp no seu celular</p>
               <p>2. Toque em Mais opções → Dispositivos conectados</p>
@@ -262,17 +299,25 @@ export default function QrPolling({
         </div>
       )}
 
-      {!showQr && status.toUpperCase() !== "CONNECTED" && !pairingCode && (
+      {!showQr && status !== "CONNECTED" && status !== "EXPIRED" && !pairingCode && (
         <div className="text-center space-y-2">
           <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <div className="text-sm text-muted-foreground">Aguardando conexão...</div>
+          <div className="text-sm text-muted-foreground">
+            {isGeneratingNewQr ? "Gerando novo código..." : "Aguardando conexão..."}
+          </div>
         </div>
       )}
 
-      {expired && (
+      {(status === "EXPIRED" || isExpired) && (
         <div className="text-center space-y-3">
-          <div className="text-sm text-destructive">Tempo esgotado. Tente novamente.</div>
-          <Button variant="outline" onClick={retryTimeout}>Tentar novamente</Button>
+          <div className="text-sm text-destructive">QR Code expirado (1 minuto)</div>
+          <Button 
+            variant="outline" 
+            onClick={generateNewQrCode}
+            disabled={isGeneratingNewQr}
+          >
+            {isGeneratingNewQr ? "Gerando..." : "Gerar Novo Código"}
+          </Button>
         </div>
       )}
 
