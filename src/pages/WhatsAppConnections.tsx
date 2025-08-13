@@ -217,10 +217,10 @@ export default function WhatsAppConnections() {
       const updateData: any = { status: newStatus }
       
       if (newStatus === 'connected' && profileData) {
-        // CORRIGIDO: Usar campos corretos do formato especificado
+        // CORRIGIDO: Usar campos corretos conforme JSON real recebido
         updateData.whatsapp_profile_name = profileData.profileName === "not loaded" ? null : (profileData.profileName || null)
-        updateData.whatsapp_contact = profileData.contact || null  // Corrigido: usar 'contact' não 'contato'
-        updateData.whatsapp_profile_picture_url = profileData.profilePictureUrl || null  // Corrigido: usar 'profilePictureUrl'
+        updateData.whatsapp_contact = profileData.contato || null  // Corrigido: usar 'contato' conforme JSON
+        updateData.whatsapp_profile_picture_url = profileData.fotodoperfil || null  // Corrigido: usar 'fotodoperfil' conforme JSON
         updateData.whatsapp_connected_at = new Date().toISOString()
         
         console.log('💾 [handleStatusChange] Updating with data:', updateData);
