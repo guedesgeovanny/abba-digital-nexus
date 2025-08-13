@@ -88,47 +88,20 @@ export function InstanceCard({
   const handleConnect = async () => {
     try {
       setIsConnecting(true)
-      setShowLogger(true)
-      
-      // Log inicial
-      setTimeout(() => {
-        if ((window as any).connectionLogger) {
-          (window as any).connectionLogger.addLog('info', `🔗 Iniciando processo de conexão`)
-          ;(window as any).connectionLogger.addLog('info', `📱 Instância: ${name}`)
-          ;(window as any).connectionLogger.addLog('info', `⏰ Horário: ${new Date().toLocaleString()}`)
-          ;(window as any).connectionLogger.addLog('info', `🌐 Fazendo requisição para: ${WEBHOOK_URLS.CONNECT}`)
-        }
-      }, 100)
       
       const response = await fetch(
         `${WEBHOOK_URLS.CONNECT}?instanceName=${encodeURIComponent(name)}`
       )
-      
-      if ((window as any).connectionLogger) {
-        (window as any).connectionLogger.addLog('info', `📡 Response status: ${response.status}`)
-      }
       
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       
       const data = await response.json()
       const qrCode = data.base64 || data.result?.base64
       
-      if ((window as any).connectionLogger) {
-        (window as any).connectionLogger.addLog('info', `📄 Response data received`, { 
-          hasBase64: !!qrCode, 
-          dataKeys: Object.keys(data) 
-        })
-      }
-      
       if (qrCode) {
-        // Usar o QR como está, já que agora o QrPolling lida com ambos os formatos
         setQrCodeData(qrCode)
         setShowQrModal(true)
         onStatusChange(id, 'connecting')
-        
-        if ((window as any).connectionLogger) {
-          (window as any).connectionLogger.addLog('success', `✅ QR Code gerado com sucesso`)
-        }
         
         toast({
           title: "QR Code gerado",
@@ -139,10 +112,6 @@ export function InstanceCard({
       }
     } catch (error) {
       console.error('Connect error:', error)
-      
-      if ((window as any).connectionLogger) {
-        (window as any).connectionLogger.addLog('error', `❌ Erro ao conectar: ${error}`, error)
-      }
       
       toast({
         title: "Erro ao conectar",
@@ -220,17 +189,8 @@ export function InstanceCard({
   const handleConnected = (profileData: any) => {
     console.log('🎉 [InstanceCard] WhatsApp connected successfully:', profileData)
     
-    if ((window as any).connectionLogger) {
-      (window as any).connectionLogger.addLog('success', `✅ WhatsApp conectado com sucesso!`, profileData)
-    }
-    
     // Fechar modal após conexão bem-sucedida
     setShowQrModal(false)
-    
-    // Manter o logger visível por mais tempo para mostrar o sucesso
-    setTimeout(() => {
-      setShowLogger(false)
-    }, 5000)
     
     // Usar dados já formatados pelo QrPolling com campos corretos
     const connectionData = {
@@ -408,11 +368,6 @@ export function InstanceCard({
                 onClick={() => {
                   console.log('❌ [InstanceCard] User manually closed QR modal');
                   setShowQrModal(false);
-                  setShowLogger(false);
-                  
-                  if ((window as any).connectionLogger) {
-                    (window as any).connectionLogger.addLog('warning', `❌ Modal fechado pelo usuário`)
-                  }
                 }}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -434,11 +389,6 @@ export function InstanceCard({
                 onClick={() => {
                   console.log('❌ [InstanceCard] User clicked Cancel button');
                   setShowQrModal(false);
-                  setShowLogger(false);
-                  
-                  if ((window as any).connectionLogger) {
-                    (window as any).connectionLogger.addLog('warning', `❌ Conexão cancelada pelo usuário`)
-                  }
                 }}
                 className="w-full sm:w-auto"
               >
