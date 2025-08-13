@@ -24,34 +24,41 @@ function normalizeResp(resp: RawResp): Sessao {
   return { status, qr, pairingCode };
 }
 
-// Considera "conectado" SOMENTE quando payload tem o formato exato:
-// { "profileName": "...", "contato": "...", "fotodoperfil": "...", "status": "open" }
+// Considera "conectado" SOMENTE quando payload tem o formato exigido:
+// [ { instance: { ... } } ] E com campos indicando conexão estabelecida
 function isTargetConnectedPayload(raw: any): boolean {
   console.log('🔍 [isTargetConnectedPayload] Checking payload:', raw);
   
-  // Verifica se é um objeto direto (não array)
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    console.log('❌ [isTargetConnectedPayload] Not a direct object');
+  if (!Array.isArray(raw) || !raw[0] || typeof raw[0] !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Not an array or missing first element');
     return false;
   }
   
-  console.log('📋 [isTargetConnectedPayload] Direct object:', raw);
+  const inst = (raw[0] as any).instance;
+  if (!inst || typeof inst !== 'object') {
+    console.log('❌ [isTargetConnectedPayload] Missing instance object');
+    return false;
+  }
   
-  // Verifica se tem os campos obrigatórios
-  const hasRequiredFields = (
-    typeof raw.status === 'string' &&
-    typeof raw.contato === 'string' &&
-    typeof raw.profileName === 'string'
+  console.log('📋 [isTargetConnectedPayload] Instance object:', inst);
+  
+  // Checagem mínima de campos esperados
+  const hasBasics = typeof inst.instanceName === 'string' && typeof inst.instanceId === 'string' && typeof inst.status === 'string';
+  
+  // Considera conectado se:
+  // 1. Tem campos básicos E
+  // 2. status é "open" OU tem campos que indicam conexão estabelecida (owner, profileName, profilePictureUrl)
+  const isConnected = hasBasics && (
+    inst.status === 'open' || 
+    (typeof inst.owner === 'string' && inst.owner.length > 0) ||
+    (typeof inst.profileName === 'string' && inst.profileName.length > 0) ||
+    (typeof inst.profilePictureUrl === 'string' && inst.profilePictureUrl.length > 0)
   );
   
-  // Considera conectado se status é "open" e tem contato válido
-  const isConnected = hasRequiredFields && raw.status === 'open' && raw.contato.length > 0;
-  
-  console.log('🎯 [isTargetConnectedPayload] status:', raw.status);
-  console.log('🎯 [isTargetConnectedPayload] contato:', raw.contato);
-  console.log('🎯 [isTargetConnectedPayload] profileName:', raw.profileName);
-  console.log('🎯 [isTargetConnectedPayload] fotodoperfil:', raw.fotodoperfil);
-  console.log('🎯 [isTargetConnectedPayload] hasRequiredFields:', hasRequiredFields);
+  console.log('🎯 [isTargetConnectedPayload] hasBasics:', hasBasics);
+  console.log('🎯 [isTargetConnectedPayload] status:', inst.status);
+  console.log('🎯 [isTargetConnectedPayload] owner:', inst.owner);
+  console.log('🎯 [isTargetConnectedPayload] profileName:', inst.profileName);
   console.log('🎯 [isTargetConnectedPayload] isConnected:', isConnected);
   
   return isConnected;
