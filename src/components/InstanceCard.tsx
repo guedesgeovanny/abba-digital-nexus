@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Trash, Power, Wifi, MoreVertical, Smartphone, Clock } from "lucide-react"
+import { Trash, Power, Wifi, MoreVertical, Smartphone, Clock, RotateCw } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -54,6 +54,7 @@ export function InstanceCard({
   const [isConnecting, setIsConnecting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [qrCodeData, setQrCodeData] = useState<string>("")
   const { toast } = useToast()
@@ -197,6 +198,65 @@ export function InstanceCard({
       title: "WhatsApp conectado!",
       description: "Sua conta WhatsApp foi conectada com sucesso.",
     })
+  }
+
+  const handleVerifyNow = async () => {
+    try {
+      setIsVerifying(true)
+      
+      const response = await Promise.race([
+        fetch(`${WEBHOOK_URLS.CHECK_STATUS}?instanceName=${encodeURIComponent(name)}`),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('timeout')), 15000)
+        )
+      ]) as Response
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('🔍 [InstanceCard] Manual verification response:', data)
+      
+      const connected = data.connected === true || 
+                       (typeof data.status === 'string' && 
+                        ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
+      
+      if (connected) {
+        // Fechar modal após verificação bem-sucedida
+        setShowQrModal(false)
+        
+        // Criar objeto profileData no formato esperado
+        const profileData = {
+          profilename: data.profilename || null,
+          contato: data.contato || null,
+          fotodoperfil: data.fotodoperfil || null
+        }
+        
+        // Atualizar status no banco
+        onStatusChange(id, 'connected', profileData)
+        
+        toast({
+          title: "WhatsApp conectado!",
+          description: "Conexão verificada e confirmada com sucesso.",
+        })
+      } else {
+        toast({
+          title: "Ainda não conectado",
+          description: "Escaneie o QR Code para conectar seu WhatsApp.",
+          variant: "default"
+        })
+      }
+    } catch (error) {
+      console.error('Manual verification error:', error)
+      toast({
+        title: "Erro na verificação",
+        description: "Não foi possível verificar o status. Tente novamente.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -372,14 +432,32 @@ export function InstanceCard({
               intervalMs={3000}
             />
             
-            <div className="mt-6 pt-4 border-t flex justify-end">
+            <div className="mt-6 pt-4 border-t flex justify-between gap-3">
               <Button 
                 variant="outline" 
+                onClick={handleVerifyNow}
+                disabled={isVerifying}
+                className="flex-1"
+              >
+                {isVerifying ? (
+                  <>
+                    <RotateCw className="mr-2 h-4 w-4 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <RotateCw className="mr-2 h-4 w-4" />
+                    Verificar Agora
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="ghost" 
                 onClick={() => {
                   console.log('❌ [InstanceCard] User clicked Cancel button');
                   setShowQrModal(false);
                 }}
-                className="w-full sm:w-auto"
+                className="flex-1"
               >
                 Cancelar
               </Button>
