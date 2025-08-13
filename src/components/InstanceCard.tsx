@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Trash, Power, Wifi, MoreVertical, Smartphone, Clock } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -57,6 +57,20 @@ export function InstanceCard({
   const [showQrModal, setShowQrModal] = useState(false)
   const [qrCodeData, setQrCodeData] = useState<string>("")
   const { toast } = useToast()
+
+  // Logs de diagnóstico para rastrear fechamento do modal
+  useEffect(() => {
+    console.log('📦 [InstanceCard] mounted:', { id, name })
+    return () => console.log('🧹 [InstanceCard] unmounted:', { id, name })
+  }, [])
+
+  useEffect(() => {
+    console.log('👁️ [InstanceCard] showQrModal:', showQrModal)
+  }, [showQrModal])
+
+  useEffect(() => {
+    console.log('🔁 [InstanceCard] status changed:', status)
+  }, [status])
 
   const getStatusBadge = () => {
     switch (status) {
