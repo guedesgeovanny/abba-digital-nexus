@@ -264,26 +264,43 @@ export default function QrPolling({
     setStatus('LOADING');
     
     try {
-      // Fazer chamada para gerar novo QR code
+      // Fazer chamada para gerar novo QR code usando GET (mesmo método da conexão inicial)
       const url = `${endpoint}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
+      console.log('🔗 [QrPolling] New QR request URL:', url);
+      
       const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'cache-control': 'no-cache'
+        }
       });
+      
+      console.log('📡 [QrPolling] New QR response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        const normalized = normalizeResp(data);
+        console.log('📄 [QrPolling] New QR response data:', data);
         
-        if (normalized.qr) {
-          setQr(normalized.qr);
-          lastQrRef.current = normalized.qr;
+        const qrCode = data.base64 || data.result?.base64;
+        
+        if (qrCode) {
+          setQr(qrCode);
+          lastQrRef.current = qrCode;
           setStatus('QRCODE');
           resetTimer(); // Reiniciar o timer de 1 minuto
+          console.log('✅ [QrPolling] New QR code generated successfully');
+        } else {
+          console.warn('⚠️ [QrPolling] No QR code in response');
+          setStatus('ERROR');
         }
+      } else {
+        console.error('❌ [QrPolling] Failed to generate new QR:', response.status);
+        setStatus('ERROR');
       }
     } catch (error) {
       console.error('❌ [QrPolling] Error generating new QR:', error);
+      setStatus('ERROR');
     }
     
     setIsGeneratingNewQr(false);
