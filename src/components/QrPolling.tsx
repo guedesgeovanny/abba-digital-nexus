@@ -34,30 +34,36 @@ function isTargetConnectedPayload(raw: any): boolean {
     return false;
   }
   
-  // Verifica se é array (formato esperado)
+  let dataToCheck = null;
+  
+  // Verifica se é array (formato antigo)
   if (Array.isArray(raw) && raw.length > 0) {
     const firstItem = raw[0];
-    console.log('📦 [isTargetConnectedPayload] First item:', firstItem);
-    
-    // Verifica se tem a propriedade 'instance'
     if (firstItem && firstItem.instance) {
-      const inst = firstItem.instance;
-      console.log('🏢 [isTargetConnectedPayload] Instance object:', inst);
-      
-      // NOVA LÓGICA: Considera conectado APENAS se status é "open"
-      const isConnected = inst.status === "open";
-      
-      console.log('🎯 [isTargetConnectedPayload] Status:', inst.status);
-      console.log('🎯 [isTargetConnectedPayload] Owner:', inst.owner);
-      console.log('🎯 [isTargetConnectedPayload] ProfileName:', inst.profileName);
-      console.log('🎯 [isTargetConnectedPayload] Result:', isConnected ? "✅ CONNECTED" : "❌ NOT CONNECTED");
-      
-      return isConnected;
+      dataToCheck = firstItem.instance;
+      console.log('📦 [isTargetConnectedPayload] Array format - Instance object:', dataToCheck);
     }
+  } 
+  // Verifica se é objeto direto (formato novo)
+  else if (typeof raw === 'object' && raw !== null) {
+    dataToCheck = raw;
+    console.log('📋 [isTargetConnectedPayload] Direct object format:', dataToCheck);
   }
   
-  console.log('❌ [isTargetConnectedPayload] Invalid format - expecting array with instance object');
-  return false;
+  if (!dataToCheck) {
+    console.log('❌ [isTargetConnectedPayload] No valid data to check');
+    return false;
+  }
+  
+  // LÓGICA PRINCIPAL: Considera conectado APENAS se status é "open"
+  const isConnected = dataToCheck.status === "open";
+  
+  console.log('🎯 [isTargetConnectedPayload] Status:', dataToCheck.status);
+  console.log('🎯 [isTargetConnectedPayload] ProfileName:', dataToCheck.profileName);
+  console.log('🎯 [isTargetConnectedPayload] Contact/Owner:', dataToCheck.contato || dataToCheck.owner);
+  console.log('🎯 [isTargetConnectedPayload] Result:', isConnected ? "✅ CONNECTED" : "❌ NOT CONNECTED");
+  
+  return isConnected;
 }
 
 export default function QrPolling({
@@ -145,16 +151,23 @@ export default function QrPolling({
         stopAllTimers();
         abortRef.current?.abort();
         
-        // Extrair dados da conexão para salvar
-        const data = Array.isArray(raw) ? raw[0] : raw;
-        const inst = data.instance || data;
+        // Extrair dados da conexão para salvar - suporta ambos os formatos
+        let dataToExtract = null;
         
-        console.log('💾 [QrPolling] Extracting connection data from:', inst);
+        if (Array.isArray(raw) && raw.length > 0 && raw[0].instance) {
+          // Formato antigo: array com instance
+          dataToExtract = raw[0].instance;
+        } else if (typeof raw === 'object' && raw !== null) {
+          // Formato novo: objeto direto
+          dataToExtract = raw;
+        }
+        
+        console.log('💾 [QrPolling] Extracting connection data from:', dataToExtract);
         
         const connectionData = {
-          profileName: inst.profileName === "not loaded" ? 'Usuário WhatsApp' : (inst.profileName || 'Usuário WhatsApp'),
-          profilePictureUrl: inst.profilePictureUrl || '',
-          contact: inst.owner ? inst.owner.replace('@s.whatsapp.net', '') : ''
+          profileName: dataToExtract?.profileName === "not loaded" ? 'Usuário WhatsApp' : (dataToExtract?.profileName || 'Usuário WhatsApp'),
+          profilePictureUrl: dataToExtract?.profilePictureUrl || dataToExtract?.fotodoperfil || '',
+          contact: (dataToExtract?.owner ? dataToExtract.owner.replace('@s.whatsapp.net', '') : '') || dataToExtract?.contato || ''
         };
         
         console.log('📋 [QrPolling] Final connection data:', connectionData);
