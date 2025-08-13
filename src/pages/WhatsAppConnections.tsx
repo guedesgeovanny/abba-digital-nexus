@@ -137,7 +137,11 @@ export default function WhatsAppConnections() {
   const verifyConnectionStatus = async (connectionId: string, instanceName: string, silent = false) => {
     try {
       const response = await Promise.race([
-        fetch(`${WEBHOOK_URLS.CHECK_STATUS}?instanceName=${encodeURIComponent(instanceName)}`),
+        fetch(WEBHOOK_URLS.CHECK_STATUS, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instanceName })
+        }),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('timeout')), POLLING_CONFIG.requestTimeout)
         )
@@ -194,7 +198,11 @@ export default function WhatsAppConnections() {
         connections.map(async (connection) => {
           try {
             const response = await Promise.race([
-              fetch(`${WEBHOOK_URLS.CHECK_STATUS}?instanceName=${encodeURIComponent(connection.name)}`),
+              fetch(WEBHOOK_URLS.CHECK_STATUS, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instanceName: connection.name })
+              }),
               new Promise<never>((_, reject) => 
                 setTimeout(() => reject(new Error('timeout')), POLLING_CONFIG.requestTimeout)
               )
