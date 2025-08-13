@@ -144,21 +144,18 @@ export default function QrPolling({
     try {
       // Usar endpoint de verificação de status específico
       const statusUrl = endpoint.replace('conecta-mp-brasil', 'verifica-status-mp-brasil');
+      const url = `${statusUrl}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
 
       console.log('🔄 [QrPolling] Checking status for:', instance);
-      console.log('🔗 [QrPolling] URL:', statusUrl);
+      console.log('🔗 [QrPolling] URL:', url);
       
       addLog('info', `🔄 Verificando status da instância: ${instance}`)
-      addLog('info', `🔗 URL: ${statusUrl}`)
+      addLog('info', `🔗 URL: ${url}`)
 
-      const r = await fetch(statusUrl, {
+      const r = await fetch(url, {
         signal: ac.signal,
-        method: 'POST',
-        headers: { 
-          "Content-Type": "application/json",
-          "cache-control": "no-cache" 
-        },
-        body: JSON.stringify({ instanceName: instance })
+        headers: { "cache-control": "no-cache" },
+        method: 'GET'
       });
 
       if (!r.ok) {
@@ -270,10 +267,10 @@ export default function QrPolling({
     
     try {
       // Fazer chamada para gerar novo QR code
-      const response = await fetch(endpoint, {
+      const url = `${endpoint}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName: instance })
+        headers: { 'Content-Type': 'application/json' }
       });
       
       if (response.ok) {

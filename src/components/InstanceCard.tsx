@@ -100,11 +100,9 @@ export function InstanceCard({
         }
       }, 100)
       
-      const response = await fetch(WEBHOOK_URLS.CONNECT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName: name })
-      })
+      const response = await fetch(
+        `${WEBHOOK_URLS.CONNECT}?instanceName=${encodeURIComponent(name)}`
+      )
       
       if ((window as any).connectionLogger) {
         (window as any).connectionLogger.addLog('info', `📡 Response status: ${response.status}`)
