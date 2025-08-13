@@ -41,13 +41,15 @@ function normalizeResp(resp: RawResp): Sessao {
 export default function QrPolling({
   instance,
   endpoint,
-  intervalMs = 2000,
-  initialQr
+  intervalMs = 3000,
+  initialQr,
+  onConnected
 }: {
   instance: string;
   endpoint: string; // ex.: "https://SEU_N8N/webhook/qr-status" ou "/api/whats/status"
   intervalMs?: number;
   initialQr?: string;
+  onConnected?: (profileData: any) => void;
 }) {
   const [status, setStatus] = useState<string>("LOADING");
   const [qr, setQr] = useState<string | null>(initialQr || null);
@@ -72,30 +74,54 @@ export default function QrPolling({
     const ac = new AbortController();
     abortRef.current = ac;
     try {
-      const url = `${endpoint}?instance=${encodeURIComponent(instance)}&t=${Date.now()}`;
-      const r = await fetch(url, { signal: ac.signal, headers: { "cache-control": "no-cache" } });
+      // Usar endpoint de verificação de status específico
+      const statusUrl = endpoint.replace('conecta-mp-brasil', 'verifica-status-mp-brasil');
+      const url = `${statusUrl}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
+      
+      console.log('Polling status for instance:', instance, 'URL:', url);
+      
+      const r = await fetch(url, { 
+        signal: ac.signal, 
+        headers: { "cache-control": "no-cache" } 
+      });
+      
+      if (!r.ok) {
+        console.error('Status check failed:', r.status, r.statusText);
+        return;
+      }
+      
       const raw = await r.json();
+      console.log('Status response:', raw);
+      
       const data = normalizeResp(raw);
+      console.log('Normalized status:', data);
 
       setStatus(data.status);
       setPairingCode(data.pairingCode ?? null);
 
+      // Manter o QR inicial sempre visível até conectar
       if (data.qr) {
         lastQrRef.current = data.qr;
         setQr(data.qr);
-      } else if (["QRCODE", "UNPAIRED", "PAIRING", "CONNECTING"].includes(data.status.toUpperCase())) {
-        // Manter o último QR válido enquanto está conectando
-        // NÃO limpar o QR se já temos um válido
+      } else if (data.status.toUpperCase() === "CONNECTED") {
+        // Só limpar QR quando realmente conectado
+        console.log('Connection established, clearing QR');
+        lastQrRef.current = null;
+        setQr(null);
+        // Notificar sobre a conexão estabelecida
+        if (onConnected) {
+          onConnected(raw);
+        }
+      } else {
+        // Para todos os outros status, manter o QR inicial
         if (lastQrRef.current) {
           setQr(lastQrRef.current);
         }
-      } else if (data.status.toUpperCase() === "CONNECTED") {
-        // Limpar QR apenas quando conectado
-        lastQrRef.current = null;
-        setQr(null);
       }
-    } catch {
-      // silêncio em cancelamentos
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Polling error:', error);
+      }
     }
   };
 
@@ -121,35 +147,55 @@ export default function QrPolling({
   const showQr = !!qr && status.toUpperCase() !== "CONNECTED";
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-4">
       {showQr && (
         <>
-          <img
-            alt="QR para conectar"
-            src={qr?.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`}
-            className="w-64 h-64 border rounded-xl"
-          />
-          <p className="text-sm text-muted-foreground text-center">
-            Abra o WhatsApp → Dispositivos conectados → Conectar dispositivo
-          </p>
+          <div className="border-2 border-primary rounded-xl p-2 bg-white">
+            <img
+              alt="QR Code para conectar WhatsApp"
+              src={qr?.startsWith("data:image") ? qr : `data:image/png;base64,${qr}`}
+              className="w-64 h-64 rounded-lg"
+            />
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-sm font-medium">Escaneie o QR Code com seu WhatsApp</p>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>1. Abra o WhatsApp no seu celular</p>
+              <p>2. Toque em Mais opções → Dispositivos conectados</p>
+              <p>3. Toque em Conectar dispositivo</p>
+              <p>4. Aponte seu celular para esta tela</p>
+            </div>
+          </div>
         </>
       )}
 
       {!showQr && pairingCode && (
-        <div className="text-sm font-mono px-3 py-2 border rounded">
-          Código de pareamento: {pairingCode}
+        <div className="text-center space-y-2">
+          <p className="text-sm font-medium">Código de pareamento</p>
+          <div className="text-lg font-mono px-4 py-2 border rounded-lg bg-muted">
+            {pairingCode}
+          </div>
+          <p className="text-xs text-muted-foreground">Digite este código no WhatsApp</p>
         </div>
       )}
 
-      {status === "CONNECTED" && (
-        <div className="text-green-600 font-medium">✅ Dispositivo conectado</div>
+      {status.toUpperCase() === "CONNECTED" && (
+        <div className="text-center space-y-2">
+          <div className="text-green-600 font-medium text-lg">✅ Conectado com sucesso!</div>
+          <p className="text-sm text-muted-foreground">Seu WhatsApp foi conectado</p>
+        </div>
       )}
 
-      {!showQr && status !== "CONNECTED" && !pairingCode && (
-        <div className="text-sm opacity-70">Gerando/renovando QR…</div>
+      {!showQr && status.toUpperCase() !== "CONNECTED" && !pairingCode && (
+        <div className="text-center space-y-2">
+          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <div className="text-sm text-muted-foreground">Aguardando conexão...</div>
+        </div>
       )}
 
-      <div className="text-xs opacity-50">Status: {status}</div>
+      <div className="text-xs text-muted-foreground text-center">
+        Status: <span className="font-mono">{status}</span>
+      </div>
     </div>
   );
 }

@@ -171,8 +171,14 @@ export function InstanceCard({
   }
 
   const handleConnected = (profileData: any) => {
+    console.log('WhatsApp connected successfully:', profileData)
     setShowQrModal(false)
     onStatusChange(id, 'connected', profileData)
+    
+    toast({
+      title: "WhatsApp conectado!",
+      description: "Sua conta WhatsApp foi conectada com sucesso.",
+    })
   }
 
   const formatDate = (dateString: string) => {
@@ -320,24 +326,36 @@ export function InstanceCard({
       </Card>
       
       {showQrModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-          <div className="bg-background border rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-background border rounded-xl shadow-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-lg font-semibold">Conectar WhatsApp</h2>
-                <p className="text-sm text-muted-foreground">Escaneie o QR Code com seu WhatsApp para conectar</p>
+                <h2 className="text-xl font-semibold">Conectar WhatsApp</h2>
+                <p className="text-sm text-muted-foreground">Instância: {name}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowQrModal(false)}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowQrModal(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
                 ✕
               </Button>
             </div>
+            
             <QrPolling
               instance={name}
               endpoint={WEBHOOK_URLS.CONNECT}
               initialQr={qrCodeData}
+              onConnected={handleConnected}
             />
-            <div className="mt-4 pt-4 border-t flex justify-end">
-              <Button variant="outline" onClick={() => setShowQrModal(false)}>
+            
+            <div className="mt-6 pt-4 border-t flex justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowQrModal(false)}
+                className="w-full sm:w-auto"
+              >
                 Cancelar
               </Button>
             </div>
