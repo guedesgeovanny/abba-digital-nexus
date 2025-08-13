@@ -67,6 +67,92 @@ export default function WhatsAppConnections() {
     fetchConnections()
   }, [])
 
+  // Função unificada para verificar status de uma conexão e atualizar banco
+  const verifyConnectionStatus = async (connectionId: string, instanceName: string, silent = false) => {
+    try {
+      const response = await Promise.race([
+        fetch(`${WEBHOOK_URLS.CHECK_STATUS}?instanceName=${encodeURIComponent(instanceName)}`),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('timeout')), POLLING_CONFIG.requestTimeout)
+        )
+      ]) as Response
+      
+      if (!response.ok) {
+        console.warn(`Status check failed for ${instanceName}:`, response.status)
+        return false
+      }
+      
+      const data = await response.json()
+      console.log(`[verifyConnectionStatus] Raw data for ${instanceName}:`, data)
+      
+      // Detectar conexão usando a mesma lógica do QrPolling
+      let isConnected = false
+      let profileData: any = null
+      
+      // Verificar se é a nova estrutura com array/instance
+      const parsedData = Array.isArray(data) ? data[0] : data
+      const target = parsedData.instance || parsedData
+      
+      if (target && target.status && target.status.toLowerCase() === 'open') {
+        isConnected = true
+        profileData = {
+          profileName: target.profileName && target.profileName !== "not loaded"
+            ? target.profileName
+            : "Usuário WhatsApp",
+          contact: target.owner || "",
+          profilePictureUrl: target.profilePictureUrl || "",
+          connectedAt: new Date().toISOString()
+        }
+      } else {
+        // Fallback para estrutura antiga
+        isConnected = data.connected === true || 
+                     (typeof data.status === 'string' && 
+                      ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
+        
+        if (isConnected) {
+          profileData = {
+            profileName: data.profileName === "not loaded" ? "Usuário WhatsApp" : (data.profileName || "Usuário WhatsApp"),
+            contact: data.contato || "",
+            profilePictureUrl: data.fotodoperfil || "",
+            connectedAt: new Date().toISOString()
+          }
+        }
+      }
+      
+      const newStatus = isConnected ? 'connected' : 'disconnected'
+      
+      // Atualizar banco com dados unificados
+      const updateData: any = { status: newStatus }
+      
+      if (isConnected && profileData) {
+        updateData.whatsapp_profile_name = profileData.profileName || null
+        updateData.whatsapp_contact = profileData.contact || null
+        updateData.whatsapp_profile_picture_url = profileData.profilePictureUrl || null
+        updateData.whatsapp_connected_at = profileData.connectedAt
+      } else if (!isConnected) {
+        updateData.whatsapp_profile_name = null
+        updateData.whatsapp_contact = null
+        updateData.whatsapp_profile_picture_url = null
+        updateData.whatsapp_connected_at = null
+      }
+      
+      await supabase
+        .from('conexoes')
+        .update(updateData)
+        .eq('id', connectionId)
+      
+      if (!silent) {
+        console.log(`[verifyConnectionStatus] Updated ${instanceName} status to ${newStatus}`)
+      }
+      
+      return { statusChanged: true, newStatus, profileData }
+      
+    } catch (error) {
+      console.error(`Error verifying connection ${instanceName}:`, error)
+      return false
+    }
+  }
+
   const verifyAllConnections = async () => {
     setVerifying(true)
     let updatedCount = 0
@@ -74,40 +160,9 @@ export default function WhatsAppConnections() {
     try {
       await Promise.allSettled(
         connections.map(async (connection) => {
-          try {
-            const response = await Promise.race([
-              fetch(`${WEBHOOK_URLS.CHECK_STATUS}?instanceName=${encodeURIComponent(connection.name)}`),
-              new Promise<never>((_, reject) => 
-                setTimeout(() => reject(new Error('timeout')), POLLING_CONFIG.requestTimeout)
-              )
-            ]) as Response
-            
-            if (!response.ok) return
-            
-            const data = await response.json()
-            
-            const connected = data.connected === true || 
-                             (typeof data.status === 'string' && 
-                              ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
-            
-            const newStatus = connected ? 'connected' : 'disconnected'
-            
-            if (connection.status !== newStatus) {
-                await supabase
-                .from('conexoes')
-                .update({
-                  status: newStatus,
-                  whatsapp_profile_name: data.profileName === "not loaded" ? null : (data.profileName || null),
-                  whatsapp_contact: data.contato || null,
-                  whatsapp_profile_picture_url: data.fotodoperfil || null,
-                  whatsapp_connected_at: connected ? new Date().toISOString() : null
-                })
-                .eq('id', connection.id)
-              
-              updatedCount++
-            }
-          } catch (error) {
-            console.error(`Error verifying connection ${connection.name}:`, error)
+          const result = await verifyConnectionStatus(connection.id, connection.name, true)
+          if (result && result.statusChanged) {
+            updatedCount++
           }
         })
       )
@@ -205,52 +260,59 @@ export default function WhatsAppConnections() {
     newStatus: 'connected' | 'disconnected' | 'connecting', 
     profileData?: any
   ) => {
-    try {
-      console.log('🔄 [handleStatusChange] Called with:', { id, newStatus, profileData });
-      
-      // Quando for 'connecting', não tocar no banco nem refazer o fetch; apenas atualizar em memória
-      if (newStatus === 'connecting') {
-        setConnections(prev => prev.map(c => c.id === id ? { ...c, status: 'connecting' } : c))
-        return
-      }
-
-      const updateData: any = { status: newStatus }
-      
-      if (newStatus === 'connected' && profileData) {
-        // Mapeamento usando dados extraídos pela função extractProfileData
-        updateData.whatsapp_profile_name = profileData.profileName || null
-        updateData.whatsapp_contact = profileData.contact || null
-        updateData.whatsapp_profile_picture_url = profileData.profilePictureUrl || null
-        updateData.whatsapp_connected_at = profileData.connectedAt || new Date().toISOString()
+    // Usar a função unificada de verificação ao invés de atualizar diretamente
+    if (newStatus === 'connected') {
+      const connection = connections.find(c => c.id === id)
+      if (connection) {
+        await verifyConnectionStatus(id, connection.name)
+        await fetchConnections()
         
-        console.log('💾 [handleStatusChange] Updating with data:', updateData);
-      } else if (newStatus === 'disconnected') {
-        updateData.whatsapp_connected_at = null
+        toast({
+          title: "Sucesso",
+          description: "WhatsApp conectado com sucesso!"
+        })
       }
-      
-      console.log('📤 [handleStatusChange] Sending to database:', updateData);
-      
-      const { error } = await supabase
-        .from('conexoes')
-        .update(updateData)
-        .eq('id', id)
-      
-      if (error) {
-        console.error('❌ [handleStatusChange] Database error:', error);
-        throw error;
+    } else if (newStatus === 'connecting') {
+      // Quando for 'connecting', apenas atualizar em memória
+      setConnections(prev => prev.map(c => c.id === id ? { ...c, status: 'connecting' } : c))
+    } else {
+      // Para desconexão, manter lógica direta
+      try {
+        const { error } = await supabase
+          .from('conexoes')
+          .update({
+            status: 'disconnected',
+            whatsapp_profile_name: null,
+            whatsapp_contact: null,
+            whatsapp_profile_picture_url: null,
+            whatsapp_connected_at: null
+          })
+          .eq('id', id)
+
+        if (error) {
+          console.error('[handleStatusChange] Error updating connection:', error)
+          toast({
+            title: "Erro",
+            description: "Não foi possível atualizar a conexão.",
+            variant: "destructive"
+          })
+          return
+        }
+        
+        await fetchConnections()
+        
+        toast({
+          title: "Sucesso",
+          description: "WhatsApp desconectado."
+        })
+      } catch (error) {
+        console.error('[handleStatusChange] Error:', error)
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro inesperado.",
+          variant: "destructive"
+        })
       }
-      
-      console.log('✅ [handleStatusChange] Database updated successfully');
-      
-      await fetchConnections()
-      console.log('🔄 [handleStatusChange] Connections refreshed');
-    } catch (error) {
-      console.error('Error updating connection status:', error)
-      toast({
-        title: "Erro ao atualizar status",
-        description: "Não foi possível atualizar o status da conexão.",
-        variant: "destructive"
-      })
     }
   }
 
