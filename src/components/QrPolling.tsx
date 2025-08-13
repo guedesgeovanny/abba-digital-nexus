@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQRCodeTimer } from "@/hooks/useQRCodeTimer";
 
+const addLog = (level: 'info' | 'error' | 'success' | 'warning', message: string, data?: any) => {
+  if ((window as any).connectionLogger) {
+    (window as any).connectionLogger.addLog(level, message, data)
+  }
+}
+
 type RawResp = any;
 type Sessao = { status: string; qr?: string | null; pairingCode?: string | null; error?: string };
 
@@ -107,12 +113,21 @@ export default function QrPolling({
 
   // Se temos um QR inicial, definir status como QRCODE
   useEffect(() => {
+    addLog('info', `🔄 Componente QrPolling iniciado`)
+    addLog('info', `📋 Configuração:`, {
+      instance,
+      intervalMs,
+      hasInitialQr: !!initialQr,
+      endpoint
+    })
+    
     if (initialQr) {
       setStatus("QRCODE");
       lastQrRef.current = initialQr;
       setQr(initialQr);
+      addLog('info', `📱 QR Code inicial carregado`)
     }
-  }, [initialQr]);
+  }, [initialQr])
 
   const stopAllTimers = () => {
     if (timerRef.current) {
@@ -133,6 +148,9 @@ export default function QrPolling({
 
       console.log('🔄 [QrPolling] Checking status for:', instance);
       console.log('🔗 [QrPolling] URL:', url);
+      
+      addLog('info', `🔄 Verificando status da instância: ${instance}`)
+      addLog('info', `🔗 URL: ${url}`)
 
       const r = await fetch(url, {
         signal: ac.signal,
@@ -141,16 +159,25 @@ export default function QrPolling({
       });
 
       if (!r.ok) {
+        addLog('warning', `⚠️ Resposta HTTP ${r.status} - ${r.statusText}`)
         console.warn('⚠️ [QrPolling] Status check failed:', r.status, r.statusText);
         return; // Não alterar o estado em caso de erro de rede
       }
 
       const raw = await r.json();
       console.log('📊 [QrPolling] Raw response:', raw);
+      
+      addLog('info', `📡 Resposta recebida (${r.status})`, {
+        status: r.status,
+        dataKeys: Object.keys(raw || {}),
+        hasArray: Array.isArray(raw)
+      })
 
       // Verifica se recebeu dados de conexão bem-sucedida
       if (isTargetConnectedPayload(raw)) {
         console.log('🎯 [QrPolling] Connection successful!');
+        addLog('success', `🎉 Conexão detectada!`, raw)
+        
         setStatus('CONNECTED');
         lastQrRef.current = null;
         setQr(null);
@@ -161,6 +188,8 @@ export default function QrPolling({
         console.log('💾 [QrPolling] Extracting connection data from:', raw);
         const connectionData = extractProfileData(raw);
         console.log('📋 [QrPolling] Final connection data:', connectionData);
+        
+        addLog('success', `✅ Dados de conexão extraídos`, connectionData)
         
         if (onConnected) onConnected(connectionData);
         return;
@@ -175,16 +204,19 @@ export default function QrPolling({
       // Manter QR visível até a condição de sucesso acima
       if (normalizedData.qr && normalizedData.qr !== lastQrRef.current) {
         console.log('🆕 [QrPolling] New QR received, updating...');
+        addLog('info', `🆕 Novo QR Code recebido`)
         lastQrRef.current = normalizedData.qr;
         setQr(normalizedData.qr);
       } else if (!qr && lastQrRef.current) {
         console.log('🔄 [QrPolling] Restoring QR from backup...');
+        addLog('info', `🔄 Restaurando QR Code`)
         setQr(lastQrRef.current);
       }
 
     } catch (error: any) {
       if (error.name !== 'AbortError') {
         console.error('❌ [QrPolling] Polling error:', error);
+        addLog('error', `❌ Erro no polling: ${error}`, error)
       }
     }
   };
@@ -196,12 +228,16 @@ export default function QrPolling({
     console.log('🚀 [QrPolling] Starting polling for instance:', instance);
     console.log('⏱️ [QrPolling] Interval:', intervalMs + 'ms');
     console.log('📱 [QrPolling] Initial QR available:', !!initialQr);
+    
+    addLog('info', `🚀 Iniciando polling`)
+    addLog('info', `⏱️ Intervalo: ${intervalMs}ms`)
 
     // Timer será resetado pelo resetTimer() abaixo
 
     // Se não temos QR inicial, fazer fetch imediatamente
     if (!initialQr) {
       console.log('🔍 [QrPolling] No initial QR, fetching status immediately...');
+      addLog('info', `🔍 Buscando status inicial...`)
       fetchStatus();
     }
 
@@ -216,6 +252,7 @@ export default function QrPolling({
 
     return () => {
       console.log('🛑 [QrPolling] Cleanup: stopping polling...');
+      addLog('info', `🛑 Parando polling e limpando recursos`)
       stopAllTimers();
       abortRef.current?.abort();
       isPollingRef.current = false;
