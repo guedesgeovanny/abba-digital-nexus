@@ -93,11 +93,11 @@ export default function WhatsAppConnections() {
             const newStatus = connected ? 'connected' : 'disconnected'
             
             if (connection.status !== newStatus) {
-              await supabase
+                await supabase
                 .from('conexoes')
                 .update({
                   status: newStatus,
-                  whatsapp_profile_name: data.profilename || null,
+                  whatsapp_profile_name: data.profileName === "not loaded" ? null : (data.profileName || null),
                   whatsapp_contact: data.contato || null,
                   whatsapp_profile_picture_url: data.fotodoperfil || null,
                   whatsapp_connected_at: connected ? new Date().toISOString() : null
@@ -217,10 +217,10 @@ export default function WhatsAppConnections() {
       const updateData: any = { status: newStatus }
       
       if (newStatus === 'connected' && profileData) {
-        // CORRIGIDO: Usar campos corretos conforme JSON real recebido
+        // Mapeamento correto conforme especificado
         updateData.whatsapp_profile_name = profileData.profileName === "not loaded" ? null : (profileData.profileName || null)
-        updateData.whatsapp_contact = profileData.contato || null  // Corrigido: usar 'contato' conforme JSON
-        updateData.whatsapp_profile_picture_url = profileData.fotodoperfil || null  // Corrigido: usar 'fotodoperfil' conforme JSON
+        updateData.whatsapp_contact = profileData.contato || null
+        updateData.whatsapp_profile_picture_url = profileData.fotodoperfil || null
         updateData.whatsapp_connected_at = new Date().toISOString()
         
         console.log('💾 [handleStatusChange] Updating with data:', updateData);
