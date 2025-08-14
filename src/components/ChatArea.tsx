@@ -341,6 +341,17 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                         : 'bg-muted text-foreground'
                   }`}
                 >
+                  {/* Informações da conexão e usuário */}
+                  <div className="text-xs opacity-70 mb-2 border-b border-current/20 pb-1">
+                    <div className="flex flex-col gap-1">
+                      <span>
+                        Conexão: {conversation.account || 'N/A'}
+                      </span>
+                      <span>
+                        Usuário: {message.direcao === 'sent' ? 'Você' : (message.nome_contato || conversation.contact_name)}
+                      </span>
+                    </div>
+                  </div>
                   {(() => {
                     const fileInfo = detectFileInMessage(message.mensagem)
                     const linkInfo = detectLinksInMessage(message.mensagem)
