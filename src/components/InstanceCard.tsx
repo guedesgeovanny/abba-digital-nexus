@@ -333,7 +333,7 @@ export function InstanceCard({
             {status === 'connected' ? (
               <Button 
                 variant="outline" 
-                className="w-full" 
+                className="w-full hover:bg-red-500 hover:text-white hover:border-red-500" 
                 onClick={handleDisconnect}
                 disabled={isDisconnecting}
               >
