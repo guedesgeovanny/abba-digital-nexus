@@ -1,0 +1,164 @@
+import { useState } from "react"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Label } from "@/components/ui/label"
+
+interface DateRange {
+  from: Date | undefined
+  to: Date | undefined
+}
+
+interface DashboardDateFilterProps {
+  dateRange: DateRange
+  onDateRangeChange: (range: DateRange) => void
+}
+
+export function DashboardDateFilter({ dateRange, onDateRangeChange }: DashboardDateFilterProps) {
+  const [isFromOpen, setIsFromOpen] = useState(false)
+  const [isToOpen, setIsToOpen] = useState(false)
+
+  const handleFromDateSelect = (date: Date | undefined) => {
+    onDateRangeChange({ ...dateRange, from: date })
+    setIsFromOpen(false)
+  }
+
+  const handleToDateSelect = (date: Date | undefined) => {
+    onDateRangeChange({ ...dateRange, to: date })
+    setIsToOpen(false)
+  }
+
+  const clearFilters = () => {
+    onDateRangeChange({ from: undefined, to: undefined })
+  }
+
+  const setPresetRange = (days: number) => {
+    const today = new Date()
+    const from = new Date()
+    from.setDate(today.getDate() - days)
+    onDateRangeChange({ from, to: today })
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 p-4 bg-card rounded-lg border">
+      <div className="flex items-center gap-2">
+        <Label className="text-sm font-medium">Período:</Label>
+      </div>
+
+      {/* Quick preset buttons */}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPresetRange(6)}
+          className="text-xs"
+        >
+          7 dias
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPresetRange(29)}
+          className="text-xs"
+        >
+          30 dias
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPresetRange(89)}
+          className="text-xs"
+        >
+          90 dias
+        </Button>
+      </div>
+
+      {/* From Date */}
+      <div className="flex items-center gap-2">
+        <Label className="text-sm">De:</Label>
+        <Popover open={isFromOpen} onOpenChange={setIsFromOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-[140px] justify-start text-left font-normal",
+                !dateRange.from && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange.from ? (
+                format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+              ) : (
+                <span>Data inicial</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateRange.from}
+              onSelect={handleFromDateSelect}
+              initialFocus
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* To Date */}
+      <div className="flex items-center gap-2">
+        <Label className="text-sm">Até:</Label>
+        <Popover open={isToOpen} onOpenChange={setIsToOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-[140px] justify-start text-left font-normal",
+                !dateRange.to && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange.to ? (
+                format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })
+              ) : (
+                <span>Data final</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateRange.to}
+              onSelect={handleToDateSelect}
+              initialFocus
+              className="p-3 pointer-events-auto"
+              disabled={(date) => 
+                dateRange.from ? date < dateRange.from : false
+              }
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Clear button */}
+      {(dateRange.from || dateRange.to) && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          className="text-xs"
+        >
+          Limpar
+        </Button>
+      )}
+    </div>
+  )
+}

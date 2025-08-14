@@ -1,18 +1,27 @@
+import { useState } from "react"
 import { KPICard } from "@/components/KPICard"
+import { DashboardDateFilter } from "@/components/DashboardDateFilter"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RefreshCw, MessageSquare, Users, PhoneCall, UserCheck } from "lucide-react"
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 
+interface DateRange {
+  from: Date | undefined
+  to: Date | undefined
+}
+
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))']
 
 export default function Dashboard() {
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
+  
   const { 
     metrics, 
     isLoading, 
     refetch 
-  } = useDashboardMetrics()
+  } = useDashboardMetrics(dateRange)
 
   const handleRefresh = () => {
     refetch()
@@ -55,6 +64,12 @@ export default function Dashboard() {
         </Button>
       </div>
 
+      {/* Date Filter */}
+      <DashboardDateFilter 
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+      />
+
       {/* Main KPIs */}
       <div className="grid gap-4 md:grid-cols-4">
         <KPICard
@@ -64,10 +79,10 @@ export default function Dashboard() {
           description="Conversas registradas"
         />
         <KPICard
-          title="Mensagens Hoje"
+          title="Mensagens no Período"
           value={metrics?.messagesToday || 0}
           icon={MessageSquare}
-          description="Mensagens de hoje"
+          description={dateRange.from || dateRange.to ? "Mensagens no período" : "Mensagens de hoje"}
         />
         <KPICard
           title="Conexões Ativas"

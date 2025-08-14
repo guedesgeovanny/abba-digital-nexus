@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 
+interface DateRange {
+  from: Date | undefined
+  to: Date | undefined
+}
+
 interface DashboardMetrics {
   totalConversations: number
   openConversations: number
@@ -15,7 +20,7 @@ interface DashboardMetrics {
   conversationsByStatus: Array<{ name: string; count: number }>
 }
 
-export const useDashboardMetrics = () => {
+export const useDashboardMetrics = (dateRange?: DateRange) => {
   const { user } = useAuth()
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -26,25 +31,51 @@ export const useDashboardMetrics = () => {
     try {
       setIsLoading(true)
 
-      // Fetch conversations data
-      const { data: conversations } = await supabase
+      // Build date filters
+      let conversationsQuery = supabase
         .from('conversations')
         .select('id, status, created_at, unread_count')
         .eq('user_id', user.id)
 
-      // Fetch messages for today
+      if (dateRange?.from) {
+        conversationsQuery = conversationsQuery.gte('created_at', dateRange.from.toISOString())
+      }
+      if (dateRange?.to) {
+        const toDate = new Date(dateRange.to)
+        toDate.setHours(23, 59, 59, 999)
+        conversationsQuery = conversationsQuery.lte('created_at', toDate.toISOString())
+      }
+
+      const { data: conversations } = await conversationsQuery
+
+      // Fetch messages for the selected period
       const today = new Date().toISOString().split('T')[0]
       const conversationIds = conversations?.map(c => c.id) || []
       
       let messagesToday = 0
       if (conversationIds.length > 0) {
-        const { count } = await supabase
+        let messagesQuery = supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .in('conversa_id', conversationIds)
-          .gte('created_at', `${today}T00:00:00`)
-          .lte('created_at', `${today}T23:59:59`)
+
+        // If no date range is specified, default to today
+        if (!dateRange?.from && !dateRange?.to) {
+          messagesQuery = messagesQuery
+            .gte('created_at', `${today}T00:00:00`)
+            .lte('created_at', `${today}T23:59:59`)
+        } else {
+          if (dateRange?.from) {
+            messagesQuery = messagesQuery.gte('created_at', dateRange.from.toISOString())
+          }
+          if (dateRange?.to) {
+            const toDate = new Date(dateRange.to)
+            toDate.setHours(23, 59, 59, 999)
+            messagesQuery = messagesQuery.lte('created_at', toDate.toISOString())
+          }
+        }
         
+        const { count } = await messagesQuery
         messagesToday = count || 0
       }
 
@@ -76,19 +107,33 @@ export const useDashboardMetrics = () => {
         totalUsers = count || 0
       }
 
-      // Messages by date (last 7 days)
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      // Messages by date (use date range or default to last 7 days)
+      let startDate = new Date()
+      if (dateRange?.from) {
+        startDate = dateRange.from
+      } else {
+        startDate.setDate(startDate.getDate() - 7)
+      }
 
-      const { data: messages } = await supabase
+      let endDate = dateRange?.to || new Date()
+
+      let messagesQuery = supabase
         .from('messages')
         .select(`
           created_at,
           conversations!inner(user_id)
         `)
         .eq('conversations.user_id', user.id)
-        .gte('created_at', sevenDaysAgo.toISOString())
+        .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true })
+
+      if (dateRange?.to) {
+        const toDate = new Date(endDate)
+        toDate.setHours(23, 59, 59, 999)
+        messagesQuery = messagesQuery.lte('created_at', toDate.toISOString())
+      }
+
+      const { data: messages } = await messagesQuery
 
       // Group messages by date
       const messagesByDate = messages?.reduce((acc, message) => {
@@ -139,7 +184,7 @@ export const useDashboardMetrics = () => {
     if (user) {
       fetchMetrics()
     }
-  }, [user])
+  }, [user, dateRange])
 
   return {
     metrics,
