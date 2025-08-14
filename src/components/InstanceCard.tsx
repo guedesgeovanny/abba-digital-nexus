@@ -77,11 +77,11 @@ export function InstanceCard({
   const getStatusBadge = () => {
     switch (status) {
       case 'connected':
-        return <Badge className="bg-emerald-500 text-white"><Wifi className="h-3 w-3 mr-1" />Conectado</Badge>
+        return <Badge className="bg-emerald-500 text-white text-xs px-2 py-1"><Wifi className="h-3 w-3 mr-1" />Conectado</Badge>
       case 'connecting':
-        return <Badge variant="secondary"><Smartphone className="h-3 w-3 mr-1" />QR Code</Badge>
+        return <Badge variant="secondary" className="text-xs px-2 py-1"><Smartphone className="h-3 w-3 mr-1" />QR Code</Badge>
       default:
-        return <Badge variant="destructive"><Power className="h-3 w-3 mr-1" />Desconectado</Badge>
+        return <Badge variant="destructive" className="text-xs px-2 py-1"><Power className="h-3 w-3 mr-1" />Desconectado</Badge>
     }
   }
 
@@ -222,10 +222,15 @@ export function InstanceCard({
 
   return (
     <>
-      <Card className="w-full">
+      <Card className="w-full relative">
         <CardContent className="p-6">
+          {/* Status Badge - Positioned in top-right corner */}
+          <div className="absolute top-4 right-4">
+            {getStatusBadge()}
+          </div>
+          
           {/* Header */}
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-4 pr-20">
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
                 {profilePictureUrl && (
@@ -247,9 +252,7 @@ export function InstanceCard({
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              {getStatusBadge()}
-              
+            <div className="flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
