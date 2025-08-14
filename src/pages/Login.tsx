@@ -165,12 +165,7 @@ const Login = () => {
           </form>
 
           <div className="mt-6 text-center space-y-2">
-            <p className="text-sm text-gray-400">
-              Não tem uma conta?{" "}
-              <Link to="/signup" className="text-abba-green hover:underline">
-                Criar conta
-              </Link>
-            </p>
+            
             <p className="text-sm text-gray-400">
               Esqueceu sua senha?{" "}
               <a href="#" className="text-abba-green hover:underline">
