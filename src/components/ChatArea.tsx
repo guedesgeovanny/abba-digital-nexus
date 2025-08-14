@@ -102,7 +102,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     }
   }, [messages])
 
-  // Ao selecionar conversa, garantir que a barra de digitação apareça
+  // Ao selecionar conversa, garantir que a barra de digitação apareça e manter conexão padrão
   useEffect(() => {
     // scroll mensagens para o final
     if (scrollAreaRef.current) {
@@ -117,7 +117,22 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     if (messageInputRef.current) {
       setTimeout(() => messageInputRef.current?.focus(), 50)
     }
-  }, [conversation.id])
+    
+    // Restaurar conexão padrão se não há uma selecionada
+    if (!selectedConnectionName && defaultConnection) {
+      setSelectedConnectionName(defaultConnection)
+    }
+  }, [conversation.id, defaultConnection, selectedConnectionName])
+
+  // Garantir que a conexão padrão seja aplicada quando as conexões carregam
+  useEffect(() => {
+    if (connections.length > 0 && !selectedConnectionName && defaultConnection) {
+      const connectionExists = connections.some(conn => conn.name === defaultConnection)
+      if (connectionExists) {
+        setSelectedConnectionName(defaultConnection)
+      }
+    }
+  }, [connections, defaultConnection, selectedConnectionName])
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
