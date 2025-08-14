@@ -222,15 +222,10 @@ export function InstanceCard({
 
   return (
     <>
-      <Card className="w-full relative">
+      <Card className="w-full">
         <CardContent className="p-6">
-          {/* Status Badge - Positioned in top-right corner */}
-          <div className="absolute top-4 right-4">
-            {getStatusBadge()}
-          </div>
-          
           {/* Header */}
-          <div className="flex items-start justify-between mb-4 pr-20">
+          <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3">
               <Avatar className="h-12 w-12">
                 {profilePictureUrl && (
@@ -252,7 +247,7 @@ export function InstanceCard({
               </div>
             </div>
             
-            <div className="flex items-center">
+            <div className="flex flex-col items-end space-y-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
@@ -308,6 +303,8 @@ export function InstanceCard({
                   </AlertDialog>
                 </DropdownMenuContent>
               </DropdownMenu>
+              
+              {getStatusBadge()}
             </div>
           </div>
           
