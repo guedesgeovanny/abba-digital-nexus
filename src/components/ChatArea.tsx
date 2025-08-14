@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, User, Trash2 } from "lucide-react"
+import { Send, User, Trash2, Star } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { useMessages } from "@/hooks/useMessages"
 import { formatDistanceToNow } from "date-fns"
@@ -44,6 +44,16 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const messageInputRef = useRef<HTMLInputElement>(null)
   const [connections, setConnections] = useState<any[]>([])
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
+  const [defaultConnection, setDefaultConnection] = useState<string | undefined>(undefined)
+
+  // Carregar conexão padrão do localStorage
+  useEffect(() => {
+    const savedDefaultConnection = localStorage.getItem('defaultConnection')
+    if (savedDefaultConnection) {
+      setDefaultConnection(savedDefaultConnection)
+      setSelectedConnectionName(savedDefaultConnection)
+    }
+  }, [])
 
   // Carregar conexões WhatsApp ativas
   useEffect(() => {
@@ -61,6 +71,12 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
         }
         
         setConnections(data || [])
+        
+        // Se há uma conexão padrão salva, verificar se ainda existe
+        const savedDefaultConnection = localStorage.getItem('defaultConnection')
+        if (savedDefaultConnection && data?.some(conn => conn.name === savedDefaultConnection)) {
+          setSelectedConnectionName(savedDefaultConnection)
+        }
       } catch (error) {
         console.error('Erro ao buscar conexões:', error)
       }
@@ -219,6 +235,26 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     } finally {
       setIsUpdatingAgentStatus(false)
     }
+  }
+
+  const handleSetDefaultConnection = () => {
+    if (selectedConnectionName) {
+      localStorage.setItem('defaultConnection', selectedConnectionName)
+      setDefaultConnection(selectedConnectionName)
+      toast({
+        title: "Conexão padrão definida",
+        description: `"${selectedConnectionName}" foi definida como conexão padrão.`,
+      })
+    }
+  }
+
+  const handleRemoveDefaultConnection = () => {
+    localStorage.removeItem('defaultConnection')
+    setDefaultConnection(undefined)
+    toast({
+      title: "Conexão padrão removida",
+      description: "Nenhuma conexão está mais definida como padrão.",
+    })
   }
 
   const renderAgentStatusButton = () => {
@@ -390,19 +426,49 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       {/* Campo de entrada de mensagem */}
       <form ref={inputBarRef} onSubmit={handleSendMessage} className="p-4 border-t border-border bg-card">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="w-full sm:w-64">
-            <Select value={selectedConnectionName} onValueChange={setSelectedConnectionName}>
-              <SelectTrigger className="bg-background border-border text-foreground">
-                <SelectValue placeholder="Escolha a conexão" />
-              </SelectTrigger>
-              <SelectContent>
-                {connectionOptions.map((opt) => (
-                  <SelectItem key={opt.name} value={opt.name}>
-                    {opt.name} • {getChannelIcon(opt.channel)} {opt.channel}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="w-full sm:w-64">
+              <Select value={selectedConnectionName} onValueChange={setSelectedConnectionName}>
+                <SelectTrigger className="bg-background border-border text-foreground">
+                  <SelectValue placeholder="Escolha a conexão" />
+                </SelectTrigger>
+                <SelectContent>
+                  {connectionOptions.map((opt) => (
+                    <SelectItem key={opt.name} value={opt.name}>
+                      {opt.name} • {getChannelIcon(opt.channel)} {opt.channel}
+                      {defaultConnection === opt.name && " ⭐"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedConnectionName && (
+              <div className="flex gap-1">
+                {defaultConnection !== selectedConnectionName ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSetDefaultConnection}
+                    className="px-2"
+                    title="Definir como padrão"
+                  >
+                    <Star className="h-3 w-3" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRemoveDefaultConnection}
+                    className="px-2 text-yellow-600"
+                    title="Remover como padrão"
+                  >
+                    <Star className="h-3 w-3 fill-current" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex w-full gap-2">
             <Input
