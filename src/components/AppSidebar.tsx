@@ -31,6 +31,13 @@ const allItems = [{
 
 // Filter menu items based on user role
 const getFilteredMenuItems = (userProfile: any) => {
+  const isAdmin = userProfile?.role === 'admin';
+  
+  // If not admin, filter out WhatsApp
+  if (!isAdmin) {
+    return allItems.filter(item => item.title !== 'WhatsApp');
+  }
+  
   return allItems;
 };
 
