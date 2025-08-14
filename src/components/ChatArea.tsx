@@ -43,16 +43,38 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const inputBarRef = useRef<HTMLFormElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
   const [connections, setConnections] = useState<any[]>([])
-
-// Removed connections loading since conexoes table is now managed in WhatsAppConnections
-
-// Conexões disponíveis (mockado para manter compatibilidade)
-const connectionOptions = [
-  { name: 'Atendimento-Humano', originalName: 'manual', channel: 'whatsapp' },
-  { name: 'Agente-de-IA', originalName: 'ai-agent', channel: 'whatsapp' }
-]
-
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
+
+  // Carregar conexões WhatsApp ativas
+  useEffect(() => {
+    const fetchConnections = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('conexoes')
+          .select('name, whatsapp_contact, channel')
+          .eq('type', 'whatsapp')
+          .eq('status', 'connected')
+        
+        if (error) {
+          console.error('Erro ao carregar conexões:', error)
+          return
+        }
+        
+        setConnections(data || [])
+      } catch (error) {
+        console.error('Erro ao buscar conexões:', error)
+      }
+    }
+
+    fetchConnections()
+  }, [])
+
+  // Opções de conexão baseadas nas conexões reais
+  const connectionOptions = connections.map(conn => ({
+    name: conn.name,
+    originalName: conn.whatsapp_contact,
+    channel: conn.channel || 'whatsapp'
+  }))
 
   // Auto-scroll para o final quando novas mensagens chegam
   useEffect(() => {
