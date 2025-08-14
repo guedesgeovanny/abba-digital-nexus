@@ -21,7 +21,7 @@ const Chat = () => {
   const [selectedAccount, setSelectedAccount] = useState("all")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
-  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, assignConversation, isDeleting, refetch } = useConversations()
+  const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, assignConversation, markConversationAsRead, isDeleting, refetch } = useConversations()
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -264,6 +264,7 @@ const Chat = () => {
                       onDeleteConversation={handleDeleteConversation}
                       onCloseConversation={handleToggleConversationStatus}
                       onAssignConversation={assignConversation}
+                      onMarkAsRead={markConversationAsRead}
                       isLoading={isLoading}
                     />
           </ScrollArea>

@@ -26,6 +26,7 @@ interface ConversationListProps {
   onDeleteConversation?: (conversationId: string) => void
   onCloseConversation?: (conversationId: string) => void
   onAssignConversation?: (conversationId: string, userId: string) => Promise<void>
+  onMarkAsRead?: (conversationId: string) => Promise<void>
   isLoading?: boolean
 }
 
@@ -36,6 +37,7 @@ export const ConversationList = ({
   onDeleteConversation,
   onCloseConversation,
   onAssignConversation,
+  onMarkAsRead,
   isLoading 
 }: ConversationListProps) => {
   const { user, userProfile } = useAuth()
@@ -80,6 +82,14 @@ export const ConversationList = ({
     if (onCloseConversation) {
       onCloseConversation(conversation.id)
     }
+  }
+
+  const handleSelectConversation = async (conversation: Conversation) => {
+    // Mark conversation as read if it has unread messages
+    if (conversation.unread_count > 0 && onMarkAsRead) {
+      await onMarkAsRead(conversation.id)
+    }
+    onSelectConversation(conversation)
   }
 
   const getAccountColor = (account: string) => {
@@ -150,7 +160,7 @@ export const ConversationList = ({
             ${selectedConversation?.id === conversation.id ? 'bg-muted border-r-2 border-abba-green' : ''}
           `}
         >
-          <div className="relative" onClick={() => onSelectConversation(conversation)}>
+          <div className="relative" onClick={() => handleSelectConversation(conversation)}>
             <Avatar className="h-12 w-12">
               <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
               <AvatarFallback className="bg-muted">
@@ -159,7 +169,7 @@ export const ConversationList = ({
             </Avatar>
           </div>
 
-          <div className="ml-3 flex-1 min-w-0" onClick={() => onSelectConversation(conversation)}>
+          <div className="ml-3 flex-1 min-w-0" onClick={() => handleSelectConversation(conversation)}>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-sm font-medium text-foreground truncate">
                 {conversation.contact_name}

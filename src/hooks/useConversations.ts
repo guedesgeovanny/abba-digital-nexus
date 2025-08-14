@@ -532,6 +532,28 @@ export const useConversations = () => {
     }
   }
 
+  const markConversationAsRead = async (conversationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ unread_count: 0 })
+        .eq('id', conversationId)
+      
+      if (error) throw error
+      
+      // Update local state optimistically
+      setConversations(prev => prev.map(conv => 
+        conv.id === conversationId ? { ...conv, unread_count: 0 } : conv
+      ))
+      
+      console.log(`Conversa ${conversationId} marcada como lida`)
+    } catch (error) {
+      console.error('Erro ao marcar conversa como lida:', error)
+      setError(error as Error)
+      throw error
+    }
+  }
+
   return {
     conversations,
     isLoading,
@@ -541,6 +563,7 @@ export const useConversations = () => {
     updateAgentStatus,
     createConversation,
     assignConversation,
+    markConversationAsRead,
     isDeleting,
     refetch: fetchConversations
   }
