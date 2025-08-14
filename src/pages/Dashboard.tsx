@@ -1,52 +1,42 @@
-import { DashboardKPICards } from "@/components/DashboardKPICards"
-import { DashboardCharts } from "@/components/DashboardCharts"
-import { DashboardFilters } from "@/components/DashboardFilters"
-import { ConnectionsKPIs } from "@/components/ConnectionsKPIs"
-import { ContactsKPIs } from "@/components/ContactsKPIs"
-import { ProfilesKPIs } from "@/components/ProfilesKPIs"
+import { KPICard } from "@/components/KPICard"
 import { Button } from "@/components/ui/button"
-import { RefreshCw } from "lucide-react"
-import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics"
-import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { RefreshCw, MessageSquare, Users, PhoneCall, UserCheck } from "lucide-react"
+import { useDashboardMetrics } from "@/hooks/useDashboardMetrics"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 
-interface DashboardFilters {
-  status?: string
-  channel?: string
-  agent?: string
-  dateFrom?: Date
-  dateTo?: Date
-}
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))']
 
 export default function Dashboard() {
-  const [filters, setFilters] = useState<DashboardFilters>({})
   const { 
-    kpis, 
-    messagesByDate, 
-    conversationsByStatus, 
-    heatmapData,
-    connectionsKPIs,
-    contactsKPIs,
-    profilesKPIs,
+    metrics, 
     isLoading, 
     refetch 
-  } = useDashboardAnalytics(filters)
-
-  const handleFiltersChange = (newFilters: { 
-    status?: string
-    channel?: string
-    agent?: string
-    dateFrom?: string
-    dateTo?: string 
-  }) => {
-    setFilters({
-      ...newFilters,
-      dateFrom: newFilters.dateFrom ? new Date(newFilters.dateFrom) : undefined,
-      dateTo: newFilters.dateTo ? new Date(newFilters.dateTo) : undefined,
-    })
-  }
+  } = useDashboardMetrics()
 
   const handleRefresh = () => {
     refetch()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 space-y-6 p-6">
+        <div className="grid gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-muted rounded animate-pulse mb-2" />
+                <div className="h-3 w-24 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -65,41 +55,125 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {/* Filters */}
-      <DashboardFilters onFiltersChange={handleFiltersChange} />
-
-      {/* Main KPIs - Conversations & Messages */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Conversas e Mensagens</h2>
-        <DashboardKPICards kpis={kpis} isLoading={isLoading} />
-      </div>
-
-      {/* Charts */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Análise Temporal</h2>
-        <DashboardCharts 
-          messagesByDate={messagesByDate}
-          conversationsByStatus={conversationsByStatus}
-          isLoading={isLoading}
+      {/* Main KPIs */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <KPICard
+          title="Total de Conversas"
+          value={metrics?.totalConversations || 0}
+          icon={MessageSquare}
+          description="Conversas registradas"
+        />
+        <KPICard
+          title="Mensagens Hoje"
+          value={metrics?.messagesToday || 0}
+          icon={MessageSquare}
+          description="Mensagens de hoje"
+        />
+        <KPICard
+          title="Conexões Ativas"
+          value={metrics?.activeConnections || 0}
+          icon={PhoneCall}
+          description="WhatsApp conectado"
+        />
+        <KPICard
+          title="Total de Contatos"
+          value={metrics?.totalContacts || 0}
+          icon={Users}
+          description="Contatos cadastrados"
         />
       </div>
 
-      {/* Connections KPIs */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Conexões WhatsApp</h2>
-        <ConnectionsKPIs kpis={connectionsKPIs} isLoading={isLoading} />
+      {/* Charts Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Messages by Date */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Mensagens por Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={metrics?.messagesByDate || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Conversations by Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Conversas por Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={metrics?.conversationsByStatus || []}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {(metrics?.conversationsByStatus || []).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Contacts KPIs */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Contatos</h2>
-        <ContactsKPIs kpis={contactsKPIs} isLoading={isLoading} />
-      </div>
+      {/* Additional Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Conversas Abertas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.openConversations || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Conversas pendentes de resposta
+            </p>
+          </CardContent>
+        </Card>
 
-      {/* Profiles KPIs */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Usuários e Agentes</h2>
-        <ProfilesKPIs kpis={profilesKPIs} isLoading={isLoading} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Não Lidas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.unreadConversations || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Conversas com mensagens não lidas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Total de Usuários</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.totalUsers || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Usuários cadastrados no sistema
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
