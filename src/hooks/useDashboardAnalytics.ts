@@ -102,129 +102,119 @@ export const useDashboardAnalytics = (filters: {
   const fetchKPIs = async () => {
     if (!user) return
 
-    let query = supabase
-      .from('conversations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-
-    // Apply filters
-    if (filters.status) query = query.eq('status', filters.status as any)
-    if (filters.channel) query = query.eq('channel', filters.channel as any)
-    if (filters.agent) query = query.eq('assigned_to', filters.agent)
-    if (filters.dateFrom) query = query.gte('created_at', filters.dateFrom.toISOString())
-    if (filters.dateTo) query = query.lte('created_at', filters.dateTo.toISOString())
-
-    const { count: totalConversations } = await query
-
-    // Get conversations by status
-    const { data: openConv } = await supabase
-      .from('conversations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'aberta')
-
-    const { data: closedConv } = await supabase
-      .from('conversations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'fechada')
-
-    // Messages today
-    const today = new Date().toISOString().split('T')[0]
-    const { data: messagesData } = await supabase
-      .from('messages')
-      .select('conversa_id')
-      .gte('created_at', `${today}T00:00:00`)
-      .lte('created_at', `${today}T23:59:59`)
-
-    // Get unique conversation IDs and filter by user
-    const conversationIds = [...new Set(messagesData?.map(m => m.conversa_id) || [])]
-    let messagesToday = 0
-    if (conversationIds.length > 0) {
-      const { data: userConversations } = await supabase
+    try {
+      // Fetch all conversations data in one optimized query
+      const conversationsQuery = supabase
         .from('conversations')
-        .select('id')
+        .select('id, status, created_at, unread_count')
         .eq('user_id', user.id)
-        .in('id', conversationIds)
+
+      // Apply filters
+      if (filters.status) conversationsQuery.eq('status', filters.status as any)
+      if (filters.channel) conversationsQuery.eq('channel', filters.channel as any)
+      if (filters.agent) conversationsQuery.eq('assigned_to', filters.agent)
+      if (filters.dateFrom) conversationsQuery.gte('created_at', filters.dateFrom.toISOString())
+      if (filters.dateTo) conversationsQuery.lte('created_at', filters.dateTo.toISOString())
+
+      const { data: conversations } = await conversationsQuery
+
+      if (!conversations) return
+
+      // Calculate KPIs from fetched data
+      const totalConversations = conversations.length
+      const openConversations = conversations.filter(c => c.status === 'aberta').length
+      const closedConversations = conversations.filter(c => c.status === 'fechada').length
+      const unreadConversations = conversations.filter(c => c.unread_count > 0).length
+
+      // Messages today - optimized query
+      const today = new Date().toISOString().split('T')[0]
+      const conversationIds = conversations.map(c => c.id)
       
-      messagesToday = userConversations?.length || 0
+      let messagesToday = 0
+      if (conversationIds.length > 0) {
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .in('conversa_id', conversationIds)
+          .gte('created_at', `${today}T00:00:00`)
+          .lte('created_at', `${today}T23:59:59`)
+
+        messagesToday = count || 0
+      }
+
+      setKpis({
+        totalConversations,
+        openConversations,
+        closedConversations,
+        messagesToday,
+        conversationsWithoutResponse: 0, // Will implement if needed
+        unreadConversations,
+      })
+    } catch (error) {
+      console.error('Error fetching KPIs:', error)
     }
-
-
-    // Unread conversations
-    const { data: unreadConv } = await supabase
-      .from('conversations')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gt('unread_count', 0)
-
-    setKpis({
-      totalConversations: totalConversations || 0,
-      openConversations: openConv?.length || 0,
-      closedConversations: closedConv?.length || 0,
-      messagesToday,
-      conversationsWithoutResponse: 0, // Will calculate separately
-      unreadConversations: unreadConv?.length || 0,
-    })
   }
 
   const fetchMessagesByDate = async () => {
     if (!user) return
 
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    try {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    // Get messages from user's conversations
-    const { data: userConversations } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('user_id', user.id)
+      // 4.3. Messages by period - optimized with join
+      const { data: messages } = await supabase
+        .from('messages')
+        .select(`
+          created_at,
+          conversations!inner(user_id)
+        `)
+        .eq('conversations.user_id', user.id)
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: true })
 
-    if (!userConversations?.length) return
+      // Group by date
+      const grouped = messages?.reduce((acc, message) => {
+        const date = new Date(message.created_at).toISOString().split('T')[0]
+        acc[date] = (acc[date] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
 
-    const conversationIds = userConversations.map(c => c.id)
+      const result = Object.entries(grouped).map(([date, count]) => ({
+        date,
+        count
+      }))
 
-    const { data: messages } = await supabase
-      .from('messages')
-      .select('created_at')
-      .in('conversa_id', conversationIds)
-      .gte('created_at', thirtyDaysAgo.toISOString())
-      .order('created_at', { ascending: true })
-
-    // Group by date
-    const grouped = messages?.reduce((acc, message) => {
-      const date = new Date(message.created_at).toISOString().split('T')[0]
-      acc[date] = (acc[date] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
-
-    const result = Object.entries(grouped).map(([date, count]) => ({
-      date,
-      count
-    }))
-
-    setMessagesByDate(result)
+      setMessagesByDate(result)
+    } catch (error) {
+      console.error('Error fetching messages by date:', error)
+    }
   }
 
   const fetchConversationsByStatus = async () => {
     if (!user) return
 
-    const { data: conversations } = await supabase
-      .from('conversations')
-      .select('status')
-      .eq('user_id', user.id)
+    try {
+      // 3.2. Conversations by status
+      const { data: conversations } = await supabase
+        .from('conversations')
+        .select('status')
+        .eq('user_id', user.id)
 
-    const grouped = conversations?.reduce((acc, conv) => {
-      acc[conv.status] = (acc[conv.status] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      const grouped = conversations?.reduce((acc, conv) => {
+        acc[conv.status] = (acc[conv.status] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
 
-    const result = Object.entries(grouped).map(([status, count]) => ({
-      status,
-      count
-    }))
+      const result = Object.entries(grouped).map(([status, count]) => ({
+        status,
+        count
+      }))
 
-    setConversationsByStatus(result)
+      setConversationsByStatus(result)
+    } catch (error) {
+      console.error('Error fetching conversations by status:', error)
+    }
   }
 
 
@@ -273,135 +263,168 @@ export const useDashboardAnalytics = (filters: {
   const fetchConnectionsKPIs = async () => {
     if (!user) return
 
-    const { data: connections } = await supabase
-      .from('conexoes')
-      .select('*, profiles!inner(full_name)')
-      .eq('user_id', user.id)
+    try {
+      // 1.1. Total connections
+      const { count: totalConnections } = await supabase
+        .from('conexoes')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
 
-    const total = connections?.length || 0
-    const active = connections?.filter(c => c.status === 'connected').length || 0
-    const disconnected = connections?.filter(c => c.status === 'disconnected').length || 0
-    const connecting = connections?.filter(c => c.status === 'connecting').length || 0
+      // 1.2. Connections by status
+      const { data: connectionsByStatus } = await supabase
+        .from('conexoes')
+        .select('status')
+        .eq('user_id', user.id)
 
-    // Group by user
-    const byUser = connections?.reduce((acc, conn: any) => {
-      const userName = conn.profiles?.full_name || 'Usuário desconhecido'
-      acc[userName] = (acc[userName] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      const statusCounts = connectionsByStatus?.reduce((acc, conn) => {
+        acc[conn.status] = (acc[conn.status] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
 
-    // Group by status
-    const byStatus = connections?.reduce((acc, conn) => {
-      acc[conn.status] = (acc[conn.status] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      // 1.3. Connections by user
+      const { data: connectionsByUser } = await supabase
+        .from('conexoes')
+        .select('user_id, profiles!inner(full_name)')
+        .eq('user_id', user.id)
 
-    setConnectionsKPIs({
-      totalConnections: total,
-      activeConnections: active,
-      disconnectedConnections: disconnected,
-      connectingConnections: connecting,
-      connectionsByUser: Object.entries(byUser).map(([user_name, count]) => ({ user_name, count })),
-      connectionsByStatus: Object.entries(byStatus).map(([status, count]) => ({ status, count }))
-    })
+      const userCounts = connectionsByUser?.reduce((acc, conn: any) => {
+        const userName = conn.profiles?.full_name || 'Usuário desconhecido'
+        acc[userName] = (acc[userName] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
+
+      setConnectionsKPIs({
+        totalConnections: totalConnections || 0,
+        activeConnections: statusCounts['connected'] || 0,
+        disconnectedConnections: statusCounts['disconnected'] || 0,
+        connectingConnections: statusCounts['connecting'] || 0,
+        connectionsByUser: Object.entries(userCounts).map(([user_name, count]) => ({ user_name, count })),
+        connectionsByStatus: Object.entries(statusCounts).map(([status, count]) => ({ status, count }))
+      })
+    } catch (error) {
+      console.error('Error fetching connections KPIs:', error)
+    }
   }
 
   const fetchContactsKPIs = async () => {
     if (!user) return
 
-    const { data: contacts } = await supabase
-      .from('contacts')
-      .select(`
-        *,
-        profiles!contacts_agent_assigned_fkey(full_name),
-        contact_tag_relations!inner(
-          contact_tags(name)
-        )
-      `)
-      .eq('user_id', user.id)
+    try {
+      // 2.1. Total contacts
+      const { count: totalContacts } = await supabase
+        .from('contacts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
 
-    const total = contacts?.length || 0
+      // 2.2. Contacts by status
+      const { data: contactsStatus } = await supabase
+        .from('contacts')
+        .select('status')
+        .eq('user_id', user.id)
 
-    // Group by status
-    const byStatus = contacts?.reduce((acc, contact) => {
-      acc[contact.status] = (acc[contact.status] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      const statusCounts = contactsStatus?.reduce((acc, contact) => {
+        acc[contact.status] = (acc[contact.status] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
 
-    // Group by source
-    const bySource = contacts?.filter(c => c.source).reduce((acc, contact) => {
-      acc[contact.source] = (acc[contact.source] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      // 2.3. Contacts by source
+      const { data: contactsSource } = await supabase
+        .from('contacts')
+        .select('source')
+        .eq('user_id', user.id)
+        .not('source', 'is', null)
 
-    // Group by agent
-    const byAgent = contacts?.filter(c => c.agent_assigned).reduce((acc, contact: any) => {
-      const agentName = contact.profiles?.full_name || 'Sem agente'
-      acc[agentName] = (acc[agentName] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      const sourceCounts = contactsSource?.reduce((acc, contact) => {
+        acc[contact.source] = (acc[contact.source] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
 
-    // Group by date (last 30 days)
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    
-    const recentContacts = contacts?.filter(c => new Date(c.created_at) >= thirtyDaysAgo) || []
-    const byDate = recentContacts.reduce((acc, contact) => {
-      const date = new Date(contact.created_at).toISOString().split('T')[0]
-      acc[date] = (acc[date] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      // 2.4. Contacts by agent
+      const { data: contactsAgent } = await supabase
+        .from('contacts')
+        .select('agent_assigned, profiles!contacts_agent_assigned_fkey(full_name)')
+        .eq('user_id', user.id)
+        .not('agent_assigned', 'is', null)
 
-    // Group by tags
-    const { data: tagRelations } = await supabase
-      .from('contact_tag_relations')
-      .select(`
-        contact_tags(name),
-        contacts!inner(user_id)
-      `)
-      .eq('contacts.user_id', user.id)
+      const agentCounts = contactsAgent?.reduce((acc, contact: any) => {
+        const agentName = contact.profiles?.full_name || 'Sem agente'
+        acc[agentName] = (acc[agentName] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
 
-    const byTag = tagRelations?.reduce((acc, relation: any) => {
-      const tagName = relation.contact_tags?.name
-      if (tagName) {
-        acc[tagName] = (acc[tagName] || 0) + 1
-      }
-      return acc
-    }, {} as Record<string, number>) || {}
+      // 2.5. Contacts by date (last 30 days)
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      
+      const { data: recentContacts } = await supabase
+        .from('contacts')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', thirtyDaysAgo.toISOString())
 
-    setContactsKPIs({
-      totalContacts: total,
-      contactsByStatus: Object.entries(byStatus).map(([status, count]) => ({ status, count })),
-      contactsBySource: Object.entries(bySource).map(([source, count]) => ({ source, count })),
-      contactsByAgent: Object.entries(byAgent).map(([agent_name, count]) => ({ agent_name, count })),
-      contactsByDate: Object.entries(byDate).map(([date, count]) => ({ date, count })),
-      contactsByTag: Object.entries(byTag).map(([tag_name, count]) => ({ tag_name, count }))
-    })
+      const dateCounts = recentContacts?.reduce((acc, contact) => {
+        const date = new Date(contact.created_at).toISOString().split('T')[0]
+        acc[date] = (acc[date] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
+
+      // 5.1. Contacts by tags
+      const { data: tagRelations } = await supabase
+        .from('contact_tag_relations')
+        .select(`
+          contact_tags(name),
+          contacts!inner(user_id)
+        `)
+        .eq('contacts.user_id', user.id)
+
+      const tagCounts = tagRelations?.reduce((acc, relation: any) => {
+        const tagName = relation.contact_tags?.name
+        if (tagName) {
+          acc[tagName] = (acc[tagName] || 0) + 1
+        }
+        return acc
+      }, {} as Record<string, number>) || {}
+
+      setContactsKPIs({
+        totalContacts: totalContacts || 0,
+        contactsByStatus: Object.entries(statusCounts).map(([status, count]) => ({ status, count })),
+        contactsBySource: Object.entries(sourceCounts).map(([source, count]) => ({ source, count })),
+        contactsByAgent: Object.entries(agentCounts).map(([agent_name, count]) => ({ agent_name, count })),
+        contactsByDate: Object.entries(dateCounts).map(([date, count]) => ({ date, count })),
+        contactsByTag: Object.entries(tagCounts).map(([tag_name, count]) => ({ tag_name, count }))
+      })
+    } catch (error) {
+      console.error('Error fetching contacts KPIs:', error)
+    }
   }
 
   const fetchProfilesKPIs = async () => {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('role')
+    try {
+      // 6.1. Total users
+      const { count: totalUsers } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
 
-    const total = profiles?.length || 0
-    const admin = profiles?.filter(p => p.role === 'admin').length || 0
-    const editor = profiles?.filter(p => p.role === 'editor').length || 0
-    const viewer = profiles?.filter(p => p.role === 'viewer').length || 0
+      // 6.2. Users by role
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('role')
 
-    // Group by role
-    const byRole = profiles?.reduce((acc, profile) => {
-      acc[profile.role] = (acc[profile.role] || 0) + 1
-      return acc
-    }, {} as Record<string, number>) || {}
+      const roleCounts = profiles?.reduce((acc, profile) => {
+        acc[profile.role] = (acc[profile.role] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
 
-    setProfilesKPIs({
-      totalUsers: total,
-      adminUsers: admin,
-      editorUsers: editor,
-      viewerUsers: viewer,
-      usersByRole: Object.entries(byRole).map(([role, count]) => ({ role, count }))
-    })
+      setProfilesKPIs({
+        totalUsers: totalUsers || 0,
+        adminUsers: roleCounts['admin'] || 0,
+        editorUsers: roleCounts['editor'] || 0,
+        viewerUsers: roleCounts['viewer'] || 0,
+        usersByRole: Object.entries(roleCounts).map(([role, count]) => ({ role, count }))
+      })
+    } catch (error) {
+      console.error('Error fetching profiles KPIs:', error)
+    }
   }
 
   useEffect(() => {
