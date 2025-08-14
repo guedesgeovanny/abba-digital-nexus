@@ -342,8 +342,8 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                   }`}
                 >
                   {/* Informações da conexão e usuário */}
-                  <div className="text-xs opacity-60 mb-1 border-b border-current/10 pb-0.5">
-                    <div className="flex flex-col gap-0.5 text-[10px]">
+                  <div className="text-xs opacity-50 mb-0.5 border-b border-current/5 pb-0.5">
+                    <div className="flex flex-col text-[9px] leading-tight">
                       <span>Conexão: {conversation.account || 'N/A'}</span>
                       <span>Usuário: {message.direcao === 'sent' ? 'Você' : (message.nome_contato || conversation.contact_name)}</span>
                     </div>
