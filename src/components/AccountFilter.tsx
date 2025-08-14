@@ -33,11 +33,11 @@ export const AccountFilter = ({ selectedAccount, onAccountChange }: AccountFilte
         </SelectItem>
         {accounts.map((account) => (
           <SelectItem 
-            key={account} 
-            value={account}
+            key={account.value} 
+            value={account.value}
             className="text-foreground focus:bg-abba-green focus:text-abba-black"
           >
-            {account}
+            {account.label}
           </SelectItem>
         ))}
       </SelectContent>

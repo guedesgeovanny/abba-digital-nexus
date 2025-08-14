@@ -2,9 +2,14 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/integrations/supabase/client'
 
+interface AccountOption {
+  value: string
+  label: string
+}
+
 export const useAccountFilter = () => {
   const { user } = useAuth()
-  const [accounts, setAccounts] = useState<string[]>([])
+  const [accounts, setAccounts] = useState<AccountOption[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -17,27 +22,30 @@ export const useAccountFilter = () => {
     try {
       setIsLoading(true)
       
-      // Buscar dados da coluna account (mesmo que não apareça nos tipos ainda)
+      // Buscar conexões WhatsApp ativas do usuário
       const { data, error } = await supabase
-        .from('conversations')
-        .select('account')
+        .from('conexoes')
+        .select('whatsapp_contact, name')
         .eq('user_id', user?.id)
-        .not('account', 'is', null)
+        .eq('type', 'whatsapp')
+        .eq('status', 'connected')
+        .not('whatsapp_contact', 'is', null)
       
       if (error) {
-        console.error('Erro ao buscar accounts únicos:', error)
+        console.error('Erro ao buscar conexões WhatsApp:', error)
         setAccounts([])
         return
       }
       
-      // Extrair valores únicos da coluna account
-      const uniqueAccounts = Array.from(new Set(
-        data.map((item: any) => item.account).filter(Boolean)
-      )) as string[]
+      // Criar array com formato "nome (número)" para exibição
+      const connectionAccounts = data.map((connection: any) => ({
+        value: connection.whatsapp_contact,
+        label: `${connection.name} (${connection.whatsapp_contact})`
+      }))
       
-      setAccounts(uniqueAccounts)
+      setAccounts(connectionAccounts)
     } catch (error) {
-      console.error('Erro ao carregar accounts:', error)
+      console.error('Erro ao carregar conexões:', error)
     } finally {
       setIsLoading(false)
     }
