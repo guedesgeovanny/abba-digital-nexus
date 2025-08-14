@@ -8,8 +8,12 @@ import { cn } from "@/lib/utils";
 
 // Menu items
 const allItems = [{
-  title: "WhatsApp",
+  title: "Dashboard",
   url: "/dashboard",
+  icon: BarChart3
+}, {
+  title: "WhatsApp",
+  url: "/whatsapp",
   icon: Bot
 }, {
   title: "Contatos",

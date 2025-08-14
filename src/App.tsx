@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Header } from "@/components/Header";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import Dashboard from "./pages/Dashboard";
 import WhatsAppConnections from "./pages/WhatsAppConnections";
 import Contacts from "./pages/Contacts";
 import CRM from "./pages/CRM";
@@ -54,6 +55,16 @@ const App = () => {
               <Route path="/signup" element={<SignUp />} />
               <Route 
                 path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <Dashboard />
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/whatsapp" 
                 element={
                   <ProtectedRoute>
                     <AuthenticatedLayout>
