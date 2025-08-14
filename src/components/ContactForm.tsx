@@ -110,12 +110,12 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="bg-abba-black border-abba-gray max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-abba-text">
+          <DialogTitle className="text-foreground">
             {contact ? 'Editar Contato' : 'Novo Contato'}
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             {contact ? 'Atualize as informações do contato' : 'Adicione um novo contato ao seu sistema'}
           </DialogDescription>
         </DialogHeader>
@@ -123,73 +123,73 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-abba-text">Nome *</Label>
+              <Label htmlFor="name" className="text-foreground">Nome *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-abba-text">Email</Label>
+              <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-abba-text">Telefone</Label>
+              <Label htmlFor="phone" className="text-foreground">Telefone</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
                 placeholder="+55 11 99999-9999"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="instagram" className="text-abba-text">Instagram</Label>
+              <Label htmlFor="instagram" className="text-foreground">Instagram</Label>
               <Input
                 id="instagram"
                 value={formData.instagram}
                 onChange={(e) => setFormData(prev => ({ ...prev, instagram: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
                 placeholder="@usuario"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="company" className="text-abba-text">Empresa</Label>
+              <Label htmlFor="company" className="text-foreground">Empresa</Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="position" className="text-abba-text">Cargo</Label>
+              <Label htmlFor="position" className="text-foreground">Cargo</Label>
               <Input
                 id="position"
                 value={formData.position}
                 onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-abba-text">Status</Label>
+              <Label htmlFor="status" className="text-foreground">Status</Label>
               <Select value={formData.status} onValueChange={(value: Contact['status']) => setFormData(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -203,9 +203,9 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="channel" className="text-abba-text">Canal</Label>
+              <Label htmlFor="channel" className="text-foreground">Canal</Label>
               <Select value={formData.channel || ''} onValueChange={(value: Contact['channel']) => setFormData(prev => ({ ...prev, channel: value }))}>
-                <SelectTrigger className="bg-abba-gray border-abba-gray text-abba-text">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Selecione um canal" />
                 </SelectTrigger>
                 <SelectContent>
@@ -221,28 +221,28 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="source" className="text-abba-text">Fonte</Label>
+              <Label htmlFor="source" className="text-foreground">Fonte</Label>
               <Input
                 id="source"
                 value={formData.source}
                 onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
                 placeholder="Stories, Post, Bio Link, etc."
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="agent" className="text-abba-text">Agente Responsável</Label>
+              <Label htmlFor="agent" className="text-foreground">Agente Responsável</Label>
               <Input
                 id="agent"
                 value={formData.agent_assigned}
                 onChange={(e) => setFormData(prev => ({ ...prev, agent_assigned: e.target.value }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="value" className="text-abba-text">Valor Estimado (R$)</Label>
+              <Label htmlFor="value" className="text-foreground">Valor Estimado (R$)</Label>
               <Input
                 id="value"
                 type="number"
@@ -250,29 +250,29 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
                 step="0.01"
                 value={formData.value}
                 onChange={(e) => setFormData(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                className="bg-abba-gray border-abba-gray text-abba-text"
+                className="bg-background border-border text-foreground"
                 placeholder="0,00"
               />
             </div>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="address" className="text-abba-text">Endereço</Label>
+            <Label htmlFor="address" className="text-foreground">Endereço</Label>
             <Input
               id="address"
               value={formData.address}
               onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              className="bg-abba-gray border-abba-gray text-abba-text"
+              className="bg-background border-border text-foreground"
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-abba-text">Observações</Label>
+            <Label htmlFor="notes" className="text-foreground">Observações</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="bg-abba-gray border-abba-gray text-abba-text min-h-[100px]"
+              className="bg-background border-border text-foreground min-h-[100px]"
               placeholder="Adicione observações sobre o contato..."
             />
           </div>
@@ -282,14 +282,13 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
               type="button" 
               variant="outline" 
               onClick={() => setOpen(false)}
-              className="border-abba-gray text-abba-text hover:bg-abba-gray"
             >
               Cancelar
             </Button>
             <Button 
               type="submit" 
               disabled={isCreating || isUpdating}
-              className="bg-abba-green text-abba-black hover:bg-abba-green-light"
+              className="bg-abba-green text-abba-black hover:bg-abba-green/90"
             >
               {contact ? 'Atualizar' : 'Criar'} Contato
             </Button>
