@@ -41,7 +41,7 @@ export const SortableStageHeader = ({
     transition,
   } = useSortable({
     id: `stage-header-${stage}`,
-    disabled: !isAdmin, // Allow all stages to be reordered by admins
+    disabled: !isAdmin || isEntryStage, // Only allow custom stages to be reordered by admins
   })
 
   const style = {
@@ -65,14 +65,14 @@ export const SortableStageHeader = ({
       style={style}
       className={`
         p-4 border-b border-border bg-card/50
-        ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''}
+        ${isAdmin && !isEntryStage ? 'cursor-grab active:cursor-grabbing' : ''}
         ${isDragging ? 'opacity-50 shadow-lg' : ''}
       `}
-      {...attributes}
-      {...listeners}
+      {...(isAdmin && !isEntryStage ? attributes : {})}
+      {...(isAdmin && !isEntryStage ? listeners : {})}
     >
       <div className="flex items-center gap-2 mb-2">
-        {isAdmin && (
+        {isAdmin && !isEntryStage && (
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         )}
         <div 

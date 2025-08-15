@@ -122,32 +122,35 @@ const CRM = () => {
       const activeStage = activeId.replace('stage-header-', '')
       const overStage = overId.replace('stage-header-', '')
       
-      // Find the indices in the current stages array
-      const oldIndex = stages.findIndex(s => s === activeStage)
-      const newIndex = stages.findIndex(s => s === overStage)
+      // Don't allow moving the entry stage or moving stages to/from entry stage position
+      if (activeStage === 'Etapa de Entrada' || overStage === 'Etapa de Entrada') {
+        console.log('Cannot reorder entry stage')
+        return
+      }
+      
+      // Only allow reordering custom stages
+      const activeCustomStage = customStages.find(s => s.name === activeStage)
+      const overCustomStage = customStages.find(s => s.name === overStage)
+      
+      if (!activeCustomStage || !overCustomStage) {
+        console.log('Can only reorder custom stages')
+        return
+      }
+      
+      // Find the indices in the custom stages array
+      const oldIndex = customStages.findIndex(s => s.name === activeStage)
+      const newIndex = customStages.findIndex(s => s.name === overStage)
       
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        // Reorder stages array
-        const newStagesOrder = arrayMove(stages, oldIndex, newIndex)
+        // Reorder custom stages array
+        const reorderedCustomStages = arrayMove(customStages, oldIndex, newIndex)
         
-        // For custom stages, update their positions in database
-        const activeCustomStage = customStages.find(s => s.name === activeStage)
-        if (activeCustomStage) {
-          // This is a custom stage being moved
-          const newCustomStages = newStagesOrder
-            .map((stageName, index) => customStages.find(s => s.name === stageName))
-            .filter(Boolean)
-            .map((stage, index) => ({ ...stage!, position: index }))
-          
-          try {
-            await updateStageOrder(newCustomStages.map(s => s.name))
-          } catch (error) {
-            console.error('Error reordering custom stages:', error)
-          }
-        } else {
-          // This might be a basic stage - for now we just log it
-          // Could implement basic stage ordering later
-          console.log('Basic stage reordering:', newStagesOrder)
+        // Update positions and save to database
+        try {
+          await updateStageOrder(reorderedCustomStages.map(s => s.name))
+          console.log('Custom stages reordered successfully')
+        } catch (error) {
+          console.error('Error reordering custom stages:', error)
         }
       }
       return

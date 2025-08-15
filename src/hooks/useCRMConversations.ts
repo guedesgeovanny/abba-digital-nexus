@@ -300,10 +300,8 @@ export const useCRMConversations = () => {
 
   const updateStageOrder = async (stageNames: string[]) => {
     try {
-      // Only update custom stages order (skip the first entry stage)
-      const customStageNames = stageNames.slice(1)
-      
-      const updates = customStageNames.map((stageName, index) => {
+      // Update the position of each custom stage based on the new order
+      const updates = stageNames.map((stageName, index) => {
         const stage = customStages.find(s => s.name === stageName)
         return stage ? { id: stage.id, position: index } : null
       }).filter(Boolean)
@@ -320,8 +318,18 @@ export const useCRMConversations = () => {
       }
 
       await fetchCustomStages()
+      
+      toast({
+        title: "Sucesso",
+        description: "Ordem das etapas atualizada com sucesso",
+      })
     } catch (error) {
       console.error('Erro ao atualizar ordem das etapas:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível reordenar as etapas",
+        variant: "destructive",
+      })
     }
   }
 
