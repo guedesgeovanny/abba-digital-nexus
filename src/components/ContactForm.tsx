@@ -70,6 +70,7 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
       notes: formData.notes || undefined,
       source: formData.source || undefined,
       agent_assigned: formData.agent_assigned || undefined,
+      value: formData.value,
     }
 
     if (contact) {
