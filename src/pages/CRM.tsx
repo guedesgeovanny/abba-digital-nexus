@@ -46,8 +46,10 @@ const CRM = () => {
     updateStageOrder,
     updateBasicStageOrder,
     updateCustomStage,
+    updateBasicStage,
     deleteCustomStage,
     customStages,
+    allStages,
     basicStages,
     // Filter states and functions
     filterChannel,
@@ -77,6 +79,7 @@ const CRM = () => {
   const [showLeadDetails, setShowLeadDetails] = useState(false)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [editingStage, setEditingStage] = useState<string | null>(null)
+  const [editingBasicStage, setEditingBasicStage] = useState<{ stageKey: string, name: string, color: string } | null>(null)
   const [showEditStageDialog, setShowEditStageDialog] = useState(false)
   const navigate = useNavigate()
   
@@ -219,8 +222,22 @@ const CRM = () => {
   }
 
   const handleEditStage = (stageName: string) => {
-    setEditingStage(stageName)
-    setShowEditStageDialog(true)
+    const customStage = customStages.find(s => s.name === stageName)
+    if (customStage) {
+      setEditingStage(stageName)
+      setShowEditStageDialog(true)
+    } else {
+      // Check if it's a basic stage
+      const basicStage = allStages.find(s => s.name === stageName && !s.isCustom)
+      if (basicStage) {
+        setEditingBasicStage({
+          stageKey: basicStage.stageKey,
+          name: basicStage.name,
+          color: basicStage.color
+        })
+        setShowEditStageDialog(true)
+      }
+    }
   }
 
   const handleUpdateStage = async (stageId: string, name: string, color: string) => {
@@ -235,6 +252,7 @@ const CRM = () => {
   const handleCloseEditDialog = () => {
     setShowEditStageDialog(false)
     setEditingStage(null)
+    setEditingBasicStage(null)
   }
 
   const handleCardClick = (conversation: CRMConversation) => {
@@ -351,8 +369,24 @@ const CRM = () => {
       <EditStageDialog
         isOpen={showEditStageDialog}
         onClose={handleCloseEditDialog}
-        onUpdate={handleUpdateStage}
-        stage={editingStage ? customStages.find(s => s.name === editingStage) || null : null}
+        onUpdate={async (stageId: string, name: string, color: string) => {
+          if (editingStage) {
+            // Custom stage
+            await handleUpdateStage(stageId, name, color)
+          } else if (editingBasicStage) {
+            // Basic stage
+            await updateBasicStage(editingBasicStage.stageKey, name, color)
+          }
+        }}
+        stage={editingStage ? 
+          customStages.find(s => s.name === editingStage) || null : 
+          editingBasicStage ? {
+            id: editingBasicStage.stageKey,
+            name: editingBasicStage.name,
+            color: editingBasicStage.color,
+            position: 0
+          } : null
+        }
       />
 
       <LeadDetailsDialog

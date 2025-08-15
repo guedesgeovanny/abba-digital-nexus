@@ -32,6 +32,13 @@ export interface CustomStage {
   position: number
 }
 
+export interface BasicStageCustomization {
+  id: string
+  stage_key: string
+  custom_name: string
+  custom_color: string
+}
+
 // Map conversation crm_stage to basic CRM stages
 const STAGE_TO_CRM_STAGE_MAP = {
   'novo_lead': 'Novo Lead',
@@ -54,6 +61,7 @@ export const useCRMConversations = () => {
   const { user, userProfile } = useAuth()
   const [conversations, setConversations] = useState<CRMConversation[]>([])
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
+  const [basicStageCustomizations, setBasicStageCustomizations] = useState<BasicStageCustomization[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [allUsers, setAllUsers] = useState<Array<{id: string, full_name: string, email: string}>>([])
   
@@ -68,7 +76,7 @@ export const useCRMConversations = () => {
 
   useEffect(() => {
     if (user) {
-      const promises = [fetchConversations(), fetchCustomStages()]
+      const promises = [fetchConversations(), fetchCustomStages(), fetchBasicStageCustomizations()]
       if (isAdmin) {
         promises.push(fetchAllUsers())
       }
@@ -136,6 +144,19 @@ export const useCRMConversations = () => {
       setCustomStages(data || [])
     } catch (error) {
       console.error('Error fetching custom stages:', error)
+    }
+  }
+
+  const fetchBasicStageCustomizations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('basic_stage_customizations')
+        .select('id, stage_key, custom_name, custom_color')
+
+      if (error) throw error
+      setBasicStageCustomizations(data || [])
+    } catch (error) {
+      console.error('Error fetching basic stage customizations:', error)
     }
   }
 
@@ -297,6 +318,60 @@ export const useCRMConversations = () => {
     }
   }
 
+  const updateBasicStage = async (stageKey: string, name: string, color: string) => {
+    // Only allow admins to update stages
+    if (!isAdmin) {
+      console.error('Only admins can update stages')
+      return
+    }
+
+    try {
+      // Check if customization already exists
+      const existingCustomization = basicStageCustomizations.find(c => c.stage_key === stageKey)
+
+      if (existingCustomization) {
+        // Update existing customization
+        const { error } = await supabase
+          .from('basic_stage_customizations')
+          .update({ custom_name: name, custom_color: color })
+          .eq('id', existingCustomization.id)
+
+        if (error) throw error
+
+        // Update local state
+        setBasicStageCustomizations(prev => 
+          prev.map(customization => 
+            customization.id === existingCustomization.id 
+              ? { ...customization, custom_name: name, custom_color: color }
+              : customization
+          )
+        )
+      } else {
+        // Create new customization
+        const { data, error } = await supabase
+          .from('basic_stage_customizations')
+          .insert({
+            user_id: user?.id!,
+            stage_key: stageKey,
+            custom_name: name,
+            custom_color: color
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        // Update local state
+        if (data) {
+          setBasicStageCustomizations(prev => [...prev, data])
+        }
+      }
+    } catch (error) {
+      console.error('Error updating basic stage:', error)
+      throw error
+    }
+  }
+
   const updateStageOrder = async (newStages: CustomStage[]) => {
     // Only allow admins to reorder stages
     if (!isAdmin) {
@@ -430,10 +505,31 @@ export const useCRMConversations = () => {
     return stageKey || 'novo_lead' // fallback to 'novo_lead' if stage not found
   }
 
-  // Combine basic stages and custom stages
+  // Helper function to get customized name and color for basic stages
+  const getBasicStageDisplay = (stageKey: string, defaultName: string, defaultColor: string) => {
+    const customization = basicStageCustomizations.find(c => c.stage_key === stageKey)
+    return {
+      name: customization?.custom_name || defaultName,
+      color: customization?.custom_color || defaultColor
+    }
+  }
+
+  // Combine basic stages and custom stages with customizations
   const allStages = [
-    ...BASIC_STAGES.map(stage => ({ ...stage, isCustom: false })),
-    ...customStages.map(stage => ({ ...stage, isCustom: true }))
+    ...BASIC_STAGES.map(stage => {
+      const stageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
+        key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === stage.name
+      )
+      const display = getBasicStageDisplay(stageKey || '', stage.name, stage.color)
+      return { 
+        ...stage, 
+        name: display.name, 
+        color: display.color, 
+        isCustom: false,
+        stageKey: stageKey || ''
+      }
+    }),
+    ...customStages.map(stage => ({ ...stage, isCustom: true, stageKey: '' }))
   ]
 
   const stages = allStages.map(stage => stage.name)
@@ -558,8 +654,11 @@ export const useCRMConversations = () => {
     updateStageOrder,
     updateBasicStageOrder,
     updateCustomStage,
+    updateBasicStage,
     deleteCustomStage,
     customStages,
+    basicStageCustomizations,
+    allStages,
     basicStages: BASIC_STAGES.map(s => s.name),
     // Filter states and functions
     filterChannel,
