@@ -10,7 +10,7 @@ export interface Conversation {
   contact_phone: string | null
   contact_username: string | null
   contact_avatar: string | null
-  status: string
+  status: 'aberta' | 'fechada' // Status da conversa (aberta/fechada)
   channel: 'whatsapp' | 'instagram' | 'messenger' | null
   last_message: string | null
   last_message_at: string | null
@@ -91,7 +91,7 @@ export const useConversations = () => {
             name: conversationData.contact_name,
             phone: conversationData.contact_phone,
             email: null,
-            status: 'novo',
+            status: 'ativo', // Status do contato
             channel: conversationData.channel || null,
             last_contact_date: new Date().toISOString(),
             notes: `Contato criado automaticamente via conversa ${conversationData.channel || 'chat'}`
@@ -328,6 +328,7 @@ export const useConversations = () => {
 
             return {
               ...conversation,
+              status: (conversation.status === 'fechada' ? 'fechada' : 'aberta') as 'aberta' | 'fechada',
               last_message: lastMessage?.mensagem || conversation.last_message,
               last_message_at: lastMessage?.data_hora || conversation.last_message_at,
               profile: (conversation as any).profile || null,
@@ -340,6 +341,7 @@ export const useConversations = () => {
             console.error('Erro ao processar conversa:', error)
             return {
               ...conversation,
+              status: (conversation.status === 'fechada' ? 'fechada' : 'aberta') as 'aberta' | 'fechada',
               last_message: conversation.last_message,
               last_message_at: conversation.last_message_at,
               profile: (conversation as any).profile || null,
@@ -500,6 +502,7 @@ export const useConversations = () => {
       console.log('Contato sincronizado:', syncedContact)
       setConversations(prev => [{ 
         ...data, 
+        status: (data.status === 'fechada' ? 'fechada' : 'aberta') as 'aberta' | 'fechada',
         profile: (data as any).profile || null, 
         account: (data as any).account || null,
         have_agent: (data as any).have_agent || false,

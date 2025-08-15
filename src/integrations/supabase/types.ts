@@ -174,6 +174,7 @@ export type Database = {
           company: string | null
           cpf_cnpj: string | null
           created_at: string
+          crm_stage: string | null
           email: string | null
           id: string
           instagram: string | null
@@ -195,6 +196,7 @@ export type Database = {
           company?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          crm_stage?: string | null
           email?: string | null
           id?: string
           instagram?: string | null
@@ -216,6 +218,7 @@ export type Database = {
           company?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          crm_stage?: string | null
           email?: string | null
           id?: string
           instagram?: string | null
@@ -282,6 +285,7 @@ export type Database = {
           contact_phone: string | null
           contact_username: string | null
           created_at: string
+          crm_stage: string | null
           have_agent: boolean | null
           id: string
           last_message: string | null
@@ -302,6 +306,7 @@ export type Database = {
           contact_phone?: string | null
           contact_username?: string | null
           created_at?: string
+          crm_stage?: string | null
           have_agent?: boolean | null
           id?: string
           last_message?: string | null
@@ -322,6 +327,7 @@ export type Database = {
           contact_phone?: string | null
           contact_username?: string | null
           created_at?: string
+          crm_stage?: string | null
           have_agent?: boolean | null
           id?: string
           last_message?: string | null

@@ -8,7 +8,8 @@ export interface CRMConversation {
   id: string
   contact_name: string
   contact_id?: string
-  status: string
+  status: string // Status da conversa: 'aberta' | 'fechada'
+  crm_stage: string // Etapa do CRM: 'novo' | 'qualificado' | etc
   created_at: string
   updated_at: string
   user_id?: string
@@ -31,8 +32,8 @@ export interface CustomStage {
   position: number
 }
 
-// Map conversation status to basic CRM stages
-const STATUS_TO_STAGE_MAP = {
+// Map conversation crm_stage to basic CRM stages
+const STAGE_TO_CRM_STAGE_MAP = {
   'novo': 'Novo Lead',
   'aberta': 'Em Andamento', 
   'qualificado': 'Qualificado',
@@ -82,7 +83,7 @@ export const useCRMConversations = () => {
       let query = supabase
         .from('conversations')
         .select(`
-          id, contact_name, contact_id, status, created_at, updated_at, user_id, assigned_to,
+          id, contact_name, contact_id, status, crm_stage, created_at, updated_at, user_id, assigned_to,
           contacts!conversations_contact_id_fkey (
             phone,
             email,
@@ -107,6 +108,7 @@ export const useCRMConversations = () => {
         contact_name: conv.contact_name,
         contact_id: conv.contact_id,
         status: conv.status,
+        crm_stage: conv.crm_stage || 'novo',
         created_at: conv.created_at,
         updated_at: conv.updated_at,
         user_id: conv.user_id,
@@ -210,98 +212,98 @@ export const useCRMConversations = () => {
     const isCustomStage = customStages.some(stage => stage.name === newStage)
     
     if (isCustomStage) {
-      // For custom stages, we'll use a special status format
-      const customStatus = `custom:${newStage}`
+      // For custom stages, we'll use a special crm_stage format
+      const customStage = `custom:${newStage}`
       
       // Optimistic update
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId 
-            ? { ...conv, status: customStatus }
+            ? { ...conv, crm_stage: customStage }
             : conv
         )
       )
 
       try {
-        // Update conversation status
+        // Update conversation crm_stage
         const { error: conversationError } = await supabase
           .from('conversations')
-          .update({ status: customStatus as any })
+          .update({ crm_stage: customStage as any })
           .eq('id', conversationId)
 
         if (conversationError) {
-          console.error('Error updating conversation status:', conversationError)
+          console.error('Error updating conversation crm_stage:', conversationError)
           await fetchConversations()
           return
         }
 
-        // Update contact status if contact_id exists
+        // Update contact crm_stage if contact_id exists
         const conversation = conversations.find(c => c.id === conversationId)
         if (conversation?.contact_id) {
           const { error: contactError } = await supabase
             .from('contacts')
-            .update({ status: customStatus as any })
+            .update({ crm_stage: customStage as any })
             .eq('id', conversation.contact_id)
 
           if (contactError) {
-            console.error('Error updating contact status:', contactError)
+            console.error('Error updating contact crm_stage:', contactError)
           }
         }
       } catch (error) {
-        console.error('Error updating conversation status:', error)
+        console.error('Error updating conversation crm_stage:', error)
         await fetchConversations()
       }
     } else {
       // Handle basic stages as before
-      const statusKey = getStatusForStage(newStage)
+      const stageKey = getCrmStageForStage(newStage)
       
       // Optimistic update
       setConversations(prev => 
         prev.map(conv => 
           conv.id === conversationId 
-            ? { ...conv, status: statusKey }
+            ? { ...conv, crm_stage: stageKey }
             : conv
         )
       )
 
       try {
-        // Update conversation status
+        // Update conversation crm_stage
         const { error: conversationError } = await supabase
           .from('conversations')
-          .update({ status: statusKey as any })
+          .update({ crm_stage: stageKey as any })
           .eq('id', conversationId)
 
         if (conversationError) {
-          console.error('Error updating conversation status:', conversationError)
+          console.error('Error updating conversation crm_stage:', conversationError)
           await fetchConversations()
           return
         }
 
-        // Update contact status if contact_id exists
+        // Update contact crm_stage if contact_id exists
         const conversation = conversations.find(c => c.id === conversationId)
         if (conversation?.contact_id) {
           const { error: contactError } = await supabase
             .from('contacts')
-            .update({ status: statusKey as any })
+            .update({ crm_stage: stageKey as any })
             .eq('id', conversation.contact_id)
 
           if (contactError) {
-            console.error('Error updating contact status:', contactError)
+            console.error('Error updating contact crm_stage:', contactError)
           }
         }
       } catch (error) {
-        console.error('Error updating conversation status:', error)
+        console.error('Error updating conversation crm_stage:', error)
         await fetchConversations()
       }
     }
   }
 
-  // Helper function to get status for stage
-  const getStatusForStage = (stageName: string): string => {
-    const statusKey = Object.keys(STATUS_TO_STAGE_MAP).find(
-      key => STATUS_TO_STAGE_MAP[key as keyof typeof STATUS_TO_STAGE_MAP] === stageName
+  // Helper function to get crm_stage for stage
+  const getCrmStageForStage = (stageName: string): string => {
+    const stageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
+      key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === stageName
     )
-    return statusKey || 'novo' // fallback to 'novo' if stage not found
+    return stageKey || 'novo' // fallback to 'novo' if stage not found
   }
 
   // Combine basic stages and custom stages
@@ -395,9 +397,9 @@ export const useCRMConversations = () => {
 
   // Group filtered conversations by their mapped stage (basic + custom stages)
   filteredConversations.forEach(conversation => {
-    // Check if it's a custom stage status
-    if (conversation.status.startsWith('custom:')) {
-      const customStageName = conversation.status.replace('custom:', '')
+    // Check if it's a custom stage crm_stage
+    if (conversation.crm_stage && conversation.crm_stage.startsWith('custom:')) {
+      const customStageName = conversation.crm_stage.replace('custom:', '')
       if (customStages.some(stage => stage.name === customStageName)) {
         crmData[customStageName].push(conversation)
         return
@@ -405,7 +407,7 @@ export const useCRMConversations = () => {
     }
     
     // Handle basic stages
-    const stageName = STATUS_TO_STAGE_MAP[conversation.status as keyof typeof STATUS_TO_STAGE_MAP] || 'Novo Lead'
+    const stageName = STAGE_TO_CRM_STAGE_MAP[conversation.crm_stage as keyof typeof STAGE_TO_CRM_STAGE_MAP] || 'Novo Lead'
     crmData[stageName].push(conversation)
   })
 
