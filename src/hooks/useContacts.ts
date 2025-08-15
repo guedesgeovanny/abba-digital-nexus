@@ -17,6 +17,7 @@ export interface Contact {
   cpf_cnpj?: string
   notes?: string
   status: 'novo' | 'em_andamento' | 'qualificado' | 'convertido' | 'perdido'
+  crm_stage?: string
   channel?: 'instagram' | 'whatsapp' | 'messenger' | 'email' | 'telefone' | 'site' | 'indicacao'
   source?: string
   agent_assigned?: string

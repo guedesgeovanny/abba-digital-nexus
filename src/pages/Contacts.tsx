@@ -109,6 +109,40 @@ const Contacts = () => {
     }
   }
 
+  const getCRMStageColor = (stage: string) => {
+    switch (stage) {
+      case "novo_lead":
+        return "bg-blue-600"
+      case "em_andamento":
+        return "bg-yellow-600"
+      case "qualificado":
+        return "bg-green-600"
+      case "convertido":
+        return "bg-purple-600"
+      case "perdido":
+        return "bg-red-600"
+      default:
+        return "bg-gray-600"
+    }
+  }
+
+  const getCRMStageLabel = (stage: string) => {
+    switch (stage) {
+      case "novo_lead":
+        return "Novo Lead"
+      case "em_andamento":
+        return "Em Andamento"
+      case "qualificado":
+        return "Qualificado"
+      case "convertido":
+        return "Convertido"
+      case "perdido":
+        return "Perdido"
+      default:
+        return stage
+    }
+  }
+
   const getChannelLabel = (channel?: string) => {
     switch (channel) {
       case "instagram":
@@ -590,8 +624,8 @@ const Contacts = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">Status:</span>
-                      <Badge className={`${getStatusColor(selectedContact.status)} text-white`}>
-                        {getStatusLabel(selectedContact.status)}
+                      <Badge className={`${getCRMStageColor(selectedContact.crm_stage || 'novo_lead')} text-white`}>
+                        {getCRMStageLabel(selectedContact.crm_stage || 'novo_lead')}
                       </Badge>
                     </div>
                     <div className="flex items-start gap-2">

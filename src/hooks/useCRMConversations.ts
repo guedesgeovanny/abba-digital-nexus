@@ -34,11 +34,10 @@ export interface CustomStage {
 
 // Map conversation crm_stage to basic CRM stages
 const STAGE_TO_CRM_STAGE_MAP = {
-  'novo': 'Novo Lead',
-  'aberta': 'Em Andamento', 
+  'novo_lead': 'Novo Lead',
+  'em_andamento': 'Em Andamento', 
   'qualificado': 'Qualificado',
   'convertido': 'Convertido',
-  'fechada': 'Convertido',
   'perdido': 'Perdido'
 } as const
 
@@ -108,7 +107,7 @@ export const useCRMConversations = () => {
         contact_name: conv.contact_name,
         contact_id: conv.contact_id,
         status: conv.status,
-        crm_stage: conv.crm_stage || 'novo',
+        crm_stage: conv.crm_stage || 'novo_lead',
         created_at: conv.created_at,
         updated_at: conv.updated_at,
         user_id: conv.user_id,
@@ -303,7 +302,7 @@ export const useCRMConversations = () => {
     const stageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
       key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === stageName
     )
-    return stageKey || 'novo' // fallback to 'novo' if stage not found
+    return stageKey || 'novo_lead' // fallback to 'novo_lead' if stage not found
   }
 
   // Combine basic stages and custom stages
