@@ -17,6 +17,7 @@ interface ContactFormData {
   company: string
   position: string
   address: string
+  cpf_cnpj: string
   notes: string
   status: Contact['status']
   channel?: Contact['channel']
@@ -43,6 +44,7 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
     company: contact?.company || '',
     position: contact?.position || '',
     address: contact?.address || '',
+    cpf_cnpj: contact?.cpf_cnpj || '',
     notes: contact?.notes || '',
     status: contact?.status || 'novo',
     channel: contact?.channel || undefined,
@@ -64,6 +66,7 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
       company: formData.company || undefined,
       position: formData.position || undefined,
       address: formData.address || undefined,
+      cpf_cnpj: formData.cpf_cnpj || undefined,
       notes: formData.notes || undefined,
       source: formData.source || undefined,
       agent_assigned: formData.agent_assigned || undefined,
@@ -88,6 +91,7 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
         company: '',
         position: '',
         address: '',
+        cpf_cnpj: '',
         notes: '',
         status: 'novo',
         channel: undefined,
@@ -163,6 +167,17 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
                 onChange={(e) => setFormData(prev => ({ ...prev, instagram: e.target.value }))}
                 className="bg-background border-border text-foreground"
                 placeholder="@usuario"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="cpf_cnpj" className="text-foreground">CPF/CNPJ</Label>
+              <Input
+                id="cpf_cnpj"
+                value={formData.cpf_cnpj}
+                onChange={(e) => setFormData(prev => ({ ...prev, cpf_cnpj: e.target.value }))}
+                className="bg-background border-border text-foreground"
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
               />
             </div>
             

@@ -14,6 +14,7 @@ export interface Contact {
   company?: string
   position?: string
   address?: string
+  cpf_cnpj?: string
   notes?: string
   status: 'novo' | 'em_andamento' | 'qualificado' | 'convertido' | 'perdido'
   channel?: 'instagram' | 'whatsapp' | 'messenger' | 'email' | 'telefone' | 'site' | 'indicacao'
