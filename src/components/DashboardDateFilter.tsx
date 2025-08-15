@@ -48,105 +48,97 @@ export function DashboardDateFilter({ dateRange, onDateRangeChange }: DashboardD
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-4 bg-card rounded-lg border">
-      <div className="flex items-center gap-2">
-        <Label className="text-sm font-medium">Período:</Label>
-      </div>
-
+    <div className="flex flex-wrap items-center gap-2 p-2 bg-card/50 rounded border-0">
       {/* Quick preset buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setPresetRange(6)}
-          className="text-xs"
+          className="text-xs px-2 h-7"
         >
-          7 dias
+          7d
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setPresetRange(29)}
-          className="text-xs"
+          className="text-xs px-2 h-7"
         >
-          30 dias
+          30d
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setPresetRange(89)}
-          className="text-xs"
+          className="text-xs px-2 h-7"
         >
-          90 dias
+          90d
         </Button>
       </div>
 
       {/* From Date */}
-      <div className="flex items-center gap-2">
-        <Label className="text-sm">De:</Label>
-        <Popover open={isFromOpen} onOpenChange={setIsFromOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-[140px] justify-start text-left font-normal",
-                !dateRange.from && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange.from ? (
-                format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
-              ) : (
-                <span>Data inicial</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dateRange.from}
-              onSelect={handleFromDateSelect}
-              initialFocus
-              className="p-3 pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+      <Popover open={isFromOpen} onOpenChange={setIsFromOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "w-[120px] justify-start text-left font-normal h-7 text-xs",
+              !dateRange.from && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-1 h-3 w-3" />
+            {dateRange.from ? (
+              format(dateRange.from, "dd/MM", { locale: ptBR })
+            ) : (
+              <span>Início</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={dateRange.from}
+            onSelect={handleFromDateSelect}
+            initialFocus
+            className="p-3 pointer-events-auto"
+          />
+        </PopoverContent>
+      </Popover>
 
       {/* To Date */}
-      <div className="flex items-center gap-2">
-        <Label className="text-sm">Até:</Label>
-        <Popover open={isToOpen} onOpenChange={setIsToOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-[140px] justify-start text-left font-normal",
-                !dateRange.to && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange.to ? (
-                format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })
-              ) : (
-                <span>Data final</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={dateRange.to}
-              onSelect={handleToDateSelect}
-              initialFocus
-              className="p-3 pointer-events-auto"
-              disabled={(date) => 
-                dateRange.from ? date < dateRange.from : false
-              }
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+      <Popover open={isToOpen} onOpenChange={setIsToOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "w-[120px] justify-start text-left font-normal h-7 text-xs",
+              !dateRange.to && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-1 h-3 w-3" />
+            {dateRange.to ? (
+              format(dateRange.to, "dd/MM", { locale: ptBR })
+            ) : (
+              <span>Fim</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={dateRange.to}
+            onSelect={handleToDateSelect}
+            initialFocus
+            className="p-3 pointer-events-auto"
+            disabled={(date) => 
+              dateRange.from ? date < dateRange.from : false
+            }
+          />
+        </PopoverContent>
+      </Popover>
 
       {/* Clear button */}
       {(dateRange.from || dateRange.to) && (
@@ -154,9 +146,9 @@ export function DashboardDateFilter({ dateRange, onDateRangeChange }: DashboardD
           variant="ghost"
           size="sm"
           onClick={clearFilters}
-          className="text-xs"
+          className="text-xs px-2 h-7 text-muted-foreground hover:text-foreground"
         >
-          Limpar
+          ×
         </Button>
       )}
     </div>
