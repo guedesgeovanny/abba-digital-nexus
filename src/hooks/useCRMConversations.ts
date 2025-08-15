@@ -223,19 +223,32 @@ export const useCRMConversations = () => {
       )
 
       try {
-        const { error } = await supabase
+        // Update conversation status
+        const { error: conversationError } = await supabase
           .from('conversations')
           .update({ status: customStatus as any })
           .eq('id', conversationId)
 
-        if (error) {
-          console.error('Error updating conversation status:', error)
-          // Revert optimistic update on error
+        if (conversationError) {
+          console.error('Error updating conversation status:', conversationError)
           await fetchConversations()
+          return
+        }
+
+        // Update contact status if contact_id exists
+        const conversation = conversations.find(c => c.id === conversationId)
+        if (conversation?.contact_id) {
+          const { error: contactError } = await supabase
+            .from('contacts')
+            .update({ status: customStatus as any })
+            .eq('id', conversation.contact_id)
+
+          if (contactError) {
+            console.error('Error updating contact status:', contactError)
+          }
         }
       } catch (error) {
         console.error('Error updating conversation status:', error)
-        // Revert optimistic update on error
         await fetchConversations()
       }
     } else {
@@ -252,19 +265,32 @@ export const useCRMConversations = () => {
       )
 
       try {
-        const { error } = await supabase
+        // Update conversation status
+        const { error: conversationError } = await supabase
           .from('conversations')
           .update({ status: statusKey as any })
           .eq('id', conversationId)
 
-        if (error) {
-          console.error('Error updating conversation status:', error)
-          // Revert optimistic update on error
+        if (conversationError) {
+          console.error('Error updating conversation status:', conversationError)
           await fetchConversations()
+          return
+        }
+
+        // Update contact status if contact_id exists
+        const conversation = conversations.find(c => c.id === conversationId)
+        if (conversation?.contact_id) {
+          const { error: contactError } = await supabase
+            .from('contacts')
+            .update({ status: statusKey as any })
+            .eq('id', conversation.contact_id)
+
+          if (contactError) {
+            console.error('Error updating contact status:', contactError)
+          }
         }
       } catch (error) {
         console.error('Error updating conversation status:', error)
-        // Revert optimistic update on error
         await fetchConversations()
       }
     }
