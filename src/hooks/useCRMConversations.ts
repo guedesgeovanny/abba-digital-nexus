@@ -233,6 +233,70 @@ export const useCRMConversations = () => {
     }
   }
 
+  const updateCustomStage = async (stageId: string, name: string, color: string) => {
+    // Only allow admins to update stages
+    if (!isAdmin) {
+      console.error('Only admins can update stages')
+      return
+    }
+
+    try {
+      // Update stage in database
+      const { error } = await supabase
+        .from('custom_stages')
+        .update({ name, color })
+        .eq('id', stageId)
+
+      if (error) throw error
+
+      // Update local state
+      setCustomStages(prev => 
+        prev.map(stage => 
+          stage.id === stageId 
+            ? { ...stage, name, color }
+            : stage
+        )
+      )
+
+      // Also need to update any conversations/contacts that use the old stage name
+      const oldStage = customStages.find(s => s.id === stageId)
+      if (oldStage && oldStage.name !== name) {
+        // Update conversations with the old custom stage name
+        const conversationsToUpdate = conversations.filter(conv => 
+          conv.crm_stage === `custom:${oldStage.name}`
+        )
+
+        if (conversationsToUpdate.length > 0) {
+          // Update conversations to use new stage name
+          const conversationUpdates = conversationsToUpdate.map(conv => 
+            supabase
+              .from('conversations')
+              .update({ crm_stage: `custom:${name}` })
+              .eq('id', conv.id)
+          )
+
+          // Update contacts to use new stage name
+          const contactUpdates = conversationsToUpdate
+            .filter(conv => conv.contact_id)
+            .map(conv => 
+              supabase
+                .from('contacts')
+                .update({ crm_stage: `custom:${name}` })
+                .eq('id', conv.contact_id!)
+            )
+
+          await Promise.all([...conversationUpdates, ...contactUpdates])
+          
+          // Refresh conversations to reflect changes
+          await fetchConversations()
+        }
+      }
+    } catch (error) {
+      console.error('Error updating custom stage:', error)
+      throw error
+    }
+  }
+
   const updateStageOrder = async (newStages: CustomStage[]) => {
     // Only allow admins to reorder stages
     if (!isAdmin) {
@@ -493,6 +557,7 @@ export const useCRMConversations = () => {
     addCustomStage,
     updateStageOrder,
     updateBasicStageOrder,
+    updateCustomStage,
     deleteCustomStage,
     customStages,
     basicStages: BASIC_STAGES.map(s => s.name),

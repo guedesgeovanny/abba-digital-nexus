@@ -4,7 +4,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { LeadCard } from "./LeadCard"
 import { SortableStageHeader } from "./SortableStageHeader"
-import { CRMConversation } from "@/hooks/useCRMConversations"
+import { CRMConversation, CustomStage } from "@/hooks/useCRMConversations"
 
 interface StageColumnProps {
   stage: string
@@ -15,6 +15,8 @@ interface StageColumnProps {
   currentUserId?: string
   isCustom?: boolean
   onDeleteStage?: (stageName: string) => void
+  onEditStage?: (stageName: string) => void
+  customStageData?: CustomStage
 }
 
 export const StageColumn = ({
@@ -25,7 +27,9 @@ export const StageColumn = ({
   isAdmin,
   currentUserId,
   isCustom = false,
-  onDeleteStage
+  onDeleteStage,
+  onEditStage,
+  customStageData
 }: StageColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: stage,
@@ -49,6 +53,8 @@ export const StageColumn = ({
         isCustom={isCustom}
         isAdmin={isAdmin}
         onDelete={onDeleteStage}
+        onEdit={onEditStage}
+        customStageData={customStageData}
       />
       
       {/* Lista de cards */}

@@ -26,6 +26,7 @@ import { AddStageDialog } from "@/components/AddStageDialog"
 import { StageColumn } from "@/components/StageColumn"
 import { LeadCard } from "@/components/LeadCard"
 import { SortableStageHeader } from "@/components/SortableStageHeader"
+import { EditStageDialog } from "@/components/EditStageDialog"
 import { useNavigate } from "react-router-dom"
 
 import { useCRMConversations, CRMConversation } from "@/hooks/useCRMConversations"
@@ -44,6 +45,7 @@ const CRM = () => {
     addCustomStage,
     updateStageOrder,
     updateBasicStageOrder,
+    updateCustomStage,
     deleteCustomStage,
     customStages,
     basicStages,
@@ -74,6 +76,8 @@ const CRM = () => {
   const [selectedConversation, setSelectedConversation] = useState<CRMConversation | null>(null)
   const [showLeadDetails, setShowLeadDetails] = useState(false)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [editingStage, setEditingStage] = useState<string | null>(null)
+  const [showEditStageDialog, setShowEditStageDialog] = useState(false)
   const navigate = useNavigate()
   
   // Simplify filters for now - remove complex filtering
@@ -214,6 +218,25 @@ const CRM = () => {
     }
   }
 
+  const handleEditStage = (stageName: string) => {
+    setEditingStage(stageName)
+    setShowEditStageDialog(true)
+  }
+
+  const handleUpdateStage = async (stageId: string, name: string, color: string) => {
+    try {
+      await updateCustomStage(stageId, name, color)
+    } catch (error) {
+      console.error('Error updating stage:', error)
+      throw error
+    }
+  }
+
+  const handleCloseEditDialog = () => {
+    setShowEditStageDialog(false)
+    setEditingStage(null)
+  }
+
   const handleCardClick = (conversation: CRMConversation) => {
     setSelectedConversation(conversation)
     setShowLeadDetails(true)
@@ -325,6 +348,13 @@ const CRM = () => {
         onAdd={handleAddStage}
       />
 
+      <EditStageDialog
+        isOpen={showEditStageDialog}
+        onClose={handleCloseEditDialog}
+        onUpdate={handleUpdateStage}
+        stage={editingStage ? customStages.find(s => s.name === editingStage) || null : null}
+      />
+
       <LeadDetailsDialog
         isOpen={showLeadDetails}
         onClose={handleCloseLeadDetails}
@@ -359,6 +389,8 @@ const CRM = () => {
                     currentUserId={currentUserId}
                     isCustom={isCustomStage}
                     onDeleteStage={handleDeleteStage}
+                    onEditStage={handleEditStage}
+                    customStageData={customStages.find(s => s.name === stage)}
                   />
                 )
               })}
@@ -384,6 +416,7 @@ const CRM = () => {
                   isCustom={customStages.some(s => s.name === activeStageHeader)}
                   isDragging={true}
                   isAdmin={isAdmin}
+                  customStageData={customStages.find(s => s.name === activeStageHeader)}
                 />
               </div>
             ) : null}

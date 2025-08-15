@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2 } from 'lucide-react'
+import { GripVertical, Trash2, Edit } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { CustomStage } from "@/hooks/useCRMConversations"
 
 interface SortableStageHeaderProps {
   stage: string
@@ -14,6 +15,8 @@ interface SortableStageHeaderProps {
   isDragging?: boolean
   isAdmin?: boolean
   onDelete?: (stageName: string) => void
+  onEdit?: (stageName: string) => void
+  customStageData?: CustomStage
 }
 
 export const SortableStageHeader = ({ 
@@ -23,7 +26,9 @@ export const SortableStageHeader = ({
   isCustom,
   isDragging = false,
   isAdmin = false,
-  onDelete
+  onDelete,
+  onEdit,
+  customStageData
 }: SortableStageHeaderProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const {
@@ -45,6 +50,11 @@ export const SortableStageHeader = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     onDelete?.(stage)
+  }
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onEdit?.(stage)
   }
 
   return (
@@ -69,37 +79,47 @@ export const SortableStageHeader = ({
         />
         <h3 className="font-medium text-card-foreground flex-1">{stage}</h3>
         {isCustom && isAdmin && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir Etapa</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja excluir a etapa "{stage}"? 
-                  Todos os leads nesta etapa serão movidos para "Novo Lead". 
-                  Esta ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700"
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-blue-500 hover:text-blue-700 h-6 w-6 p-0"
+              onClick={handleEdit}
+            >
+              <Edit className="w-3 h-3" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Excluir
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir Etapa</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir a etapa "{stage}"? 
+                    Todos os leads nesta etapa serão movidos para "Novo Lead". 
+                    Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         )}
         {!isAdmin && (
           <span className="text-xs text-muted-foreground">
