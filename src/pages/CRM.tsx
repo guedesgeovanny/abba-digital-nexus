@@ -408,9 +408,10 @@ const CRM = () => {
             strategy={horizontalListSortingStrategy}
           >
             <div className="flex gap-6 pb-6 min-w-max h-full">
-              {stages.map((stage) => {
+              {stages.map((stage, index) => {
                 const conversations = crmData[stage] || []
                 const isCustomStage = customStages.some(s => s.name === stage)
+                const isEntryStage = index === 0 && stage === 'Etapa de Entrada'
                 
                 return (
                   <StageColumn
@@ -422,6 +423,7 @@ const CRM = () => {
                     isAdmin={isAdmin}
                     currentUserId={currentUserId}
                     isCustom={isCustomStage}
+                    isEntryStage={isEntryStage}
                     onDeleteStage={handleDeleteStage}
                     onEditStage={handleEditStage}
                     customStageData={customStages.find(s => s.name === stage)}
@@ -448,6 +450,7 @@ const CRM = () => {
                   color={stageColorsMap[activeStageHeader] || '#64748b'}
                   conversationCount={crmData[activeStageHeader]?.length || 0}
                   isCustom={customStages.some(s => s.name === activeStageHeader)}
+                  isEntryStage={stages.indexOf(activeStageHeader) === 0 && activeStageHeader === 'Etapa de Entrada'}
                   isDragging={true}
                   isAdmin={isAdmin}
                   customStageData={customStages.find(s => s.name === activeStageHeader)}

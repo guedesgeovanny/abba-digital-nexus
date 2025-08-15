@@ -14,6 +14,7 @@ interface StageColumnProps {
   isAdmin?: boolean
   currentUserId?: string
   isCustom?: boolean
+  isEntryStage?: boolean
   onDeleteStage?: (stageName: string) => void
   onEditStage?: (stageName: string) => void
   customStageData?: CustomStage
@@ -27,6 +28,7 @@ export const StageColumn = ({
   isAdmin,
   currentUserId,
   isCustom = false,
+  isEntryStage = false,
   onDeleteStage,
   onEditStage,
   customStageData
@@ -51,6 +53,7 @@ export const StageColumn = ({
         color={stageColor}
         conversationCount={conversations.length}
         isCustom={isCustom}
+        isEntryStage={isEntryStage}
         isAdmin={isAdmin}
         onDelete={onDeleteStage}
         onEdit={onEditStage}

@@ -41,16 +41,14 @@ export interface BasicStageCustomization {
 
 // Map conversation crm_stage to basic CRM stages
 const STAGE_TO_CRM_STAGE_MAP = {
-  'novo_lead': 'Novo Lead',
-  'em_andamento': 'Em Andamento', 
-  'qualificado': 'Qualificado',
-  'convertido': 'Convertido',
-  'perdido': 'Perdido'
+  'novo_lead': 'Etapa de Entrada'
 } as const
 
-// Basic CRM stages with colors
-const BASIC_STAGES = [
-  { name: 'Novo Lead', color: '#3b82f6' },
+// Fixed entry stage that cannot be customized
+const ENTRY_STAGE = { name: 'Etapa de Entrada', color: '#3b82f6', key: 'novo_lead' } as const
+
+// Default stages that will be converted to customizable stages
+const DEFAULT_CUSTOMIZABLE_STAGES = [
   { name: 'Em Andamento', color: '#f59e0b' },
   { name: 'Qualificado', color: '#10b981' },
   { name: 'Convertido', color: '#059669' },
@@ -522,22 +520,18 @@ export const useCRMConversations = () => {
     }
   }
 
-  // Combine basic stages and custom stages with customizations
+  // Combine entry stage (fixed) and custom stages
   const allStages = [
-    ...BASIC_STAGES.map(stage => {
-      const stageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
-        key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === stage.name
-      )
-      const display = getBasicStageDisplay(stageKey || '', stage.name, stage.color)
-      return { 
-        ...stage, 
-        name: display.name, 
-        color: display.color, 
-        isCustom: false,
-        stageKey: stageKey || ''
-      }
-    }),
-    ...customStages.map(stage => ({ ...stage, isCustom: true, stageKey: '' }))
+    // Fixed entry stage that cannot be customized
+    { 
+      name: ENTRY_STAGE.name, 
+      color: ENTRY_STAGE.color, 
+      isCustom: false,
+      isEntryStage: true,
+      stageKey: ENTRY_STAGE.key
+    },
+    // All other stages are now customizable
+    ...customStages.map(stage => ({ ...stage, isCustom: true, isEntryStage: false, stageKey: '' }))
   ]
 
   const stages = allStages.map(stage => stage.name)
@@ -691,7 +685,7 @@ export const useCRMConversations = () => {
     customStages,
     basicStageCustomizations,
     allStages,
-    basicStages: BASIC_STAGES.map(s => s.name),
+    basicStages: [ENTRY_STAGE.name],
     // Filter states and functions
     filterChannel,
     filterValueRange,

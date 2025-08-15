@@ -12,6 +12,7 @@ interface SortableStageHeaderProps {
   color: string
   conversationCount: number
   isCustom: boolean
+  isEntryStage?: boolean
   isDragging?: boolean
   isAdmin?: boolean
   onDelete?: (stageName: string) => void
@@ -24,6 +25,7 @@ export const SortableStageHeader = ({
   color, 
   conversationCount, 
   isCustom,
+  isEntryStage = false,
   isDragging = false,
   isAdmin = false,
   onDelete,
@@ -78,7 +80,7 @@ export const SortableStageHeader = ({
           style={{ backgroundColor: color }}
         />
         <h3 className="font-medium text-card-foreground flex-1">{stage}</h3>
-        {isAdmin && (
+        {isAdmin && !isEntryStage && (
           <div className="flex gap-1">
             <Button
               variant="ghost"
@@ -88,40 +90,43 @@ export const SortableStageHeader = ({
             >
               <Edit className="w-3 h-3" />
             </Button>
-            {isCustom && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
-                    onClick={(e) => e.stopPropagation()}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir Etapa</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tem certeza que deseja excluir a etapa "{stage}"? 
+                    Todos os leads nesta etapa serão movidos para "Etapa de Entrada". 
+                    Esta ação não pode ser desfeita.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-red-600 hover:bg-red-700"
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir Etapa</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Tem certeza que deseja excluir a etapa "{stage}"? 
-                      Todos os leads nesta etapa serão movidos para "Novo Lead". 
-                      Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
+        )}
+        {isEntryStage && isAdmin && (
+          <span className="text-xs text-muted-foreground">
+            (Etapa fixa)
+          </span>
         )}
         {!isAdmin && (
           <span className="text-xs text-muted-foreground">
