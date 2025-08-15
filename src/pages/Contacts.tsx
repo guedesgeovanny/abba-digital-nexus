@@ -129,6 +129,7 @@ const Contacts = () => {
   const getCRMStageLabel = (stage: string) => {
     switch (stage) {
       case "novo_lead":
+      case "novo":
         return "Novo Lead"
       case "em_andamento":
         return "Em Andamento"
