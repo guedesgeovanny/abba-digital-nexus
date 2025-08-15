@@ -178,6 +178,27 @@ export const useCRMConversations = () => {
     }
   }
 
+  const updateStageOrder = async (newStages: CustomStage[]) => {
+    try {
+      // Update local state immediately for better UX
+      setCustomStages(newStages)
+      
+      // Update positions in database
+      const updates = newStages.map((stage, index) => 
+        supabase
+          .from('custom_stages')
+          .update({ position: index })
+          .eq('id', stage.id)
+      )
+      
+      await Promise.all(updates)
+    } catch (error) {
+      console.error('Error updating stage order:', error)
+      // Revert to original order on error
+      await fetchCustomStages()
+    }
+  }
+
   const updateConversationStatus = async (conversationId: string, newStage: string) => {
     // Optimistic update
     setConversations(prev => 
@@ -332,6 +353,7 @@ export const useCRMConversations = () => {
     isLoading,
     updateConversationStatus,
     addCustomStage,
+    updateStageOrder,
     customStages,
     basicStages: BASIC_STAGES.map(s => s.name),
     // Filter states and functions

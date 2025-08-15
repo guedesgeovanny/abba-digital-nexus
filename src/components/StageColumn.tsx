@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { LeadCard } from "./LeadCard"
+import { SortableStageHeader } from "./SortableStageHeader"
 import { CRMConversation } from "@/hooks/useCRMConversations"
 
 interface StageColumnProps {
@@ -12,6 +13,7 @@ interface StageColumnProps {
   onCardClick?: (conversation: CRMConversation) => void
   isAdmin?: boolean
   currentUserId?: string
+  isCustom?: boolean
 }
 
 export const StageColumn = ({
@@ -20,7 +22,8 @@ export const StageColumn = ({
   stageColorsMap,
   onCardClick,
   isAdmin,
-  currentUserId
+  currentUserId,
+  isCustom = false
 }: StageColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: stage,
@@ -37,19 +40,12 @@ export const StageColumn = ({
       `}
     >
       {/* Header do estágio */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-2">
-          <div 
-            className="w-3 h-3 rounded-full" 
-            style={{ backgroundColor: stageColor }}
-          />
-          <h3 className="font-medium text-card-foreground">{stage}</h3>
-        </div>
-        
-        <Badge variant="outline" className="border-border">
-          {conversations.length} conversas
-        </Badge>
-      </div>
+      <SortableStageHeader
+        stage={stage}
+        color={stageColor}
+        conversationCount={conversations.length}
+        isCustom={isCustom}
+      />
       
       {/* Lista de cards */}
       <div className="p-4 space-y-3 h-[calc(100vh-300px)] overflow-y-auto">

@@ -15,11 +15,17 @@ import {
   pointerWithin,
   rectIntersection
 } from '@dnd-kit/core'
+import { 
+  SortableContext, 
+  horizontalListSortingStrategy,
+  arrayMove 
+} from '@dnd-kit/sortable'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CRMFilters } from "@/components/CRMFilters"
 import { AddStageDialog } from "@/components/AddStageDialog"
 import { StageColumn } from "@/components/StageColumn"
 import { LeadCard } from "@/components/LeadCard"
+import { SortableStageHeader } from "@/components/SortableStageHeader"
 import { useNavigate } from "react-router-dom"
 
 import { useCRMConversations, CRMConversation } from "@/hooks/useCRMConversations"
@@ -36,6 +42,9 @@ const CRM = () => {
     isLoading,
     updateConversationStatus,
     addCustomStage,
+    updateStageOrder,
+    customStages,
+    basicStages,
     // Filter states and functions
     filterChannel,
     filterValueRange,
@@ -93,7 +102,34 @@ const CRM = () => {
     const activeId = active.id as string
     const overId = over.id as string
 
-    // Find which stage the conversation is moving from and to
+    // Check if we're reordering stage headers
+    if (activeId.startsWith('stage-header-') && overId.startsWith('stage-header-')) {
+      const activeStage = activeId.replace('stage-header-', '')
+      const overStage = overId.replace('stage-header-', '')
+      
+      // Only reorder custom stages
+      const activeCustomStage = customStages.find(s => s.name === activeStage)
+      const overCustomStage = customStages.find(s => s.name === overStage)
+      
+      if (activeCustomStage && overCustomStage) {
+        const oldIndex = customStages.findIndex(s => s.name === activeStage)
+        const newIndex = customStages.findIndex(s => s.name === overStage)
+        
+        if (oldIndex !== newIndex) {
+          const newCustomStages = arrayMove(customStages, oldIndex, newIndex)
+            .map((stage, index) => ({ ...stage, position: index }))
+          
+          try {
+            await updateStageOrder(newCustomStages)
+          } catch (error) {
+            console.error('Error reordering stages:', error)
+          }
+        }
+      }
+      return
+    }
+
+    // Handle conversation dragging (existing logic)
     let fromStage = ""
     let toStage = ""
 
@@ -161,9 +197,12 @@ const CRM = () => {
     setSelectedConversation(null)
   }
 
-  // Get the currently dragging conversation for overlay
-  const activeConversation = activeDragId ? 
+  // Get the currently dragging conversation or stage for overlay
+  const activeConversation = activeDragId && !activeDragId.startsWith('stage-header-') ? 
     Object.values(crmData).flat().find(conv => conv.id === activeDragId) : null
+  
+  const activeStageHeader = activeDragId && activeDragId.startsWith('stage-header-') ?
+    activeDragId.replace('stage-header-', '') : null
 
   if (isLoading) {
     return (
@@ -273,23 +312,30 @@ const CRM = () => {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-6 pb-6 min-w-max h-full">
-            {stages.map((stage) => {
-              const conversations = crmData[stage] || []
-              
-              return (
-                <StageColumn
-                  key={stage}
-                  stage={stage}
-                  conversations={conversations}
-                  stageColorsMap={stageColorsMap}
-                  onCardClick={handleCardClick}
-                  isAdmin={isAdmin}
-                  currentUserId={currentUserId}
-                />
-              )
-            })}
-          </div>
+          <SortableContext 
+            items={customStages.map(stage => `stage-header-${stage.name}`)}
+            strategy={horizontalListSortingStrategy}
+          >
+            <div className="flex gap-6 pb-6 min-w-max h-full">
+              {stages.map((stage) => {
+                const conversations = crmData[stage] || []
+                const isCustomStage = customStages.some(s => s.name === stage)
+                
+                return (
+                  <StageColumn
+                    key={stage}
+                    stage={stage}
+                    conversations={conversations}
+                    stageColorsMap={stageColorsMap}
+                    onCardClick={handleCardClick}
+                    isAdmin={isAdmin}
+                    currentUserId={currentUserId}
+                    isCustom={isCustomStage}
+                  />
+                )
+              })}
+            </div>
+          </SortableContext>
           
           <DragOverlay>
             {activeConversation ? (
@@ -299,6 +345,16 @@ const CRM = () => {
                   isDragOverlay={true}
                   isAdmin={isAdmin}
                   currentUserId={currentUserId}
+                />
+              </div>
+            ) : activeStageHeader ? (
+              <div className="w-80 bg-card rounded-lg border shadow-lg transform rotate-2 scale-105">
+                <SortableStageHeader
+                  stage={activeStageHeader}
+                  color={stageColorsMap[activeStageHeader] || '#64748b'}
+                  conversationCount={crmData[activeStageHeader]?.length || 0}
+                  isCustom={customStages.some(s => s.name === activeStageHeader)}
+                  isDragging={true}
                 />
               </div>
             ) : null}
