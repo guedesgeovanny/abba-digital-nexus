@@ -11,6 +11,7 @@ interface SortableStageHeaderProps {
   stage: string
   color: string
   conversationCount: number
+  totalValue?: number
   isCustom: boolean
   isEntryStage?: boolean
   isDragging?: boolean
@@ -24,6 +25,7 @@ export const SortableStageHeader = ({
   stage, 
   color, 
   conversationCount, 
+  totalValue = 0,
   isCustom,
   isEntryStage = false,
   isDragging = false,
@@ -64,7 +66,7 @@ export const SortableStageHeader = ({
       ref={setNodeRef}
       style={style}
       className={`
-        p-4 border-b border-border bg-card/50
+        relative p-4 border-b border-border bg-card/50
         ${isAdmin && !isEntryStage ? 'cursor-grab active:cursor-grabbing' : ''}
         ${isDragging ? 'opacity-50 shadow-lg' : ''}
       `}
@@ -135,9 +137,17 @@ export const SortableStageHeader = ({
         )}
       </div>
       
-      <Badge variant="outline" className="border-border">
-        {conversationCount} conversas
-      </Badge>
+      <div className="flex items-center justify-between">
+        <Badge variant="outline" className="border-border">
+          {conversationCount} conversas
+        </Badge>
+        
+        {totalValue > 0 && (
+          <div className="text-sm font-medium text-green-600">
+            R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -440,16 +440,23 @@ const CRM = () => {
               </div>
             ) : activeStageHeader ? (
               <div className="w-80 bg-card rounded-lg border shadow-lg transform rotate-2 scale-105">
-                <SortableStageHeader
-                  stage={activeStageHeader}
-                  color={stageColorsMap[activeStageHeader] || '#64748b'}
-                  conversationCount={crmData[activeStageHeader]?.length || 0}
-                  isCustom={customStages.some(s => s.name === activeStageHeader)}
-                  isEntryStage={stages.indexOf(activeStageHeader) === 0 && activeStageHeader === 'Etapa de Entrada'}
-                  isDragging={true}
-                  isAdmin={isAdmin}
-                  customStageData={customStages.find(s => s.name === activeStageHeader)}
-                />
+                {(() => {
+                  const stageConversations = crmData[activeStageHeader] || []
+                  const totalValue = stageConversations.reduce((sum, conv) => sum + (conv.value || 0), 0)
+                  return (
+                    <SortableStageHeader
+                      stage={activeStageHeader}
+                      color={stageColorsMap[activeStageHeader] || '#64748b'}
+                      conversationCount={stageConversations.length}
+                      totalValue={totalValue}
+                      isCustom={customStages.some(s => s.name === activeStageHeader)}
+                      isEntryStage={stages.indexOf(activeStageHeader) === 0 && activeStageHeader === 'Etapa de Entrada'}
+                      isDragging={true}
+                      isAdmin={isAdmin}
+                      customStageData={customStages.find(s => s.name === activeStageHeader)}
+                    />
+                  )
+                })()}
               </div>
             ) : null}
           </DragOverlay>

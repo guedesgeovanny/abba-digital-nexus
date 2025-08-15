@@ -38,6 +38,11 @@ export const StageColumn = ({
   })
 
   const stageColor = stageColorsMap[stage] || '#64748b'
+  
+  // Calculate total value of conversations in this stage
+  const totalValue = conversations.reduce((sum, conv) => {
+    return sum + (conv.value || 0)
+  }, 0)
 
   return (
     <div 
@@ -52,6 +57,7 @@ export const StageColumn = ({
         stage={stage}
         color={stageColor}
         conversationCount={conversations.length}
+        totalValue={totalValue}
         isCustom={isCustom}
         isEntryStage={isEntryStage}
         isAdmin={isAdmin}
