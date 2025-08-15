@@ -261,12 +261,15 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
               <Label htmlFor="value" className="text-foreground">Valor Estimado (R$)</Label>
               <Input
                 id="value"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.value}
-                onChange={(e) => setFormData(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                className="bg-background border-border text-foreground"
+                type="text"
+                inputMode="decimal"
+                value={formData.value === 0 ? '' : formData.value.toString()}
+                onChange={(e) => {
+                  const value = e.target.value.replace(',', '.')
+                  const numericValue = parseFloat(value) || 0
+                  setFormData(prev => ({ ...prev, value: numericValue }))
+                }}
+                className="bg-background border-border text-foreground [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                 placeholder="0,00"
               />
             </div>

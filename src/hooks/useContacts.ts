@@ -146,8 +146,10 @@ export const useContacts = () => {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
+    onSuccess: (updatedContact) => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] })
+      queryClient.invalidateQueries({ queryKey: ['contact-details'] })
+      queryClient.invalidateQueries({ queryKey: ['crm-conversations'] })
       toast({
         title: "Contato atualizado",
         description: "O contato foi atualizado com sucesso",
