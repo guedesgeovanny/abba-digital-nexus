@@ -10,7 +10,7 @@ export interface Conversation {
   contact_phone: string | null
   contact_username: string | null
   contact_avatar: string | null
-  status: 'aberta' | 'fechada' | 'novo' | 'qualificado' | 'convertido' | 'perdido'
+  status: string
   channel: 'whatsapp' | 'instagram' | 'messenger' | null
   last_message: string | null
   last_message_at: string | null

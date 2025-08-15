@@ -225,7 +225,7 @@ export const useCRMConversations = () => {
       try {
         const { error } = await supabase
           .from('conversations')
-          .update({ status: customStatus })
+          .update({ status: customStatus as any })
           .eq('id', conversationId)
 
         if (error) {
