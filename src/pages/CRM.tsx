@@ -104,6 +104,12 @@ const CRM = () => {
 
     // Check if we're reordering stage headers
     if (activeId.startsWith('stage-header-') && overId.startsWith('stage-header-')) {
+      // Only allow admins to reorder stages
+      if (!isAdmin) {
+        console.log('Only admins can reorder custom stages')
+        return
+      }
+      
       const activeStage = activeId.replace('stage-header-', '')
       const overStage = overId.replace('stage-header-', '')
       
@@ -355,6 +361,7 @@ const CRM = () => {
                   conversationCount={crmData[activeStageHeader]?.length || 0}
                   isCustom={customStages.some(s => s.name === activeStageHeader)}
                   isDragging={true}
+                  isAdmin={isAdmin}
                 />
               </div>
             ) : null}

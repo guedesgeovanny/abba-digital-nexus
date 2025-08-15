@@ -179,6 +179,12 @@ export const useCRMConversations = () => {
   }
 
   const updateStageOrder = async (newStages: CustomStage[]) => {
+    // Only allow admins to reorder stages
+    if (!isAdmin) {
+      console.error('Only admins can reorder stages')
+      return
+    }
+
     try {
       // Update local state immediately for better UX
       setCustomStages(newStages)

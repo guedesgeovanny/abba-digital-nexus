@@ -10,6 +10,7 @@ interface SortableStageHeaderProps {
   conversationCount: number
   isCustom: boolean
   isDragging?: boolean
+  isAdmin?: boolean
 }
 
 export const SortableStageHeader = ({ 
@@ -17,7 +18,8 @@ export const SortableStageHeader = ({
   color, 
   conversationCount, 
   isCustom,
-  isDragging = false
+  isDragging = false,
+  isAdmin = false
 }: SortableStageHeaderProps) => {
   const {
     attributes,
@@ -27,7 +29,7 @@ export const SortableStageHeader = ({
     transition,
   } = useSortable({
     id: `stage-header-${stage}`,
-    disabled: !isCustom, // Only custom stages can be reordered
+    disabled: !isCustom || !isAdmin, // Only custom stages can be reordered and only by admins
   })
 
   const style = {
@@ -41,14 +43,14 @@ export const SortableStageHeader = ({
       style={style}
       className={`
         p-4 border-b border-border bg-card/50
-        ${isCustom ? 'cursor-grab active:cursor-grabbing' : ''}
+        ${isCustom && isAdmin ? 'cursor-grab active:cursor-grabbing' : ''}
         ${isDragging ? 'opacity-50 shadow-lg' : ''}
       `}
       {...attributes}
       {...listeners}
     >
       <div className="flex items-center gap-2 mb-2">
-        {isCustom && (
+        {isCustom && isAdmin && (
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         )}
         <div 
@@ -56,6 +58,11 @@ export const SortableStageHeader = ({
           style={{ backgroundColor: color }}
         />
         <h3 className="font-medium text-card-foreground flex-1">{stage}</h3>
+        {isCustom && !isAdmin && (
+          <span className="text-xs text-muted-foreground">
+            (Somente admin pode reordenar)
+          </span>
+        )}
       </div>
       
       <Badge variant="outline" className="border-border">

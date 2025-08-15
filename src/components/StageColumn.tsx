@@ -45,6 +45,7 @@ export const StageColumn = ({
         color={stageColor}
         conversationCount={conversations.length}
         isCustom={isCustom}
+        isAdmin={isAdmin}
       />
       
       {/* Lista de cards */}
