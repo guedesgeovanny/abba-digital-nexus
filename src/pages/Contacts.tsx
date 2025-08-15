@@ -437,8 +437,8 @@ const Contacts = () => {
                     </TableCell>
                     <TableCell>{contact.agent_assigned || 'N/A'}</TableCell>
                     <TableCell>
-                      <Badge className={`${getStatusColor(contact.status)} text-white`}>
-                        {getStatusLabel(contact.status)}
+                      <Badge className={`${getCRMStageColor(contact.crm_stage || 'novo_lead')} text-white`}>
+                        {getCRMStageLabel(contact.crm_stage || 'novo_lead')}
                       </Badge>
                     </TableCell>
                     <TableCell>
