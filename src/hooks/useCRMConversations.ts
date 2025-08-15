@@ -453,8 +453,23 @@ export const useCRMConversations = () => {
         await fetchConversations()
       }
     } else {
-      // Handle basic stages as before
-      const stageKey = getCrmStageForStage(newStage)
+      // Handle basic stages - find the correct stage key
+      // First, try to find if this newStage is a customized name
+      let stageKey = 'novo_lead' // default fallback
+      
+      // Check if newStage is a customized basic stage name
+      const customizedBasicStage = allStages.find(s => !s.isCustom && s.name === newStage)
+      if (customizedBasicStage && customizedBasicStage.stageKey) {
+        stageKey = customizedBasicStage.stageKey
+      } else {
+        // Try to find the stage key from original mapping
+        const foundStageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
+          key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === newStage
+        )
+        if (foundStageKey) {
+          stageKey = foundStageKey
+        }
+      }
       
       // Optimistic update
       setConversations(prev => 
@@ -497,13 +512,6 @@ export const useCRMConversations = () => {
     }
   }
 
-  // Helper function to get crm_stage for stage
-  const getCrmStageForStage = (stageName: string): string => {
-    const stageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
-      key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === stageName
-    )
-    return stageKey || 'novo_lead' // fallback to 'novo_lead' if stage not found
-  }
 
   // Helper function to get customized name and color for basic stages
   const getBasicStageDisplay = (stageKey: string, defaultName: string, defaultColor: string) => {
@@ -617,18 +625,42 @@ export const useCRMConversations = () => {
 
   // Group filtered conversations by their mapped stage (basic + custom stages)
   filteredConversations.forEach(conversation => {
+    let targetStageName = ''
+    
     // Check if it's a custom stage crm_stage
     if (conversation.crm_stage && conversation.crm_stage.startsWith('custom:')) {
       const customStageName = conversation.crm_stage.replace('custom:', '')
       if (customStages.some(stage => stage.name === customStageName)) {
-        crmData[customStageName].push(conversation)
-        return
+        targetStageName = customStageName
+      }
+    } else {
+      // Handle basic stages
+      const stageName = STAGE_TO_CRM_STAGE_MAP[conversation.crm_stage as keyof typeof STAGE_TO_CRM_STAGE_MAP]
+      
+      if (stageName) {
+        // Find the actual stage name in our stages array (might be customized)
+        const stageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
+          key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === stageName
+        )
+        if (stageKey) {
+          const customizedStage = allStages.find(s => s.stageKey === stageKey)
+          targetStageName = customizedStage ? customizedStage.name : stageName
+        } else {
+          targetStageName = stageName
+        }
       }
     }
     
-    // Handle basic stages
-    const stageName = STAGE_TO_CRM_STAGE_MAP[conversation.crm_stage as keyof typeof STAGE_TO_CRM_STAGE_MAP] || 'Novo Lead'
-    crmData[stageName].push(conversation)
+    // Add conversation to the correct stage
+    if (targetStageName && crmData[targetStageName]) {
+      crmData[targetStageName].push(conversation)
+    } else {
+      // Fallback to the first available stage
+      const fallbackStageKey = Object.keys(crmData)[0]
+      if (fallbackStageKey) {
+        crmData[fallbackStageKey].push(conversation)
+      }
+    }
   })
 
   // Get unique values for filter options
