@@ -142,6 +142,11 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     try {
       await sendMessage({ content: newMessage.trim(), connectionName: selectedConnectionName })
       setNewMessage("")
+      
+      // Manter o foco no input após enviar mensagem
+      if (messageInputRef.current) {
+        messageInputRef.current.focus()
+      }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       toast({
