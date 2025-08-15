@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/hooks/use-toast'
+import { useRealtimeUpdates } from './useRealtimeUpdates'
 
 // CRM Conversation interface
 interface CRMConversation {
@@ -58,6 +59,10 @@ const DEFAULT_CUSTOMIZABLE_STAGES = [
 
 export const useCRMConversations = () => {
   const { user, userProfile } = useAuth()
+  
+  // Enable realtime updates
+  useRealtimeUpdates()
+  
   const [conversations, setConversations] = useState<CRMConversation[]>([])
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
