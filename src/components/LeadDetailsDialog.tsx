@@ -258,17 +258,17 @@ export const LeadDetailsDialog = ({
                         </div>
                       </div>}
 
-                    {contact.value && contact.value > 0 && <div className="flex items-center gap-3">
+                     <div className="flex items-center gap-3">
                         <DollarSign className="w-4 h-4 text-abba-green" />
                         <div>
                           <p className="text-sm text-gray-400">Valor Estimado</p>
                           <p className="text-abba-text">
-                            R$ {contact.value.toLocaleString('pt-BR', {
+                            R$ {(contact.value || 0).toLocaleString('pt-BR', {
                     minimumFractionDigits: 2
                   })}
                           </p>
                         </div>
-                      </div>}
+                      </div>
                   </div>
 
                   {/* Tags */}
