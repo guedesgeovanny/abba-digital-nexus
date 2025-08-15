@@ -1,42 +1,43 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/hooks/use-toast'
 
-// Force cache invalidation - removed STAGE_COLORS constant
-
-export interface CRMConversation {
+// CRM Conversation interface
+interface CRMConversation {
   id: string
   contact_name: string
-  contact_id?: string
-  status: string // Status da conversa: 'aberta' | 'fechada'
-  crm_stage: string // Etapa do CRM: 'novo' | 'qualificado' | etc
-  created_at: string
-  updated_at: string
+  contact_phone?: string
+  contact_username?: string
+  contact_avatar?: string
+  channel?: string
+  status: string
+  last_message?: string
+  last_message_at?: string
+  unread_count: number
   user_id?: string
   assigned_to?: string
-  phone?: string
-  email?: string
-  company?: string
+  crm_stage?: string
   value?: number
-  channel?: string
+  contact_id?: string
+  phone?: string
+  created_at?: string
+  updated_at?: string
 }
 
-export interface CRMStageData {
+// Stage customization interfaces
+interface CRMStageData {
   [stageName: string]: CRMConversation[]
 }
 
-export interface CustomStage {
+interface CustomStage {
   id: string
+  user_id: string
   name: string
   color: string
   position: number
-}
-
-export interface BasicStageCustomization {
-  id: string
-  stage_key: string
-  custom_name: string
-  custom_color: string
+  created_at: string
+  updated_at: string
 }
 
 // Map conversation crm_stage to basic CRM stages
@@ -59,7 +60,6 @@ export const useCRMConversations = () => {
   const { user, userProfile } = useAuth()
   const [conversations, setConversations] = useState<CRMConversation[]>([])
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
-  const [basicStageCustomizations, setBasicStageCustomizations] = useState<BasicStageCustomization[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [allUsers, setAllUsers] = useState<Array<{id: string, full_name: string, email: string}>>([])
   
@@ -74,10 +74,11 @@ export const useCRMConversations = () => {
 
   useEffect(() => {
     if (user) {
-      const promises = [fetchConversations(), fetchCustomStages(), fetchBasicStageCustomizations()]
+      const promises = [fetchConversations(), fetchCustomStages()]
       if (isAdmin) {
         promises.push(fetchAllUsers())
       }
+      
       Promise.all(promises)
         .finally(() => setIsLoading(false))
     }
@@ -85,49 +86,36 @@ export const useCRMConversations = () => {
 
   const fetchConversations = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('conversations')
         .select(`
-          id, contact_name, contact_id, status, crm_stage, created_at, updated_at, user_id, assigned_to,
-          contacts!conversations_contact_id_fkey (
-            phone,
+          *,
+          contacts (
+            id,
+            name,
             email,
-            company,
-            value,
-            channel
+            phone,
+            value
           )
         `)
-        .order('created_at', { ascending: false })
-
-      // Apply role-based filtering - same as Chat tab
-      if (!isAdmin && user?.id) {
-        query = query.or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
-      }
-
-      const { data, error } = await query
+        .order('last_message_at', { ascending: false })
 
       if (error) throw error
-      
-      const formattedData = data?.map(conv => ({
-        id: conv.id,
-        contact_name: conv.contact_name,
-        contact_id: conv.contact_id,
-        status: conv.status,
-        crm_stage: conv.crm_stage || 'novo_lead',
-        created_at: conv.created_at,
-        updated_at: conv.updated_at,
-        user_id: conv.user_id,
-        assigned_to: conv.assigned_to,
-        phone: conv.contacts?.phone,
-        email: conv.contacts?.email,
-        company: conv.contacts?.company,
-        value: conv.contacts?.value,
-        channel: conv.contacts?.channel
+
+      const mappedConversations = data?.map(conv => ({
+        ...conv,
+        contact_name: conv.contacts?.name || conv.contact_name,
+        value: conv.contacts?.value || 0
       })) || []
-      
-      setConversations(formattedData)
+
+      setConversations(mappedConversations)
     } catch (error) {
-      console.error('Error fetching conversations:', error)
+      console.error('Erro ao buscar conversas:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as conversas",
+        variant: "destructive",
+      })
     }
   }
 
@@ -135,26 +123,13 @@ export const useCRMConversations = () => {
     try {
       const { data, error } = await supabase
         .from('custom_stages')
-        .select('id, name, color, position')
-        .order('position', { ascending: true })
+        .select('*')
+        .order('position')
 
       if (error) throw error
       setCustomStages(data || [])
     } catch (error) {
-      console.error('Error fetching custom stages:', error)
-    }
-  }
-
-  const fetchBasicStageCustomizations = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('basic_stage_customizations')
-        .select('id, stage_key, custom_name, custom_color')
-
-      if (error) throw error
-      setBasicStageCustomizations(data || [])
-    } catch (error) {
-      console.error('Error fetching basic stage customizations:', error)
+      console.error('Erro ao buscar etapas customizadas:', error)
     }
   }
 
@@ -163,360 +138,244 @@ export const useCRMConversations = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .order('full_name', { ascending: true })
+        .order('full_name')
 
       if (error) throw error
       setAllUsers(data || [])
     } catch (error) {
-      console.error('Error fetching users:', error)
+      console.error('Erro ao buscar usuários:', error)
     }
   }
 
-  const addCustomStage = async (stageName: string) => {
+  // Custom stage management functions
+  const addCustomStage = async (name: string, color: string) => {
     try {
-      const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) throw new Error('User not authenticated')
+      const nextPosition = Math.max(...customStages.map(s => s.position), -1) + 1
       
-      const maxPosition = Math.max(...customStages.map(s => s.position), -1)
       const { data, error } = await supabase
         .from('custom_stages')
-        .insert({
-          user_id: userData.user.id,
-          name: stageName,
-          position: maxPosition + 1,
-          color: '#6366f1'
-        })
+        .insert([
+          {
+            name,
+            color,
+            position: nextPosition,
+            user_id: user?.id
+          }
+        ])
         .select()
         .single()
 
       if (error) throw error
-      if (data) {
-        setCustomStages(prev => [...prev, data])
-      }
+
+      setCustomStages(prev => [...prev, data].sort((a, b) => a.position - b.position))
+      
+      toast({
+        title: "Sucesso",
+        description: `Etapa "${name}" criada com sucesso`,
+      })
+      
+      return data
     } catch (error) {
-      console.error('Error adding custom stage:', error)
+      console.error('Erro ao criar etapa:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar a etapa",
+        variant: "destructive",
+      })
     }
   }
 
-  const deleteCustomStage = async (stageId: string, stageName: string) => {
-    // Only allow admins to delete stages
-    if (!isAdmin) {
-      console.error('Only admins can delete stages')
-      return
-    }
-
+  const deleteCustomStage = async (stageName: string) => {
     try {
-      // First, move all conversations in this custom stage to "Novo Lead"
-      const conversationsInStage = conversations.filter(conv => 
-        conv.crm_stage === `custom:${stageName}`
-      )
+      const stageToDelete = customStages.find(s => s.name === stageName)
+      if (!stageToDelete) return
 
-      if (conversationsInStage.length > 0) {
-        // Update conversations to "novo_lead" stage
-        const conversationUpdates = conversationsInStage.map(conv => 
-          supabase
-            .from('conversations')
+      // Move conversations from deleted stage to entry stage
+      const conversationsToMove = conversations.filter(conv => conv.crm_stage === `custom:${stageName}`)
+      
+      if (conversationsToMove.length > 0) {
+        const { error: updateError } = await supabase
+          .from('conversations')
+          .update({ crm_stage: 'novo_lead' })
+          .in('id', conversationsToMove.map(c => c.id))
+
+        if (updateError) throw updateError
+
+        // Also update contacts
+        const contactIdsToUpdate = conversationsToMove
+          .filter(c => c.contact_id)
+          .map(c => c.contact_id)
+
+        if (contactIdsToUpdate.length > 0) {
+          const { error: contactUpdateError } = await supabase
+            .from('contacts')
             .update({ crm_stage: 'novo_lead' })
-            .eq('id', conv.id)
-        )
+            .in('id', contactIdsToUpdate)
 
-        // Update contacts to "novo_lead" stage  
-        const contactUpdates = conversationsInStage
-          .filter(conv => conv.contact_id)
-          .map(conv => 
-            supabase
-              .from('contacts')
-              .update({ crm_stage: 'novo_lead' })
-              .eq('id', conv.contact_id!)
-          )
-
-        await Promise.all([...conversationUpdates, ...contactUpdates])
+          if (contactUpdateError) throw contactUpdateError
+        }
       }
 
       // Delete the custom stage
       const { error } = await supabase
         .from('custom_stages')
         .delete()
-        .eq('id', stageId)
+        .eq('id', stageToDelete.id)
 
       if (error) throw error
 
-      // Update local state
-      setCustomStages(prev => prev.filter(stage => stage.id !== stageId))
+      setCustomStages(prev => prev.filter(s => s.id !== stageToDelete.id))
       
-      // Refresh conversations to reflect changes
+      // Refresh conversations to reflect the changes
       await fetchConversations()
+      
+      toast({
+        title: "Sucesso",
+        description: `Etapa "${stageName}" excluída com sucesso`,
+      })
     } catch (error) {
-      console.error('Error deleting custom stage:', error)
-      throw error
+      console.error('Erro ao excluir etapa:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a etapa",
+        variant: "destructive",
+      })
     }
   }
 
-  const updateCustomStage = async (stageId: string, name: string, color: string) => {
-    // Only allow admins to update stages
-    if (!isAdmin) {
-      console.error('Only admins can update stages')
-      return
-    }
-
+  const updateCustomStage = async (stageId: string, newName: string, newColor: string) => {
     try {
-      // Update stage in database
+      const stageToUpdate = customStages.find(s => s.id === stageId)
+      if (!stageToUpdate) return
+
+      const oldName = stageToUpdate.name
+
+      // Update the custom stage
       const { error } = await supabase
         .from('custom_stages')
-        .update({ name, color })
+        .update({ 
+          name: newName, 
+          color: newColor 
+        })
         .eq('id', stageId)
 
       if (error) throw error
 
-      // Update local state
+      // Update conversations that reference this stage
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .update({ crm_stage: `custom:${newName}` })
+        .eq('crm_stage', `custom:${oldName}`)
+
+      if (conversationError) throw conversationError
+
+      // Update contacts that reference this stage
+      const { error: contactError } = await supabase
+        .from('contacts')
+        .update({ crm_stage: `custom:${newName}` })
+        .eq('crm_stage', `custom:${oldName}`)
+
+      if (contactError) throw contactError
+
       setCustomStages(prev => 
-        prev.map(stage => 
-          stage.id === stageId 
-            ? { ...stage, name, color }
-            : stage
-        )
+        prev.map(s => s.id === stageId ? { ...s, name: newName, color: newColor } : s)
       )
-
-      // Also need to update any conversations/contacts that use the old stage name
-      const oldStage = customStages.find(s => s.id === stageId)
-      if (oldStage && oldStage.name !== name) {
-        // Update conversations with the old custom stage name
-        const conversationsToUpdate = conversations.filter(conv => 
-          conv.crm_stage === `custom:${oldStage.name}`
-        )
-
-        if (conversationsToUpdate.length > 0) {
-          // Update conversations to use new stage name
-          const conversationUpdates = conversationsToUpdate.map(conv => 
-            supabase
-              .from('conversations')
-              .update({ crm_stage: `custom:${name}` })
-              .eq('id', conv.id)
-          )
-
-          // Update contacts to use new stage name
-          const contactUpdates = conversationsToUpdate
-            .filter(conv => conv.contact_id)
-            .map(conv => 
-              supabase
-                .from('contacts')
-                .update({ crm_stage: `custom:${name}` })
-                .eq('id', conv.contact_id!)
-            )
-
-          await Promise.all([...conversationUpdates, ...contactUpdates])
-          
-          // Refresh conversations to reflect changes
-          await fetchConversations()
-        }
-      }
+      
+      // Refresh conversations to reflect the changes
+      await fetchConversations()
+      
+      toast({
+        title: "Sucesso",
+        description: `Etapa atualizada com sucesso`,
+      })
     } catch (error) {
-      console.error('Error updating custom stage:', error)
-      throw error
+      console.error('Erro ao atualizar etapa:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a etapa",
+        variant: "destructive",
+      })
     }
   }
 
-  const updateBasicStage = async (stageKey: string, name: string, color: string) => {
-    // Only allow admins to update stages
-    if (!isAdmin) {
-      console.error('Only admins can update stages')
-      return
-    }
-
+  const updateStageOrder = async (stageNames: string[]) => {
     try {
-      // Check if customization already exists
-      const existingCustomization = basicStageCustomizations.find(c => c.stage_key === stageKey)
+      // Only update custom stages order (skip the first entry stage)
+      const customStageNames = stageNames.slice(1)
+      
+      const updates = customStageNames.map((stageName, index) => {
+        const stage = customStages.find(s => s.name === stageName)
+        return stage ? { id: stage.id, position: index } : null
+      }).filter(Boolean)
 
-      if (existingCustomization) {
-        // Update existing customization
-        const { error } = await supabase
-          .from('basic_stage_customizations')
-          .update({ custom_name: name, custom_color: color })
-          .eq('id', existingCustomization.id)
+      for (const update of updates) {
+        if (update) {
+          const { error } = await supabase
+            .from('custom_stages')
+            .update({ position: update.position })
+            .eq('id', update.id)
 
-        if (error) throw error
-
-        // Update local state
-        setBasicStageCustomizations(prev => 
-          prev.map(customization => 
-            customization.id === existingCustomization.id 
-              ? { ...customization, custom_name: name, custom_color: color }
-              : customization
-          )
-        )
-      } else {
-        // Create new customization
-        const { data, error } = await supabase
-          .from('basic_stage_customizations')
-          .insert({
-            user_id: user?.id!,
-            stage_key: stageKey,
-            custom_name: name,
-            custom_color: color
-          })
-          .select()
-          .single()
-
-        if (error) throw error
-
-        // Update local state
-        if (data) {
-          setBasicStageCustomizations(prev => [...prev, data])
+          if (error) throw error
         }
       }
-    } catch (error) {
-      console.error('Error updating basic stage:', error)
-      throw error
-    }
-  }
 
-  const updateStageOrder = async (newStages: CustomStage[]) => {
-    // Only allow admins to reorder stages
-    if (!isAdmin) {
-      console.error('Only admins can reorder stages')
-      return
-    }
-
-    try {
-      // Update local state immediately for better UX
-      setCustomStages(newStages)
-      
-      // Update positions in database
-      const updates = newStages.map((stage, index) => 
-        supabase
-          .from('custom_stages')
-          .update({ position: index })
-          .eq('id', stage.id)
-      )
-      
-      await Promise.all(updates)
-    } catch (error) {
-      console.error('Error updating stage order:', error)
-      // Revert to original order on error
       await fetchCustomStages()
+    } catch (error) {
+      console.error('Erro ao atualizar ordem das etapas:', error)
     }
   }
 
-  const updateBasicStageOrder = async (orderedStageNames: string[]) => {
-    // This function would handle reordering basic stages
-    // For now, we'll keep basic stages in their original order
-    // but this could be extended to allow custom ordering
-    console.log('Basic stage reordering:', orderedStageNames)
-  }
-
+  // Conversation status update
   const updateConversationStatus = async (conversationId: string, newStage: string) => {
-    // Check if it's a custom stage
-    const isCustomStage = customStages.some(stage => stage.name === newStage)
-    
-    if (isCustomStage) {
-      // For custom stages, we'll use a special crm_stage format
-      const customStage = `custom:${newStage}`
-      
-      // Optimistic update
+    try {
+      const conversation = conversations.find(c => c.id === conversationId)
+      if (!conversation) return
+
+      // Determine the target stage name
+      let targetStageName = newStage
+      if (newStage !== 'novo_lead' && !newStage.startsWith('custom:')) {
+        // If it's a custom stage, add the prefix
+        targetStageName = `custom:${newStage}`
+      }
+
+      // Update conversation
+      const { error } = await supabase
+        .from('conversations')
+        .update({ crm_stage: targetStageName })
+        .eq('id', conversationId)
+
+      if (error) throw error
+
+      // Update associated contact if exists
+      if (conversation.contact_id) {
+        const { error: contactError } = await supabase
+          .from('contacts')
+          .update({ crm_stage: targetStageName })
+          .eq('id', conversation.contact_id)
+
+        if (contactError) console.error('Erro ao atualizar contato:', contactError)
+      }
+
+      // Update local state
       setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId 
-            ? { ...conv, crm_stage: customStage }
-            : conv
+        prev.map(c => 
+          c.id === conversationId 
+            ? { ...c, crm_stage: targetStageName }
+            : c
         )
       )
 
-      try {
-        // Update conversation crm_stage
-        const { error: conversationError } = await supabase
-          .from('conversations')
-          .update({ crm_stage: customStage as any })
-          .eq('id', conversationId)
-
-        if (conversationError) {
-          console.error('Error updating conversation crm_stage:', conversationError)
-          await fetchConversations()
-          return
-        }
-
-        // Update contact crm_stage if contact_id exists
-        const conversation = conversations.find(c => c.id === conversationId)
-        if (conversation?.contact_id) {
-          const { error: contactError } = await supabase
-            .from('contacts')
-            .update({ crm_stage: customStage as any })
-            .eq('id', conversation.contact_id)
-
-          if (contactError) {
-            console.error('Error updating contact crm_stage:', contactError)
-          }
-        }
-      } catch (error) {
-        console.error('Error updating conversation crm_stage:', error)
-        await fetchConversations()
-      }
-    } else {
-      // Handle basic stages - find the correct stage key
-      // First, try to find if this newStage is a customized name
-      let stageKey = 'novo_lead' // default fallback
-      
-      // Check if newStage is a customized basic stage name
-      const customizedBasicStage = allStages.find(s => !s.isCustom && s.name === newStage)
-      if (customizedBasicStage && customizedBasicStage.stageKey) {
-        stageKey = customizedBasicStage.stageKey
-      } else {
-        // Try to find the stage key from original mapping
-        const foundStageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
-          key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === newStage
-        )
-        if (foundStageKey) {
-          stageKey = foundStageKey
-        }
-      }
-      
-      // Optimistic update
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId 
-            ? { ...conv, crm_stage: stageKey }
-            : conv
-        )
-      )
-
-      try {
-        // Update conversation crm_stage
-        const { error: conversationError } = await supabase
-          .from('conversations')
-          .update({ crm_stage: stageKey as any })
-          .eq('id', conversationId)
-
-        if (conversationError) {
-          console.error('Error updating conversation crm_stage:', conversationError)
-          await fetchConversations()
-          return
-        }
-
-        // Update contact crm_stage if contact_id exists
-        const conversation = conversations.find(c => c.id === conversationId)
-        if (conversation?.contact_id) {
-          const { error: contactError } = await supabase
-            .from('contacts')
-            .update({ crm_stage: stageKey as any })
-            .eq('id', conversation.contact_id)
-
-          if (contactError) {
-            console.error('Error updating contact crm_stage:', contactError)
-          }
-        }
-      } catch (error) {
-        console.error('Error updating conversation crm_stage:', error)
-        await fetchConversations()
-      }
-    }
-  }
-
-
-  // Helper function to get customized name and color for basic stages
-  const getBasicStageDisplay = (stageKey: string, defaultName: string, defaultColor: string) => {
-    const customization = basicStageCustomizations.find(c => c.stage_key === stageKey)
-    return {
-      name: customization?.custom_name || defaultName,
-      color: customization?.custom_color || defaultColor
+      toast({
+        title: "Sucesso",
+        description: `Conversa movida para "${newStage}"`,
+      })
+    } catch (error) {
+      console.error('Erro ao atualizar status da conversa:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status da conversa",
+        variant: "destructive",
+      })
     }
   }
 
@@ -576,92 +435,69 @@ export const useCRMConversations = () => {
     }
     
     // Period filter
-    if (filterPeriod && filterPeriod !== 'all') {
-      const createdDate = new Date(conversation.created_at)
+    if (filterPeriod && filterPeriod !== 'all' && conversation.last_message_at) {
+      const messageDate = new Date(conversation.last_message_at)
       const now = new Date()
-      const daysDiff = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
+      const daysDiff = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 3600 * 24))
       
       switch (filterPeriod) {
+        case 'hoje':
+          if (daysDiff > 0) return false
+          break
         case '7-dias':
           if (daysDiff > 7) return false
           break
         case '30-dias':
           if (daysDiff > 30) return false
           break
-        case '90-dias':
-          if (daysDiff > 90) return false
-          break
       }
     }
     
     // Status filter
-    if (filterStatus && filterStatus !== 'all') {
-      switch (filterStatus) {
-        case 'aberta':
-          if (!['novo', 'aberta', 'qualificado'].includes(conversation.status)) return false
-          break
-        case 'fechada':
-          if (!['convertido', 'fechada', 'perdido'].includes(conversation.status)) return false
-          break
-      }
+    if (filterStatus && filterStatus !== 'all' && conversation.status !== filterStatus) {
+      return false
     }
     
     return true
   })
 
-  // Group filtered conversations by stage
+  // Group filtered conversations by CRM stage
   const crmData: CRMStageData = {}
   
-  // Initialize all stages (basic + custom)
-  stages.forEach(stage => {
-    crmData[stage] = []
+  // Initialize all stages in crmData
+  allStages.forEach(stage => {
+    crmData[stage.name] = []
   })
-
-  // Group filtered conversations by their mapped stage (basic + custom stages)
+  
+  // Group conversations by stage
   filteredConversations.forEach(conversation => {
-    let targetStageName = ''
+    let targetStageName: string = ENTRY_STAGE.name // default fallback
     
-    // Check if it's a custom stage crm_stage
-    if (conversation.crm_stage && conversation.crm_stage.startsWith('custom:')) {
-      const customStageName = conversation.crm_stage.replace('custom:', '')
-      if (customStages.some(stage => stage.name === customStageName)) {
-        targetStageName = customStageName
-      }
-    } else {
-      // Handle basic stages
-      const stageName = STAGE_TO_CRM_STAGE_MAP[conversation.crm_stage as keyof typeof STAGE_TO_CRM_STAGE_MAP]
-      
-      if (stageName) {
-        // Find the actual stage name in our stages array (might be customized)
-        const stageKey = Object.keys(STAGE_TO_CRM_STAGE_MAP).find(
-          key => STAGE_TO_CRM_STAGE_MAP[key as keyof typeof STAGE_TO_CRM_STAGE_MAP] === stageName
-        )
-        if (stageKey) {
-          const customizedStage = allStages.find(s => s.stageKey === stageKey)
-          targetStageName = customizedStage ? customizedStage.name : stageName
-        } else {
-          targetStageName = stageName
+    if (conversation.crm_stage) {
+      if (conversation.crm_stage === 'novo_lead') {
+        targetStageName = ENTRY_STAGE.name
+      } else if (conversation.crm_stage.startsWith('custom:')) {
+        const stageName = conversation.crm_stage.replace('custom:', '')
+        const customStage = customStages.find(s => s.name === stageName)
+        if (customStage) {
+          targetStageName = customStage.name
         }
       }
     }
     
-    // Add conversation to the correct stage
-    if (targetStageName && crmData[targetStageName]) {
+    // Ensure the target stage exists in crmData, if not use first available stage
+    if (crmData[targetStageName]) {
       crmData[targetStageName].push(conversation)
-    } else {
-      // Fallback to the first available stage
-      const fallbackStageKey = Object.keys(crmData)[0]
-      if (fallbackStageKey) {
-        crmData[fallbackStageKey].push(conversation)
-      }
+    } else if (Object.keys(crmData).length > 0) {
+      const firstStage = Object.keys(crmData)[0]
+      crmData[firstStage].push(conversation)
     }
   })
 
-  // Get unique values for filter options
-  const allChannels = [...new Set(conversations.map(c => c.channel).filter(Boolean))]
-  const hasValueData = conversations.some(c => c.value !== null && c.value !== undefined)
-  
-  // Clear filters function
+  // Get unique channels for filtering
+  const allChannels = Array.from(new Set(conversations.map(c => c.channel).filter(Boolean)))
+
+  // Utility function to clear all filters
   const clearFilters = () => {
     setFilterChannel('all')
     setFilterValueRange('all')
@@ -670,23 +506,24 @@ export const useCRMConversations = () => {
     setFilterUser('all')
   }
 
+  const hasValueData = conversations.some(c => c.value && c.value > 0)
+  const filteredLeadsCount = filteredConversations.length
+  const totalLeads = conversations.length
+
   return {
+    // Data
     crmData,
     stages,
     stageColorsMap,
-    isLoading,
-    updateConversationStatus,
-    addCustomStage,
-    updateStageOrder,
-    updateBasicStageOrder,
-    updateCustomStage,
-    updateBasicStage,
-    deleteCustomStage,
+    conversations: filteredConversations,
     customStages,
-    basicStageCustomizations,
-    allStages,
-    basicStages: [ENTRY_STAGE.name],
-    // Filter states and functions
+    allChannels,
+    allUsers,
+    
+    // Loading state
+    isLoading,
+    
+    // Filter states
     filterChannel,
     filterValueRange,
     filterPeriod,
@@ -698,13 +535,33 @@ export const useCRMConversations = () => {
     setFilterStatus,
     setFilterUser,
     clearFilters,
-    allChannels,
+    
+    // Statistics
     hasValueData,
-    allUsers,
-    totalLeads: conversations.length,
-    filteredLeadsCount: filteredConversations.length,
-    // User role information  
+    filteredLeadsCount,
+    totalLeads,
+    
+    // Admin status
     isAdmin,
-    currentUserId: user?.id
+    
+    // Management functions
+    addCustomStage,
+    deleteCustomStage,
+    updateCustomStage,
+    updateStageOrder,
+    updateConversationStatus,
+    
+    // Refresh function
+    refetch: fetchConversations,
+    
+    // For backwards compatibility and CRM page compatibility
+    basicStages: [ENTRY_STAGE.name],
+    currentUser: user,
+    currentUserId: user?.id,
+    allStages,
+    updateBasicStageOrder: updateStageOrder,
+    updateBasicStage: () => Promise.resolve() // No longer needed but kept for compatibility
   }
 }
+
+export type { CRMConversation, CustomStage, CRMStageData }

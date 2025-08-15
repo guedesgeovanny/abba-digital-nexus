@@ -14,36 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      basic_stage_customizations: {
-        Row: {
-          created_at: string
-          custom_color: string
-          custom_name: string
-          id: string
-          stage_key: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          custom_color?: string
-          custom_name: string
-          id?: string
-          stage_key: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          custom_color?: string
-          custom_name?: string
-          id?: string
-          stage_key?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       conexoes: {
         Row: {
           channel: string | null

@@ -140,7 +140,7 @@ const CRM = () => {
             .map((stage, index) => ({ ...stage!, position: index }))
           
           try {
-            await updateStageOrder(newCustomStages)
+            await updateStageOrder(newCustomStages.map(s => s.name))
           } catch (error) {
             console.error('Error reordering custom stages:', error)
           }
@@ -194,7 +194,7 @@ const CRM = () => {
 
   const handleAddStage = async (stageName: string) => {
     try {
-      await addCustomStage(stageName)
+      await addCustomStage(stageName, '#6366f1')
       setIsAddingStage(false)
     } catch (error) {
       console.error('Error adding stage:', error)
@@ -215,7 +215,7 @@ const CRM = () => {
     }
 
     try {
-      await deleteCustomStage(stageToDelete.id, stageName)
+      await deleteCustomStage(stageName)
     } catch (error) {
       console.error('Error deleting stage:', error)
     }
@@ -373,19 +373,11 @@ const CRM = () => {
           if (editingStage) {
             // Custom stage
             await handleUpdateStage(stageId, name, color)
-          } else if (editingBasicStage) {
-            // Basic stage
-            await updateBasicStage(editingBasicStage.stageKey, name, color)
           }
         }}
         stage={editingStage ? 
           customStages.find(s => s.name === editingStage) || null : 
-          editingBasicStage ? {
-            id: editingBasicStage.stageKey,
-            name: editingBasicStage.name,
-            color: editingBasicStage.color,
-            position: 0
-          } : null
+          null
         }
       />
 
