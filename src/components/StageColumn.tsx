@@ -14,6 +14,7 @@ interface StageColumnProps {
   isAdmin?: boolean
   currentUserId?: string
   isCustom?: boolean
+  onDeleteStage?: (stageName: string) => void
 }
 
 export const StageColumn = ({
@@ -23,7 +24,8 @@ export const StageColumn = ({
   onCardClick,
   isAdmin,
   currentUserId,
-  isCustom = false
+  isCustom = false,
+  onDeleteStage
 }: StageColumnProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: stage,
@@ -46,6 +48,7 @@ export const StageColumn = ({
         conversationCount={conversations.length}
         isCustom={isCustom}
         isAdmin={isAdmin}
+        onDelete={onDeleteStage}
       />
       
       {/* Lista de cards */}

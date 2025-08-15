@@ -179,6 +179,60 @@ export const useCRMConversations = () => {
     }
   }
 
+  const deleteCustomStage = async (stageId: string, stageName: string) => {
+    // Only allow admins to delete stages
+    if (!isAdmin) {
+      console.error('Only admins can delete stages')
+      return
+    }
+
+    try {
+      // First, move all conversations in this custom stage to "Novo Lead"
+      const conversationsInStage = conversations.filter(conv => 
+        conv.crm_stage === `custom:${stageName}`
+      )
+
+      if (conversationsInStage.length > 0) {
+        // Update conversations to "novo_lead" stage
+        const conversationUpdates = conversationsInStage.map(conv => 
+          supabase
+            .from('conversations')
+            .update({ crm_stage: 'novo_lead' })
+            .eq('id', conv.id)
+        )
+
+        // Update contacts to "novo_lead" stage  
+        const contactUpdates = conversationsInStage
+          .filter(conv => conv.contact_id)
+          .map(conv => 
+            supabase
+              .from('contacts')
+              .update({ crm_stage: 'novo_lead' })
+              .eq('id', conv.contact_id!)
+          )
+
+        await Promise.all([...conversationUpdates, ...contactUpdates])
+      }
+
+      // Delete the custom stage
+      const { error } = await supabase
+        .from('custom_stages')
+        .delete()
+        .eq('id', stageId)
+
+      if (error) throw error
+
+      // Update local state
+      setCustomStages(prev => prev.filter(stage => stage.id !== stageId))
+      
+      // Refresh conversations to reflect changes
+      await fetchConversations()
+    } catch (error) {
+      console.error('Error deleting custom stage:', error)
+      throw error
+    }
+  }
+
   const updateStageOrder = async (newStages: CustomStage[]) => {
     // Only allow admins to reorder stages
     if (!isAdmin) {
@@ -204,6 +258,13 @@ export const useCRMConversations = () => {
       // Revert to original order on error
       await fetchCustomStages()
     }
+  }
+
+  const updateBasicStageOrder = async (orderedStageNames: string[]) => {
+    // This function would handle reordering basic stages
+    // For now, we'll keep basic stages in their original order
+    // but this could be extended to allow custom ordering
+    console.log('Basic stage reordering:', orderedStageNames)
   }
 
   const updateConversationStatus = async (conversationId: string, newStage: string) => {
@@ -431,6 +492,8 @@ export const useCRMConversations = () => {
     updateConversationStatus,
     addCustomStage,
     updateStageOrder,
+    updateBasicStageOrder,
+    deleteCustomStage,
     customStages,
     basicStages: BASIC_STAGES.map(s => s.name),
     // Filter states and functions

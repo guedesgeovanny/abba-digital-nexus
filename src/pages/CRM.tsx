@@ -43,6 +43,8 @@ const CRM = () => {
     updateConversationStatus,
     addCustomStage,
     updateStageOrder,
+    updateBasicStageOrder,
+    deleteCustomStage,
     customStages,
     basicStages,
     // Filter states and functions
@@ -106,30 +108,39 @@ const CRM = () => {
     if (activeId.startsWith('stage-header-') && overId.startsWith('stage-header-')) {
       // Only allow admins to reorder stages
       if (!isAdmin) {
-        console.log('Only admins can reorder custom stages')
+        console.log('Only admins can reorder stages')
         return
       }
       
       const activeStage = activeId.replace('stage-header-', '')
       const overStage = overId.replace('stage-header-', '')
       
-      // Only reorder custom stages
-      const activeCustomStage = customStages.find(s => s.name === activeStage)
-      const overCustomStage = customStages.find(s => s.name === overStage)
+      // Find the indices in the current stages array
+      const oldIndex = stages.findIndex(s => s === activeStage)
+      const newIndex = stages.findIndex(s => s === overStage)
       
-      if (activeCustomStage && overCustomStage) {
-        const oldIndex = customStages.findIndex(s => s.name === activeStage)
-        const newIndex = customStages.findIndex(s => s.name === overStage)
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        // Reorder stages array
+        const newStagesOrder = arrayMove(stages, oldIndex, newIndex)
         
-        if (oldIndex !== newIndex) {
-          const newCustomStages = arrayMove(customStages, oldIndex, newIndex)
-            .map((stage, index) => ({ ...stage, position: index }))
+        // For custom stages, update their positions in database
+        const activeCustomStage = customStages.find(s => s.name === activeStage)
+        if (activeCustomStage) {
+          // This is a custom stage being moved
+          const newCustomStages = newStagesOrder
+            .map((stageName, index) => customStages.find(s => s.name === stageName))
+            .filter(Boolean)
+            .map((stage, index) => ({ ...stage!, position: index }))
           
           try {
             await updateStageOrder(newCustomStages)
           } catch (error) {
-            console.error('Error reordering stages:', error)
+            console.error('Error reordering custom stages:', error)
           }
+        } else {
+          // This might be a basic stage - for now we just log it
+          // Could implement basic stage ordering later
+          console.log('Basic stage reordering:', newStagesOrder)
         }
       }
       return
@@ -188,9 +199,19 @@ const CRM = () => {
     console.log('Color change not implemented yet:', { stage, color })
   }
 
-  const removeStage = (stageToRemove: string) => {
-    // Para implementação futura - por enquanto mantemos os estágios fixos
-    console.log('Remove stage not implemented yet:', stageToRemove)
+  const handleDeleteStage = async (stageName: string) => {
+    // Find the custom stage to delete
+    const stageToDelete = customStages.find(stage => stage.name === stageName)
+    if (!stageToDelete) {
+      console.error('Stage not found:', stageName)
+      return
+    }
+
+    try {
+      await deleteCustomStage(stageToDelete.id, stageName)
+    } catch (error) {
+      console.error('Error deleting stage:', error)
+    }
   }
 
   const handleCardClick = (conversation: CRMConversation) => {
@@ -319,7 +340,7 @@ const CRM = () => {
           onDragEnd={handleDragEnd}
         >
           <SortableContext 
-            items={customStages.map(stage => `stage-header-${stage.name}`)}
+            items={stages.map(stage => `stage-header-${stage}`)}
             strategy={horizontalListSortingStrategy}
           >
             <div className="flex gap-6 pb-6 min-w-max h-full">
@@ -337,6 +358,7 @@ const CRM = () => {
                     isAdmin={isAdmin}
                     currentUserId={currentUserId}
                     isCustom={isCustomStage}
+                    onDeleteStage={handleDeleteStage}
                   />
                 )
               })}
