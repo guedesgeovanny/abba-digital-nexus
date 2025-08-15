@@ -140,7 +140,8 @@ const Contacts = () => {
       case "perdido":
         return "Perdido"
       default:
-        return stage
+        // Remove "custom:" prefix from custom stages
+        return stage.startsWith('custom:') ? stage.replace('custom:', '') : stage
     }
   }
 
