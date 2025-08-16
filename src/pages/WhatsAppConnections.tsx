@@ -16,6 +16,8 @@ interface Connection {
   whatsapp_profile_picture_url?: string
   whatsapp_connected_at?: string
   created_at: string
+  user_id: string
+  assigned_users?: string[]
 }
 
 export default function WhatsAppConnections() {
@@ -31,7 +33,7 @@ export default function WhatsAppConnections() {
       setLoading(true)
       const { data, error } = await supabase
         .from('conexoes')
-        .select('id, name, status, whatsapp_profile_name, whatsapp_contact, whatsapp_profile_picture_url, whatsapp_connected_at, created_at')
+        .select('id, name, status, whatsapp_profile_name, whatsapp_contact, whatsapp_profile_picture_url, whatsapp_connected_at, created_at, user_id, assigned_users')
         .order('created_at', { ascending: false })
       
       if (error) throw error
@@ -47,7 +49,9 @@ export default function WhatsAppConnections() {
         whatsapp_contact: item.whatsapp_contact,
         whatsapp_profile_picture_url: item.whatsapp_profile_picture_url,
         whatsapp_connected_at: item.whatsapp_connected_at,
-        created_at: item.created_at
+        created_at: item.created_at,
+        user_id: item.user_id,
+        assigned_users: Array.isArray(item.assigned_users) ? item.assigned_users as string[] : []
       }))
       
       setConnections(transformedData)
@@ -454,8 +458,11 @@ export default function WhatsAppConnections() {
               profilePictureUrl={connection.whatsapp_profile_picture_url}
               connectedAt={connection.whatsapp_connected_at}
               createdAt={connection.created_at}
+              userId={connection.user_id}
+              assignedUsers={connection.assigned_users}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
+              onAssignmentUpdate={fetchConnections}
             />
           ))}
         </div>

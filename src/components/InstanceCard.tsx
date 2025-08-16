@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Trash, Power, Wifi, MoreVertical, Smartphone, Clock } from "lucide-react"
+import { Trash, Power, Wifi, MoreVertical, Smartphone, Clock, Users, Crown } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -24,8 +24,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import QrPolling from "./QrPolling"
 import { ConnectionLogger } from "./ConnectionLogger"
+import { ConnectionAssignmentModal } from "./ConnectionAssignmentModal"
 import { WEBHOOK_URLS } from "@/utils/connectionValidation"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface InstanceCardProps {
   id: string
@@ -36,8 +38,11 @@ interface InstanceCardProps {
   profilePictureUrl?: string
   connectedAt?: string
   createdAt: string
+  userId: string
+  assignedUsers?: string[]
   onStatusChange: (id: string, newStatus: 'connected' | 'disconnected' | 'connecting', profileData?: any) => void
   onDelete: (id: string) => void
+  onAssignmentUpdate?: () => void
 }
 
 export function InstanceCard({
@@ -49,16 +54,21 @@ export function InstanceCard({
   profilePictureUrl,
   connectedAt,
   createdAt,
+  userId,
+  assignedUsers = [],
   onStatusChange,
-  onDelete
+  onDelete,
+  onAssignmentUpdate
 }: InstanceCardProps) {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
   const [showLogger, setShowLogger] = useState(false)
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false)
   const [qrCodeData, setQrCodeData] = useState<string>("")
   const { toast } = useToast()
+  const { userProfile } = useAuth()
 
   // Logs de diagnóstico para rastrear fechamento do modal
   useEffect(() => {
@@ -220,6 +230,16 @@ export function InstanceCard({
     }).format(new Date(dateString))
   }
 
+  const isAdmin = userProfile?.role === 'admin'
+  const isOwner = userProfile?.id === userId
+  const isAssigned = assignedUsers.includes(userProfile?.id || '')
+
+  const getConnectionType = () => {
+    if (isOwner) return 'owner'
+    if (isAssigned) return 'assigned'
+    return 'none'
+  }
+
   return (
     <>
       <Card className="w-full">
@@ -237,7 +257,20 @@ export function InstanceCard({
               </Avatar>
               
               <div>
-                <h3 className="font-semibold text-lg">{name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">{name}</h3>
+                   {getConnectionType() === 'owner' && (
+                     <div className="relative group">
+                       <Crown className="h-4 w-4 text-yellow-500" />
+                       <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background border rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                         Proprietário
+                       </span>
+                     </div>
+                   )}
+                  {getConnectionType() === 'assigned' && (
+                    <Badge variant="outline" className="text-xs">Atribuída</Badge>
+                  )}
+                </div>
                 {profileName && (
                   <p className="text-sm text-muted-foreground">{profileName}</p>
                 )}
@@ -271,6 +304,16 @@ export function InstanceCard({
                       <Wifi className="mr-2 h-4 w-4" />
                       {isConnecting ? "Conectando..." : "Conectar"}
                     </DropdownMenuItem>
+                  )}
+                  
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowAssignmentModal(true)}>
+                        <Users className="mr-2 h-4 w-4" />
+                        Gerenciar Acesso
+                      </DropdownMenuItem>
+                    </>
                   )}
                   
                   <DropdownMenuSeparator />
@@ -326,6 +369,13 @@ export function InstanceCard({
               <span>Canal:</span>
               <span>WhatsApp</span>
             </div>
+            
+            {assignedUsers.length > 0 && isAdmin && (
+              <div className="flex justify-between">
+                <span>Usuários atribuídos:</span>
+                <span>{assignedUsers.length}</span>
+              </div>
+            )}
           </div>
           
           {/* Action Button */}
@@ -403,6 +453,21 @@ export function InstanceCard({
         isVisible={showLogger}
         onClose={() => setShowLogger(false)}
         instanceName={name}
+      />
+      
+      <ConnectionAssignmentModal
+        connection={{
+          id,
+          name,
+          user_id: userId,
+          assigned_users: assignedUsers
+        }}
+        isOpen={showAssignmentModal}
+        onClose={() => setShowAssignmentModal(false)}
+        onSuccess={() => {
+          onAssignmentUpdate?.();
+          setShowAssignmentModal(false);
+        }}
       />
     </>
   )
