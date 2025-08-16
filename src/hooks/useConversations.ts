@@ -243,9 +243,9 @@ export const useConversations = () => {
         .select('*')
         .order('updated_at', { ascending: false })
       
-      // Se não for admin, filtrar apenas as conversas do usuário
+      // Se não for admin, filtrar apenas as conversas do usuário ou atribuídas a ele
       if (!isAdmin) {
-        conversationsQuery = conversationsQuery.eq('user_id', user?.id)
+        conversationsQuery = conversationsQuery.or(`user_id.eq.${user?.id},assigned_to.eq.${user?.id}`)
       }
       
       const { data: conversationsData, error: conversationsError } = await conversationsQuery
