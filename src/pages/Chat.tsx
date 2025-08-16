@@ -39,15 +39,17 @@ const Chat = () => {
     const matchesSearch = conversation.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (conversation.contact_username && conversation.contact_username.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    const matchesAccount = selectedAccount === "all" || conversation.account === selectedAccount
+    // Normalizar números para comparação (remover espaços, traços e caracteres especiais)
+    const normalizePhoneNumber = (phone: string) => {
+      return phone?.replace(/[\s\-\(\)]/g, '').replace(/[^0-9]/g, '') || ''
+    }
     
-    // Debug logging
-    console.log('Filtering conversation:', {
-      name: conversation.contact_name,
-      account: conversation.account,
-      selectedAccount,
-      matchesAccount
-    })
+    const conversationAccount = normalizePhoneNumber(conversation.account || '')
+    const selectedAccountNormalized = normalizePhoneNumber(selectedAccount)
+    
+    const matchesAccount = selectedAccount === "all" || 
+                          conversationAccount === selectedAccountNormalized ||
+                          conversation.account === selectedAccount
     
     if (activeTab === "geral") return matchesSearch && matchesAccount
     if (activeTab === "aberto") return matchesSearch && matchesAccount && conversation.status === "aberta"
