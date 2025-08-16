@@ -21,8 +21,57 @@ const SignUp = () => {
   const { signUp } = useAuth()
   const navigate = useNavigate()
 
+  // Input sanitization
+  const sanitizeInput = (input: string): string => {
+    return input
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .trim()
+  }
+
+  // Enhanced email validation
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+    return emailRegex.test(email) && email.length <= 254
+  }
+
+  // Enhanced password validation
+  const isStrongPassword = (password: string): boolean => {
+    const hasMinLength = password.length >= 8
+    const hasUpperCase = /[A-Z]/.test(password)
+    const hasLowerCase = /[a-z]/.test(password)
+    const hasNumbers = /\d/.test(password)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    
+    return hasMinLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeInput(email)
+    const sanitizedFullName = sanitizeInput(fullName)
+    
+    // Enhanced validations
+    if (!sanitizedFullName || sanitizedFullName.length < 2) {
+      toast({
+        title: "Erro",
+        description: "Nome deve ter pelo menos 2 caracteres",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!isValidEmail(sanitizedEmail)) {
+      toast({
+        title: "Erro",
+        description: "Email inválido",
+        variant: "destructive",
+      })
+      return
+    }
     
     if (password !== confirmPassword) {
       toast({
@@ -33,10 +82,10 @@ const SignUp = () => {
       return
     }
 
-    if (password.length < 6) {
+    if (!isStrongPassword(password)) {
       toast({
         title: "Erro",
-        description: "A senha deve ter pelo menos 6 caracteres",
+        description: "A senha deve ter pelo menos 8 caracteres, incluindo maiúscula, minúscula, número e símbolo",
         variant: "destructive",
       })
       return
@@ -44,7 +93,7 @@ const SignUp = () => {
 
     setLoading(true)
     
-    const { error } = await signUp(email, password, fullName)
+    const { error } = await signUp(sanitizedEmail, password, sanitizedFullName)
     
     if (error) {
       console.error('Signup error:', error)

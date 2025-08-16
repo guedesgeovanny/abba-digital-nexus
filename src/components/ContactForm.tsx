@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
 import { useContacts, Contact } from "@/hooks/useContacts"
+import { toast } from "@/hooks/use-toast"
 
 interface ContactFormData {
   name: string
@@ -53,23 +54,72 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
     value: contact?.value || 0,
   })
 
+  // Input sanitization function
+  const sanitizeInput = (input: string): string => {
+    return input
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+      .replace(/javascript:/gi, '') // Remove javascript: URLs
+      .replace(/on\w+\s*=/gi, '') // Remove event handlers
+      .trim()
+  }
+
+  // Email validation
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  // Phone validation
+  const isValidPhone = (phone: string): boolean => {
+    const phoneRegex = /^[\+]?[\d\s\-\(\)]{8,}$/
+    return phoneRegex.test(phone)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.name.trim()) return
+    if (!formData.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome é obrigatório",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate email if provided
+    if (formData.email && !isValidEmail(formData.email)) {
+      toast({
+        title: "Erro",
+        description: "Email inválido",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate phone if provided
+    if (formData.phone && !isValidPhone(formData.phone)) {
+      toast({
+        title: "Erro", 
+        description: "Telefone inválido",
+        variant: "destructive",
+      })
+      return
+    }
 
     const submitData = {
       ...formData,
-      email: formData.email || undefined,
-      phone: formData.phone || undefined,
-      instagram: formData.instagram || undefined,
-      company: formData.company || undefined,
-      position: formData.position || undefined,
-      address: formData.address || undefined,
-      cpf_cnpj: formData.cpf_cnpj || undefined,
-      notes: formData.notes || undefined,
-      source: formData.source || undefined,
-      agent_assigned: formData.agent_assigned || undefined,
+      name: sanitizeInput(formData.name),
+      email: formData.email ? sanitizeInput(formData.email) : undefined,
+      phone: formData.phone ? sanitizeInput(formData.phone) : undefined,
+      instagram: formData.instagram ? sanitizeInput(formData.instagram) : undefined,
+      company: formData.company ? sanitizeInput(formData.company) : undefined,
+      position: formData.position ? sanitizeInput(formData.position) : undefined,
+      address: formData.address ? sanitizeInput(formData.address) : undefined,
+      cpf_cnpj: formData.cpf_cnpj ? sanitizeInput(formData.cpf_cnpj) : undefined,
+      notes: formData.notes ? sanitizeInput(formData.notes) : undefined,
+      source: formData.source ? sanitizeInput(formData.source) : undefined,
+      agent_assigned: formData.agent_assigned ? sanitizeInput(formData.agent_assigned) : undefined,
       value: formData.value,
     }
 

@@ -7,6 +7,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Input sanitization function
+const sanitizeInput = (input: string): string => {
+  if (typeof input !== 'string') return ''
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+    .replace(/javascript:/gi, '') // Remove javascript: URLs
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .replace(/[<>]/g, '') // Remove angle brackets
+    .trim()
+    .substring(0, 1000) // Limit length
+}
+
+// Validate UUID format
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(uuid)
+}
+
 interface WebhookMessage {
   conversation_id: string  // UUID da conversa
   content: string
@@ -37,7 +55,7 @@ serve(async (req) => {
     const messageData: WebhookMessage = await req.json()
     console.log('📋 Dados recebidos:', messageData)
 
-    // Validar dados obrigatórios
+    // Enhanced input validation and sanitization
     if (!messageData.conversation_id || !messageData.content) {
       console.error('❌ Dados obrigatórios não fornecidos')
       return new Response(
@@ -49,11 +67,46 @@ serve(async (req) => {
       )
     }
 
+    // Validate UUID format
+    if (!isValidUUID(messageData.conversation_id)) {
+      console.error('❌ UUID inválido')
+      return new Response(
+        JSON.stringify({ error: 'conversation_id deve ser um UUID válido' }), 
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Sanitize all string inputs
+    const sanitizedData = {
+      ...messageData,
+      content: sanitizeInput(messageData.content),
+      sender_name: messageData.sender_name ? sanitizeInput(messageData.sender_name) : undefined,
+      contact_name: messageData.contact_name ? sanitizeInput(messageData.contact_name) : undefined,
+      contact_phone: messageData.contact_phone ? sanitizeInput(messageData.contact_phone) : undefined,
+      contact_username: messageData.contact_username ? sanitizeInput(messageData.contact_username) : undefined,
+      contact_avatar: messageData.contact_avatar ? sanitizeInput(messageData.contact_avatar) : undefined,
+    }
+
+    // Validate direction
+    if (sanitizedData.direction && !['sent', 'received'].includes(sanitizedData.direction)) {
+      console.error('❌ Direção inválida')
+      return new Response(
+        JSON.stringify({ error: 'direction deve ser "sent" ou "received"' }), 
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
     // Converter UUID da conversa para número usando a função do banco
-    console.log('🔄 Convertendo UUID para número:', messageData.conversation_id)
+    console.log('🔄 Convertendo UUID para número:', sanitizedData.conversation_id)
     
     const { data: conversationNumber, error: numberError } = await supabaseServiceRole
-      .rpc('get_conversation_number', { conversation_uuid: messageData.conversation_id })
+      .rpc('get_conversation_number', { conversation_uuid: sanitizedData.conversation_id })
     
     if (numberError) {
       console.error('❌ Erro ao converter UUID para número:', numberError)
@@ -73,10 +126,10 @@ serve(async (req) => {
       .from('messages')
       .insert({
         conversation_id: conversationNumber,
-        content: messageData.content,
-        direction: messageData.direction || 'received',
-        message_type: messageData.message_type || 'text',
-        sender_name: messageData.sender_name || null
+        content: sanitizedData.content,
+        direction: sanitizedData.direction || 'received',
+        message_type: sanitizedData.message_type || 'text',
+        sender_name: sanitizedData.sender_name || null
       })
       .select()
       .single()
@@ -98,15 +151,15 @@ serve(async (req) => {
     const { error: conversationError } = await supabaseServiceRole
       .from('conversations')
       .update({
-        last_message: messageData.content,
+        last_message: sanitizedData.content,
         last_message_at: new Date().toISOString(),
         // Atualizar dados do contato se fornecidos
-        ...(messageData.contact_name && { contact_name: messageData.contact_name }),
-        ...(messageData.contact_phone && { contact_phone: messageData.contact_phone }),
-        ...(messageData.contact_username && { contact_username: messageData.contact_username }),
-        ...(messageData.contact_avatar && { contact_avatar: messageData.contact_avatar })
+        ...(sanitizedData.contact_name && { contact_name: sanitizedData.contact_name }),
+        ...(sanitizedData.contact_phone && { contact_phone: sanitizedData.contact_phone }),
+        ...(sanitizedData.contact_username && { contact_username: sanitizedData.contact_username }),
+        ...(sanitizedData.contact_avatar && { contact_avatar: sanitizedData.contact_avatar })
       })
-      .eq('id', messageData.conversation_id)
+      .eq('id', sanitizedData.conversation_id)
 
     if (conversationError) {
       console.error('⚠️ Erro ao atualizar conversa (não crítico):', conversationError)
