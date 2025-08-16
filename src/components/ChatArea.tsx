@@ -76,10 +76,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
           .eq('type', 'whatsapp')
           .eq('status', 'connected')
         
-        // Se não for admin, filtrar apenas conexões atribuídas ao usuário
-        if (userProfile.role !== 'admin') {
-          query = query.or(`assigned_users.cs.["${user.id}"],user_id.eq.${user.id}`)
-        }
+        // As políticas RLS já filtram corretamente as conexões visíveis
         
         const { data, error } = await query
         
