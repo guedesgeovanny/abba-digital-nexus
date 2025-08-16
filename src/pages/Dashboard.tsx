@@ -108,15 +108,51 @@ export default function Dashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={metrics?.messagesByDate || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  tickLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  interval={0}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                  tickLine={{ stroke: 'hsl(var(--border))' }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px',
+                    color: 'hsl(var(--foreground))',
+                    fontSize: '12px'
+                  }}
+                  labelFormatter={(label, payload) => {
+                    if (payload && payload[0]) {
+                      const data = payload[0].payload
+                      return `Data: ${new Date(data.fullDate).toLocaleDateString('pt-BR', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}`
+                    }
+                    return label
+                  }}
+                  formatter={(value) => [`${value} mensagens`, 'Mensagens']}
+                />
                 <Line 
                   type="monotone" 
                   dataKey="count" 
                   stroke="hsl(var(--primary))" 
                   strokeWidth={2}
+                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2, fill: 'hsl(var(--background))' }}
                 />
               </LineChart>
             </ResponsiveContainer>

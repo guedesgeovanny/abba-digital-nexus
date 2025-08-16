@@ -16,7 +16,7 @@ interface DashboardMetrics {
   activeConnections: number
   totalContacts: number
   totalUsers: number
-  messagesByDate: Array<{ date: string; count: number }>
+  messagesByDate: Array<{ date: string; fullDate: string; count: number }>
   conversationsByStatus: Array<{ name: string; count: number }>
 }
 
@@ -142,10 +142,57 @@ export const useDashboardMetrics = (dateRange?: DateRange) => {
         return acc
       }, {} as Record<string, number>) || {}
 
-      const messagesByDateArray = Object.entries(messagesByDate).map(([date, count]) => ({
-        date: new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-        count
-      }))
+      // Generate complete date range to fill gaps
+      const generateDateRange = (start: Date, end: Date) => {
+        const dates = []
+        const current = new Date(start)
+        
+        while (current <= end) {
+          const dateStr = current.toISOString().split('T')[0]
+          dates.push(dateStr)
+          current.setDate(current.getDate() + 1)
+        }
+        return dates
+      }
+
+      const allDates = generateDateRange(startDate, endDate)
+      
+      const messagesByDateArray = allDates.map(date => {
+        const count = messagesByDate[date] || 0
+        const dateObj = new Date(date)
+        
+        // Format date based on range duration
+        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+        let formattedDate: string
+        
+        if (daysDiff <= 7) {
+          // Show day name + day/month for weekly view
+          formattedDate = dateObj.toLocaleDateString('pt-BR', { 
+            weekday: 'short', 
+            day: '2-digit', 
+            month: '2-digit' 
+          })
+        } else if (daysDiff <= 31) {
+          // Show day/month for monthly view
+          formattedDate = dateObj.toLocaleDateString('pt-BR', { 
+            day: '2-digit', 
+            month: '2-digit' 
+          })
+        } else {
+          // Show day/month/year for longer periods
+          formattedDate = dateObj.toLocaleDateString('pt-BR', { 
+            day: '2-digit', 
+            month: '2-digit',
+            year: '2-digit'
+          })
+        }
+        
+        return {
+          date: formattedDate,
+          fullDate: date,
+          count
+        }
+      })
 
       // Conversations by status
       const statusCounts = conversations?.reduce((acc, conv) => {
