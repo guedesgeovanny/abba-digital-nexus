@@ -46,10 +46,10 @@ export const AssignConnectionDialog = ({
         connectionName
       })
       
-      // Update the connection's user_id in the database
+      // Update the connection's assigned_users in the database
       const { data, error } = await supabase
         .from('conexoes')
-        .update({ user_id: selectedUserId })
+        .update({ assigned_users: [selectedUserId] })
         .eq('id', connectionId)
         .select()
 
