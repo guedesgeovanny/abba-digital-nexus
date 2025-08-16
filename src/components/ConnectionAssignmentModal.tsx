@@ -32,7 +32,8 @@ export const ConnectionAssignmentModal = ({
 }: ConnectionAssignmentModalProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedResponsibleId, setSelectedResponsibleId] = useState<string>('');
-  const { loading, fetchActiveUsers } = useConnectionAssignment();
+  const [loading, setLoading] = useState(false);
+  const { fetchActiveUsers } = useConnectionAssignment();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export const ConnectionAssignmentModal = ({
     if (!connection || !selectedResponsibleId) return;
 
     console.log('🚀 Starting save process...');
+    setLoading(true);
     
     try {
       // Update the responsible user (change owner)
@@ -82,7 +84,7 @@ export const ConnectionAssignmentModal = ({
           description: "Falha ao alterar responsável",
           variant: "destructive"
         });
-        throw error;
+        return;
       }
 
       console.log('✅ Responsible updated successfully');
@@ -92,16 +94,25 @@ export const ConnectionAssignmentModal = ({
         description: "Responsável alterado com sucesso",
       });
       
-      // Close modal immediately
-      handleClose();
+      // Close modal first
+      onClose();
       
-      // Call success callback after a small delay
-      setTimeout(() => {
-        onSuccess?.();
-      }, 100);
+      // Call refresh after a small delay
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess();
+        }, 50);
+      }
       
     } catch (error) {
       console.error('❌ Error in handleSave:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -451,8 +451,11 @@ export function InstanceCard({
         isOpen={showAssignmentModal}
         onClose={() => setShowAssignmentModal(false)}
         onSuccess={() => {
-          onAssignmentUpdate?.();
+          console.log('🔄 Assignment success callback triggered');
           setShowAssignmentModal(false);
+          if (onAssignmentUpdate) {
+            onAssignmentUpdate();
+          }
         }}
       />
     </>
