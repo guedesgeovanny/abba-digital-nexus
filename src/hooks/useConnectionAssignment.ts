@@ -75,13 +75,19 @@ export const useConnectionAssignment = () => {
 
   const getAssignedUsers = async (connectionId: string): Promise<string[]> => {
     try {
+      console.log('📋 Getting assigned users for connection:', connectionId);
       const { data, error } = await supabase
         .from('conexoes')
         .select('assigned_users')
         .eq('id', connectionId)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid errors when no data
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching assigned users:', error);
+        throw error;
+      }
+      
+      console.log('✅ Assigned users data:', data);
       
       // Safely handle the JSONB array
       const assignedUsers = data?.assigned_users;
@@ -90,7 +96,7 @@ export const useConnectionAssignment = () => {
       }
       return [];
     } catch (error) {
-      console.error('Error fetching assigned users:', error);
+      console.error('❌ Error fetching assigned users:', error);
       return [];
     }
   };
