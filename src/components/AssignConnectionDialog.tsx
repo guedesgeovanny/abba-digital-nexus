@@ -40,13 +40,25 @@ export const AssignConnectionDialog = ({
     try {
       setIsAssigning(true)
       
+      console.log('🔧 [AssignConnectionDialog] Assigning connection:', {
+        connectionId,
+        selectedUserId,
+        connectionName
+      })
+      
       // Update the connection's user_id in the database
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('conexoes')
         .update({ user_id: selectedUserId })
         .eq('id', connectionId)
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('🔧 [AssignConnectionDialog] Database error:', error)
+        throw error
+      }
+      
+      console.log('✅ [AssignConnectionDialog] Assignment successful:', data)
       
       const selectedUser = activeUsers.find(u => u.id === selectedUserId)
       toast({
@@ -56,9 +68,14 @@ export const AssignConnectionDialog = ({
       
       setOpen(false)
       setSelectedUserId("")
-      onAssign() // Refresh connections list
+      
+      // Use setTimeout to prevent UI freeze and ensure state cleanup
+      setTimeout(() => {
+        onAssign()
+      }, 100)
+      
     } catch (error) {
-      console.error('Error assigning connection:', error)
+      console.error('❌ [AssignConnectionDialog] Error assigning connection:', error)
       toast({
         title: "Erro",
         description: "Não foi possível atribuir a conexão",
