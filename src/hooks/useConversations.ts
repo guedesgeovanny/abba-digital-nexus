@@ -537,10 +537,12 @@ export const useConversations = () => {
 
   const markConversationAsRead = async (conversationId: string) => {
     try {
+      // Mark all unread messages for this conversation as read
       const { error } = await supabase
-        .from('conversations')
-        .update({ unread_count: 0 })
-        .eq('id', conversationId)
+        .from('messages')
+        .update({ is_read: true })
+        .eq('conversation_id', conversationId)
+        .eq('is_read', false)
       
       if (error) throw error
       
