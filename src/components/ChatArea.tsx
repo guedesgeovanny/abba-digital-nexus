@@ -68,6 +68,8 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     
     const fetchConnections = async () => {
       try {
+        console.log('🔍 [ChatArea] Fetching connections for user:', user.id, 'role:', userProfile.role)
+        
         let query = supabase
           .from('conexoes')
           .select('name, whatsapp_contact, channel, assigned_users, user_id')
@@ -82,23 +84,51 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
         const { data, error } = await query
         
         if (error) {
-          console.error('Erro ao carregar conexões:', error)
+          console.error('❌ [ChatArea] Erro ao carregar conexões:', error)
           return
         }
         
+        console.log('✅ [ChatArea] Connections loaded:', data)
         setConnections(data || [])
         
         // Se há uma conexão padrão salva, verificar se ainda existe
         const savedDefaultConnection = localStorage.getItem('defaultConnection')
         if (savedDefaultConnection && data?.some(conn => conn.name === savedDefaultConnection)) {
           setSelectedConnectionName(savedDefaultConnection)
+        } else if (savedDefaultConnection && !data?.some(conn => conn.name === savedDefaultConnection)) {
+          // Se a conexão padrão não existe mais, remover ela
+          console.log('🧹 [ChatArea] Removing invalid default connection:', savedDefaultConnection)
+          localStorage.removeItem('defaultConnection')
+          setDefaultConnection(undefined)
+          setSelectedConnectionName(undefined)
         }
       } catch (error) {
-        console.error('Erro ao buscar conexões:', error)
+        console.error('❌ [ChatArea] Erro ao buscar conexões:', error)
       }
     }
 
     fetchConnections()
+
+    // Configurar listener para mudanças na tabela conexoes
+    const channel = supabase
+      .channel('conexoes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conexoes'
+        },
+        (payload) => {
+          console.log('🔔 [ChatArea] Connection changed:', payload)
+          fetchConnections() // Recarregar conexões quando houver mudanças
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [user, userProfile])
 
   // Opções de conexão baseadas nas conexões reais
