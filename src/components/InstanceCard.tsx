@@ -26,6 +26,8 @@ import QrPolling from "./QrPolling"
 import { ConnectionLogger } from "./ConnectionLogger"
 import { WEBHOOK_URLS } from "@/utils/connectionValidation"
 import { useToast } from "@/hooks/use-toast"
+import { AssignConnectionDialog } from "./AssignConnectionDialog"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface InstanceCardProps {
   id: string
@@ -38,6 +40,7 @@ interface InstanceCardProps {
   createdAt: string
   onStatusChange: (id: string, newStatus: 'connected' | 'disconnected' | 'connecting', profileData?: any) => void
   onDelete: (id: string) => void
+  onRefresh?: () => void
 }
 
 export function InstanceCard({
@@ -50,7 +53,8 @@ export function InstanceCard({
   connectedAt,
   createdAt,
   onStatusChange,
-  onDelete
+  onDelete,
+  onRefresh
 }: InstanceCardProps) {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -59,6 +63,10 @@ export function InstanceCard({
   const [showLogger, setShowLogger] = useState(false)
   const [qrCodeData, setQrCodeData] = useState<string>("")
   const { toast } = useToast()
+  const { userProfile } = useAuth()
+  
+  // Only show assign button for admins
+  const isAdmin = userProfile?.role === 'admin'
 
   // Logs de diagnóstico para rastrear fechamento do modal
   useEffect(() => {
@@ -271,6 +279,17 @@ export function InstanceCard({
                       <Wifi className="mr-2 h-4 w-4" />
                       {isConnecting ? "Conectando..." : "Conectar"}
                     </DropdownMenuItem>
+                  )}
+                  
+                  {isAdmin && (
+                    <>
+                      <AssignConnectionDialog
+                        connectionId={id}
+                        connectionName={name}
+                        onAssign={() => onRefresh?.()}
+                      />
+                      <DropdownMenuSeparator />
+                    </>
                   )}
                   
                   <DropdownMenuSeparator />

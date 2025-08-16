@@ -456,6 +456,7 @@ export default function WhatsAppConnections() {
               createdAt={connection.created_at}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
+              onRefresh={fetchConnections}
             />
           ))}
         </div>
