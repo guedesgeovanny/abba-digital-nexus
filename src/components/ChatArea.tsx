@@ -29,6 +29,7 @@ import { detectLinksInMessage } from "@/utils/linkDetection"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { useConnectionInfo } from "@/hooks/useConnectionInfo"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -45,6 +46,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const { toast } = useToast()
   const updateContactName = useUpdateContactName()
   const { user, userProfile } = useAuth()
+  const { connectionInfo } = useConnectionInfo(conversation.account)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputBarRef = useRef<HTMLFormElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
@@ -545,7 +547,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                   {/* Informações da conexão e usuário */}
                   <div className="text-xs opacity-50 mb-0.5 border-b border-current/5 pb-0.5">
                     <div className="flex flex-col text-[9px] leading-tight">
-                      <span>Conexão: {conversation.account || 'N/A'}</span>
+                      <span>Conexão: {connectionInfo?.name ? `${connectionInfo.name} (${conversation.account})` : (conversation.account || 'N/A')}</span>
                       <span>Usuário: {message.direcao === 'sent' ? 'Você' : (message.nome_contato || conversation.contact_name)}</span>
                     </div>
                   </div>
