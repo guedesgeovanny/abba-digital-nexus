@@ -459,7 +459,6 @@ export default function WhatsAppConnections() {
               connectedAt={connection.whatsapp_connected_at}
               createdAt={connection.created_at}
               userId={connection.user_id}
-              assignedUsers={connection.assigned_users}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
               onAssignmentUpdate={fetchConnections}

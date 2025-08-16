@@ -47,13 +47,20 @@ export const useConnectionAssignment = () => {
   ): Promise<boolean> => {
     setLoading(true);
     try {
+      console.log('💾 Saving assignment:', { connectionId, assignedUserIds });
+      
       const { error } = await supabase
         .from('conexoes')
         .update({ assigned_users: assignedUserIds })
         .eq('id', connectionId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error updating assignment:', error);
+        throw error;
+      }
 
+      console.log('✅ Assignment saved successfully');
+      
       toast({
         title: "Sucesso",
         description: "Atribuições atualizadas com sucesso",
@@ -61,7 +68,7 @@ export const useConnectionAssignment = () => {
       
       return true;
     } catch (error) {
-      console.error('Error updating connection assignment:', error);
+      console.error('❌ Error updating connection assignment:', error);
       toast({
         title: "Erro",
         description: "Falha ao atualizar atribuições",
@@ -69,6 +76,7 @@ export const useConnectionAssignment = () => {
       });
       return false;
     } finally {
+      console.log('🔄 Setting loading to false');
       setLoading(false);
     }
   };

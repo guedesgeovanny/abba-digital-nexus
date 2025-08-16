@@ -39,7 +39,6 @@ interface InstanceCardProps {
   connectedAt?: string
   createdAt: string
   userId: string
-  assignedUsers?: string[]
   onStatusChange: (id: string, newStatus: 'connected' | 'disconnected' | 'connecting', profileData?: any) => void
   onDelete: (id: string) => void
   onAssignmentUpdate?: () => void
@@ -55,7 +54,6 @@ export function InstanceCard({
   connectedAt,
   createdAt,
   userId,
-  assignedUsers = [],
   onStatusChange,
   onDelete,
   onAssignmentUpdate
@@ -232,11 +230,9 @@ export function InstanceCard({
 
   const isAdmin = userProfile?.role === 'admin'
   const isOwner = userProfile?.id === userId
-  const isAssigned = assignedUsers.includes(userProfile?.id || '')
 
   const getConnectionType = () => {
     if (isOwner) return 'owner'
-    if (isAssigned) return 'assigned'
     return 'none'
   }
 
@@ -267,10 +263,7 @@ export function InstanceCard({
                        </span>
                      </div>
                    )}
-                  {getConnectionType() === 'assigned' && (
-                    <Badge variant="outline" className="text-xs">Atribuída</Badge>
-                  )}
-                </div>
+                 </div>
                 {profileName && (
                   <p className="text-sm text-muted-foreground">{profileName}</p>
                 )}
@@ -311,7 +304,7 @@ export function InstanceCard({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setShowAssignmentModal(true)}>
                         <Users className="mr-2 h-4 w-4" />
-                        Gerenciar Acesso
+                        Alterar Responsável
                       </DropdownMenuItem>
                     </>
                   )}
@@ -370,12 +363,6 @@ export function InstanceCard({
               <span>WhatsApp</span>
             </div>
             
-            {assignedUsers.length > 0 && isAdmin && (
-              <div className="flex justify-between">
-                <span>Usuários atribuídos:</span>
-                <span>{assignedUsers.length}</span>
-              </div>
-            )}
           </div>
           
           {/* Action Button */}
@@ -459,8 +446,7 @@ export function InstanceCard({
         connection={{
           id,
           name,
-          user_id: userId,
-          assigned_users: assignedUsers
+          user_id: userId
         }}
         isOpen={showAssignmentModal}
         onClose={() => setShowAssignmentModal(false)}
