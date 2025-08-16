@@ -199,12 +199,33 @@ export const useConversations = () => {
               setConversations(prev => 
                 prev.map(conv => {
                   if (conv.id === message.conversa_id) {
-                    return {
+                    const updatedConv = {
                       ...conv,
                       last_message: message.mensagem,
                       last_message_at: message.data_hora || message.created_at,
                       unread_count: conv.unread_count + 1
                     }
+                    
+                    // Se a conversa estiver fechada, reabrir automaticamente
+                    if (conv.status === 'fechada') {
+                      console.log('Reabrindo conversa fechada:', conv.id)
+                      updatedConv.status = 'aberta'
+                      
+                      // Atualizar no banco de dados
+                      supabase
+                        .from('conversations')
+                        .update({ status: 'aberta' })
+                        .eq('id', conv.id)
+                        .then(({ error }) => {
+                          if (error) {
+                            console.error('Erro ao reabrir conversa:', error)
+                          } else {
+                            console.log('Conversa reaberta com sucesso:', conv.id)
+                          }
+                        })
+                    }
+                    
+                    return updatedConv
                   }
                   return conv
                 }).sort((a, b) => {
