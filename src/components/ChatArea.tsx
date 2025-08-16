@@ -495,6 +495,12 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
               ref={messageInputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendMessage(e)
+                }
+              }}
               placeholder="Digite sua mensagem..."
               className="flex-1 bg-background border-border text-foreground focus:border-abba-green"
               disabled={isSending || conversation.status === 'fechada'}
