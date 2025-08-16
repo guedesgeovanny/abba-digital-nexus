@@ -143,10 +143,12 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       await sendMessage({ content: newMessage.trim(), connectionName: selectedConnectionName })
       setNewMessage("")
       
-      // Manter o foco no input após enviar mensagem
-      if (messageInputRef.current) {
-        messageInputRef.current.focus()
-      }
+      // Manter o foco no input após enviar mensagem - usar setTimeout para garantir que seja aplicado após a limpeza
+      setTimeout(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.focus()
+        }
+      }, 10)
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       toast({
