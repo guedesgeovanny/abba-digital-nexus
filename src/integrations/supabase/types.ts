@@ -521,11 +521,87 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number
+          created_at: string
+          expires_at: string
+          id: string
+          identifier: string
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          count?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          identifier: string
+          updated_at?: string
+          window_start?: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          identifier?: string
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      security_audit_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          p_action: string
+          p_identifier: string
+          p_limit?: number
+          p_window_minutes?: number
+        }
+        Returns: boolean
+      }
+      cleanup_expired_rate_limits: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_sample_conversations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -536,6 +612,16 @@ export type Database = {
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      log_security_event: {
+        Args: {
+          p_details?: Json
+          p_event_type: string
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_user_id: string
+        }
         Returns: string
       }
     }
