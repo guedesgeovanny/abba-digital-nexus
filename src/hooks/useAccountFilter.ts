@@ -22,30 +22,29 @@ export const useAccountFilter = () => {
     try {
       setIsLoading(true)
       
-      // Buscar conexões WhatsApp ativas do usuário
+      // Buscar valores únicos da coluna 'account' das conversas
       const { data, error } = await supabase
-        .from('conexoes')
-        .select('whatsapp_contact, name')
-        .eq('user_id', user?.id)
-        .eq('type', 'whatsapp')
-        .eq('status', 'connected')
-        .not('whatsapp_contact', 'is', null)
+        .from('conversations')
+        .select('account')
+        .not('account', 'is', null)
       
       if (error) {
-        console.error('Erro ao buscar conexões WhatsApp:', error)
+        console.error('Erro ao buscar contas das conversas:', error)
         setAccounts([])
         return
       }
       
-      // Criar array com formato "nome (número)" para exibição
-      const connectionAccounts = data.map((connection: any) => ({
-        value: connection.whatsapp_contact,
-        label: `${connection.name} (${connection.whatsapp_contact})`
-      }))
+      // Criar array com valores únicos da coluna account
+      const uniqueAccounts = [...new Set(data.map(conv => conv.account))]
+        .filter(account => account && account.trim() !== '')
+        .map(account => ({
+          value: account,
+          label: account
+        }))
       
-      setAccounts(connectionAccounts)
+      setAccounts(uniqueAccounts)
     } catch (error) {
-      console.error('Erro ao carregar conexões:', error)
+      console.error('Erro ao carregar contas:', error)
     } finally {
       setIsLoading(false)
     }
