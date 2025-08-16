@@ -28,6 +28,7 @@ import { LinkMessage } from "@/components/LinkMessage"
 import { detectLinksInMessage } from "@/utils/linkDetection"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -43,6 +44,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
   const updateContactName = useUpdateContactName()
+  const { user, userProfile } = useAuth()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputBarRef = useRef<HTMLFormElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
@@ -62,13 +64,22 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
 
   // Carregar conexões WhatsApp ativas
   useEffect(() => {
+    if (!user || !userProfile) return
+    
     const fetchConnections = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('conexoes')
-          .select('name, whatsapp_contact, channel')
+          .select('name, whatsapp_contact, channel, assigned_users, user_id')
           .eq('type', 'whatsapp')
           .eq('status', 'connected')
+        
+        // Se não for admin, filtrar apenas conexões atribuídas ao usuário
+        if (userProfile.role !== 'admin') {
+          query = query.or(`assigned_users.cs.["${user.id}"],user_id.eq.${user.id}`)
+        }
+        
+        const { data, error } = await query
         
         if (error) {
           console.error('Erro ao carregar conexões:', error)
@@ -88,7 +99,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     }
 
     fetchConnections()
-  }, [])
+  }, [user, userProfile])
 
   // Opções de conexão baseadas nas conexões reais
   const connectionOptions = connections.map(conn => ({
