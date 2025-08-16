@@ -356,12 +356,12 @@ export function InstanceCard({
               <span>WhatsApp</span>
             </div>
             
-            {assignedUser && (
-              <div className="flex justify-between">
-                <span>Atribuído para:</span>
-                <span className="font-medium text-foreground">{assignedUser.full_name || assignedUser.email}</span>
-              </div>
-            )}
+            <div className="flex justify-between">
+              <span>Atribuído para:</span>
+              <span className="font-medium text-foreground">
+                {assignedUser ? (assignedUser.full_name || assignedUser.email) : 'Não atribuído'}
+              </span>
+            </div>
           </div>
           
           {/* Action Button */}
