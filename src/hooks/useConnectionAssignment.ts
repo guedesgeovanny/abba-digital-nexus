@@ -16,13 +16,19 @@ export const useConnectionAssignment = () => {
 
   const fetchActiveUsers = async (): Promise<User[]> => {
     try {
+      console.log('🔍 Fetching active users...');
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, role, status')
-        .eq('status', 'active')
+        .neq('status', 'pending') // Get all users except pending
         .order('full_name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching users:', error);
+        throw error;
+      }
+      
+      console.log('✅ Fetched users:', data?.length || 0);
       return data || [];
     } catch (error) {
       console.error('Error fetching users:', error);

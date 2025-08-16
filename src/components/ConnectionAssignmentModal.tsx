@@ -41,13 +41,21 @@ export const ConnectionAssignmentModal = ({
   const loadData = async () => {
     if (!connection) return;
 
-    // Load active users
-    const activeUsers = await fetchActiveUsers();
-    setUsers(activeUsers);
+    console.log('🔄 Loading modal data for connection:', connection.id);
+    
+    try {
+      // Load active users
+      const activeUsers = await fetchActiveUsers();
+      console.log('👥 Active users loaded:', activeUsers.length);
+      setUsers(activeUsers);
 
-    // Load current assignments
-    const currentAssignments = await getAssignedUsers(connection.id);
-    setSelectedUserIds(currentAssignments);
+      // Load current assignments
+      const currentAssignments = await getAssignedUsers(connection.id);
+      console.log('📋 Current assignments:', currentAssignments);
+      setSelectedUserIds(currentAssignments);
+    } catch (error) {
+      console.error('❌ Error loading modal data:', error);
+    }
   };
 
   const handleUserToggle = (userId: string) => {
@@ -79,74 +87,66 @@ export const ConnectionAssignmentModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Gerenciar Acesso - {connection.name}
+          <DialogTitle className="text-base">
+            Gerenciar Acesso
           </DialogTitle>
+          <p className="text-sm text-muted-foreground">{connection.name}</p>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Owner Info */}
+        <div className="space-y-3">
+          {/* Owner Info - Compact */}
           {owner && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium flex items-center gap-2">
-                <Crown className="h-4 w-4 text-yellow-500" />
-                Proprietário
-              </h4>
-              <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                <span className="text-sm">{owner.full_name || owner.email}</span>
-                <Badge variant="outline" className="text-xs">
-                  {owner.role}
-                </Badge>
+            <div className="p-2 rounded-md bg-muted/30 border">
+              <div className="flex items-center gap-2">
+                <Crown className="h-3 w-3 text-yellow-500" />
+                <span className="text-xs font-medium">Proprietário:</span>
+                <span className="text-xs">{owner.full_name || owner.email}</span>
               </div>
-              <Separator />
             </div>
           )}
 
-          {/* Users List */}
+          {/* Users List - Compact */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Atribuir para Usuários</h4>
-            <ScrollArea className="h-64 border rounded-md p-2">
-              <div className="space-y-2">
-                {users
-                  .filter(user => user.id !== connection.user_id) // Exclude owner
-                  .map((user) => (
-                    <div key={user.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50">
-                      <Checkbox
-                        id={user.id}
-                        checked={selectedUserIds.includes(user.id)}
-                        onCheckedChange={() => handleUserToggle(user.id)}
-                      />
-                      <label
-                        htmlFor={user.id}
-                        className="flex-1 text-sm cursor-pointer"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{user.full_name || user.email}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {user.role}
-                          </Badge>
-                        </div>
-                      </label>
-                    </div>
-                  ))}
-              </div>
-            </ScrollArea>
+            <h4 className="text-xs font-medium text-muted-foreground">Atribuir acesso:</h4>
+            <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-1">
+              {users
+                .filter(user => user.id !== connection.user_id)
+                .map((user) => (
+                  <div key={user.id} className="flex items-center space-x-2 p-1 rounded hover:bg-muted/50">
+                    <Checkbox
+                      id={user.id}
+                      checked={selectedUserIds.includes(user.id)}
+                      onCheckedChange={() => handleUserToggle(user.id)}
+                    />
+                    <label htmlFor={user.id} className="flex-1 text-xs cursor-pointer">
+                      {user.full_name || user.email}
+                    </label>
+                    <Badge variant="outline" className="text-[10px] px-1">
+                      {user.role}
+                    </Badge>
+                  </div>
+                ))}
+              {users.filter(user => user.id !== connection.user_id).length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  Nenhum usuário disponível
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Selected Count */}
-          <div className="text-sm text-muted-foreground">
-            {selectedUserIds.length} usuário(s) selecionado(s)
+          {/* Selected Count - Compact */}
+          <div className="text-xs text-muted-foreground">
+            {selectedUserIds.length} usuário(s) com acesso
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" size="sm" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
+          <Button size="sm" onClick={handleSave} disabled={loading}>
             {loading ? 'Salvando...' : 'Salvar'}
           </Button>
         </DialogFooter>
