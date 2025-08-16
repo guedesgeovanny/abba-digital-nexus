@@ -37,9 +37,9 @@ const allItems = [{
 const getFilteredMenuItems = (userProfile: any) => {
   const isAdmin = userProfile?.role === 'admin';
   
-  // If not admin, filter out Dashboard, WhatsApp and Contatos
+  // If not admin, filter out Dashboard and Contatos only
   if (!isAdmin) {
-    return allItems.filter(item => item.title !== 'Dashboard' && item.title !== 'WhatsApp' && item.title !== 'Contatos');
+    return allItems.filter(item => item.title !== 'Dashboard' && item.title !== 'Contatos');
   }
   
   return allItems;
