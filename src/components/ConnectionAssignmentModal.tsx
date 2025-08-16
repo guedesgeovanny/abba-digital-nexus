@@ -94,15 +94,9 @@ export const ConnectionAssignmentModal = ({
         description: "Responsável alterado com sucesso",
       });
       
-      // Close modal first
-      onClose();
-      
-      // Call refresh after a small delay
-      if (onSuccess) {
-        setTimeout(() => {
-          onSuccess();
-        }, 50);
-      }
+      // Close modal and call success callback
+      handleClose();
+      onSuccess?.();
       
     } catch (error) {
       console.error('❌ Error in handleSave:', error);

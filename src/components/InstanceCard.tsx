@@ -452,10 +452,7 @@ export function InstanceCard({
         onClose={() => setShowAssignmentModal(false)}
         onSuccess={() => {
           console.log('🔄 Assignment success callback triggered');
-          setShowAssignmentModal(false);
-          if (onAssignmentUpdate) {
-            onAssignmentUpdate();
-          }
+          onAssignmentUpdate?.();
         }}
       />
     </>
