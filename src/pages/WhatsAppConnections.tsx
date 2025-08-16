@@ -17,7 +17,8 @@ interface Connection {
   whatsapp_connected_at?: string
   created_at: string
   user_id?: string
-  profiles?: {
+  assigned_users?: string[]
+  assignedUser?: {
     full_name: string
     email: string
   } | null
@@ -39,27 +40,49 @@ export default function WhatsAppConnections() {
         .select(`
           id, name, status, whatsapp_profile_name, whatsapp_contact, 
           whatsapp_profile_picture_url, whatsapp_connected_at, created_at, user_id,
-          profiles(full_name, email)
+          assigned_users
         `)
         .order('created_at', { ascending: false })
       
       if (error) throw error
       
-      // Transform data to match our interface
-      const transformedData: Connection[] = (data || []).map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        status: ['connected', 'disconnected', 'connecting'].includes(item.status) 
-          ? item.status as 'connected' | 'disconnected' | 'connecting'
-          : 'disconnected',
-        whatsapp_profile_name: item.whatsapp_profile_name,
-        whatsapp_contact: item.whatsapp_contact,
-        whatsapp_profile_picture_url: item.whatsapp_profile_picture_url,
-        whatsapp_connected_at: item.whatsapp_connected_at,
-        created_at: item.created_at,
-        user_id: item.user_id,
-        profiles: item.profiles
-      }))
+      // Transform data to match our interface and fetch assigned user data
+      const transformedData: Connection[] = await Promise.all(
+        (data || []).map(async (item: any) => {
+          let assignedUser = null
+          
+          // Get assigned user info if assigned_users array has users
+          if (item.assigned_users && Array.isArray(item.assigned_users) && item.assigned_users.length > 0) {
+            try {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('full_name, email')
+                .eq('id', item.assigned_users[0])
+                .single()
+              
+              assignedUser = profileData
+            } catch (error) {
+              console.warn('Could not fetch assigned user profile:', error)
+            }
+          }
+          
+          return {
+            id: item.id,
+            name: item.name,
+            status: ['connected', 'disconnected', 'connecting'].includes(item.status) 
+              ? item.status as 'connected' | 'disconnected' | 'connecting'
+              : 'disconnected',
+            whatsapp_profile_name: item.whatsapp_profile_name,
+            whatsapp_contact: item.whatsapp_contact,
+            whatsapp_profile_picture_url: item.whatsapp_profile_picture_url,
+            whatsapp_connected_at: item.whatsapp_connected_at,
+            created_at: item.created_at,
+            user_id: item.user_id,
+            assigned_users: item.assigned_users,
+            assignedUser
+          }
+        })
+      )
       
       setConnections(transformedData)
     } catch (error) {
@@ -465,7 +488,7 @@ export default function WhatsAppConnections() {
               profilePictureUrl={connection.whatsapp_profile_picture_url}
               connectedAt={connection.whatsapp_connected_at}
               createdAt={connection.created_at}
-              assignedUser={connection.profiles}
+              assignedUser={connection.assignedUser}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
               onRefresh={fetchConnections}
