@@ -170,10 +170,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('AuthContext: Attempting signup for:', email)
       
+      // Security Fix: Add emailRedirectTo for proper authentication flow
+      const redirectUrl = `${window.location.origin}/`
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName || '',
           }

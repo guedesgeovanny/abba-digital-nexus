@@ -14,10 +14,12 @@ export const testN8nWebhook = async (messageData: {
   try {
     console.log('🧪 Testando webhook do n8n:', messageData)
     
+    // Security Fix: Add authentication header for webhook calls
     const response = await fetch('https://vlarijlhllzjqvxdigds.supabase.co/functions/v1/n8n-webhook', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${document.cookie.split('supabase-auth-token=')[1]?.split(';')[0] || ''}`,
       },
       body: JSON.stringify(messageData)
     })
