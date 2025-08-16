@@ -41,6 +41,14 @@ const Chat = () => {
     
     const matchesAccount = selectedAccount === "all" || conversation.account === selectedAccount
     
+    // Debug logging
+    console.log('Filtering conversation:', {
+      name: conversation.contact_name,
+      account: conversation.account,
+      selectedAccount,
+      matchesAccount
+    })
+    
     if (activeTab === "geral") return matchesSearch && matchesAccount
     if (activeTab === "aberto") return matchesSearch && matchesAccount && conversation.status === "aberta"
     if (activeTab === "fechado") return matchesSearch && matchesAccount && conversation.status === "fechada"

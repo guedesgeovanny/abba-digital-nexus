@@ -22,6 +22,8 @@ export const useAccountFilter = () => {
     try {
       setIsLoading(true)
       
+      console.log('Buscando conexões WhatsApp ativas...')
+      
       // Buscar conexões WhatsApp ativas do usuário
       const { data, error } = await supabase
         .from('conexoes')
@@ -30,6 +32,8 @@ export const useAccountFilter = () => {
         .eq('type', 'whatsapp')
         .eq('status', 'connected')
         .not('whatsapp_contact', 'is', null)
+      
+      console.log('Conexões retornadas:', data)
       
       if (error) {
         console.error('Erro ao buscar conexões WhatsApp:', error)
@@ -42,6 +46,8 @@ export const useAccountFilter = () => {
         value: connection.whatsapp_contact,
         label: `${connection.name} (${connection.whatsapp_contact})`
       }))
+      
+      console.log('Contas formatadas:', connectionAccounts)
       
       setAccounts(connectionAccounts)
     } catch (error) {
