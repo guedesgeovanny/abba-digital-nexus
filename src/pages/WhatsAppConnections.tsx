@@ -16,6 +16,11 @@ interface Connection {
   whatsapp_profile_picture_url?: string
   whatsapp_connected_at?: string
   created_at: string
+  user_id?: string
+  profiles?: {
+    full_name: string
+    email: string
+  } | null
 }
 
 export default function WhatsAppConnections() {
@@ -31,13 +36,17 @@ export default function WhatsAppConnections() {
       setLoading(true)
       const { data, error } = await supabase
         .from('conexoes')
-        .select('id, name, status, whatsapp_profile_name, whatsapp_contact, whatsapp_profile_picture_url, whatsapp_connected_at, created_at')
+        .select(`
+          id, name, status, whatsapp_profile_name, whatsapp_contact, 
+          whatsapp_profile_picture_url, whatsapp_connected_at, created_at, user_id,
+          profiles(full_name, email)
+        `)
         .order('created_at', { ascending: false })
       
       if (error) throw error
       
       // Transform data to match our interface
-      const transformedData: Connection[] = (data || []).map(item => ({
+      const transformedData: Connection[] = (data || []).map((item: any) => ({
         id: item.id,
         name: item.name,
         status: ['connected', 'disconnected', 'connecting'].includes(item.status) 
@@ -47,7 +56,9 @@ export default function WhatsAppConnections() {
         whatsapp_contact: item.whatsapp_contact,
         whatsapp_profile_picture_url: item.whatsapp_profile_picture_url,
         whatsapp_connected_at: item.whatsapp_connected_at,
-        created_at: item.created_at
+        created_at: item.created_at,
+        user_id: item.user_id,
+        profiles: item.profiles
       }))
       
       setConnections(transformedData)
@@ -454,6 +465,7 @@ export default function WhatsAppConnections() {
               profilePictureUrl={connection.whatsapp_profile_picture_url}
               connectedAt={connection.whatsapp_connected_at}
               createdAt={connection.created_at}
+              assignedUser={connection.profiles}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
               onRefresh={fetchConnections}

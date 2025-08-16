@@ -38,6 +38,10 @@ interface InstanceCardProps {
   profilePictureUrl?: string
   connectedAt?: string
   createdAt: string
+  assignedUser?: {
+    full_name: string
+    email: string
+  } | null
   onStatusChange: (id: string, newStatus: 'connected' | 'disconnected' | 'connecting', profileData?: any) => void
   onDelete: (id: string) => void
   onRefresh?: () => void
@@ -52,6 +56,7 @@ export function InstanceCard({
   profilePictureUrl,
   connectedAt,
   createdAt,
+  assignedUser,
   onStatusChange,
   onDelete,
   onRefresh
@@ -286,7 +291,12 @@ export function InstanceCard({
                       <AssignConnectionDialog
                         connectionId={id}
                         connectionName={name}
-                        onAssign={() => onRefresh?.()}
+                        onAssign={() => {
+                          console.log('🔄 [InstanceCard] Refreshing after assignment')
+                          setTimeout(() => {
+                            onRefresh?.()
+                          }, 200)
+                        }}
                       />
                       <DropdownMenuSeparator />
                     </>
@@ -345,6 +355,13 @@ export function InstanceCard({
               <span>Canal:</span>
               <span>WhatsApp</span>
             </div>
+            
+            {assignedUser && (
+              <div className="flex justify-between">
+                <span>Atribuído para:</span>
+                <span className="font-medium text-foreground">{assignedUser.full_name || assignedUser.email}</span>
+              </div>
+            )}
           </div>
           
           {/* Action Button */}
