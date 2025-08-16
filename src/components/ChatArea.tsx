@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, User, Trash2, Star } from "lucide-react"
+import { Send, User, Trash2, Star, Edit2, Check, X } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { useMessages } from "@/hooks/useMessages"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useToast } from "@/hooks/use-toast"
+import { useUpdateContactName } from "@/hooks/useUpdateContactName"
 import { MediaMessage } from "@/components/MediaMessage"
 import { detectFileInMessage } from "@/utils/fileDetection"
 import {
@@ -37,11 +38,15 @@ interface ChatAreaProps {
 export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStatus }: ChatAreaProps) => {
   const [newMessage, setNewMessage] = useState("")
   const [isUpdatingAgentStatus, setIsUpdatingAgentStatus] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState(conversation.contact_name)
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
   const { toast } = useToast()
+  const updateContactName = useUpdateContactName()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputBarRef = useRef<HTMLFormElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
   const [connections, setConnections] = useState<any[]>([])
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
   const [defaultConnection, setDefaultConnection] = useState<string | undefined>(undefined)
@@ -104,6 +109,10 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
 
   // Ao selecionar conversa, garantir que a barra de digitação apareça e manter conexão padrão
   useEffect(() => {
+    // Resetar estado de edição ao trocar de conversa
+    setIsEditingName(false)
+    setEditedName(conversation.contact_name)
+    
     // scroll mensagens para o final
     if (scrollAreaRef.current) {
       const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
@@ -279,6 +288,58 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     })
   }
 
+  const handleStartEditName = () => {
+    setIsEditingName(true)
+    setEditedName(conversation.contact_name)
+    // Focar no input após o estado atualizar
+    setTimeout(() => {
+      nameInputRef.current?.focus()
+      nameInputRef.current?.select()
+    }, 10)
+  }
+
+  const handleSaveName = async () => {
+    if (!editedName.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome não pode estar vazio",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (editedName.trim() === conversation.contact_name) {
+      setIsEditingName(false)
+      return
+    }
+
+    try {
+      await updateContactName.mutateAsync({
+        conversationId: conversation.id,
+        contactId: conversation.contact_id,
+        newName: editedName.trim()
+      })
+      setIsEditingName(false)
+    } catch (error) {
+      // Error is handled by the hook
+      setEditedName(conversation.contact_name) // Revert on error
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false)
+    setEditedName(conversation.contact_name)
+  }
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSaveName()
+    } else if (e.key === 'Escape') {
+      handleCancelEdit()
+    }
+  }
+
   const renderAgentStatusButton = () => {
     if (!conversation.have_agent) return null
 
@@ -338,8 +399,52 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
             </AvatarFallback>
           </Avatar>
           
-          <div>
-            <h3 className="font-semibold text-foreground">{conversation.contact_name}</h3>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              {isEditingName ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    ref={nameInputRef}
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    onKeyDown={handleNameKeyDown}
+                    className="h-7 text-sm font-semibold"
+                    maxLength={50}
+                    disabled={updateContactName.isPending}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={handleSaveName}
+                    disabled={updateContactName.isPending}
+                  >
+                    <Check className="h-3 w-3 text-green-600" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={handleCancelEdit}
+                    disabled={updateContactName.isPending}
+                  >
+                    <X className="h-3 w-3 text-red-600" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground">{conversation.contact_name}</h3>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                    onClick={handleStartEditName}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span>{getChannelIcon(conversation.channel)} {conversation.channel || 'Chat'}</span>
               {getAccountBadge(conversation.account)}
