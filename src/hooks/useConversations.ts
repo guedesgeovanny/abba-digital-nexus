@@ -315,15 +315,32 @@ export const useConversations = () => {
               console.error('Erro ao buscar última mensagem:', messageError)
             }
 
-            // Contar mensagens não lidas (recebidas)
-            const { count: unreadCount, error: countError } = await supabase
-              .from('messages')
-              .select('*', { count: 'exact', head: true })
-              .eq('conversa_id', conversation.id)
-              .eq('direcao', 'received')
+            // Contar mensagens não lidas (recebidas após a última leitura do usuário)
+            let unreadCount = 0
+            if (user?.id) {
+              // Verificar quando o usuário leu a conversa pela última vez
+              const { data: readStatus } = await supabase
+                .from('conversation_read_status')
+                .select('last_read_at')
+                .eq('user_id', user.id)
+                .eq('conversation_id', conversation.id)
+                .maybeSingle()
 
-            if (countError) {
-              console.error('Erro ao contar mensagens não lidas:', countError)
+              const lastReadAt = readStatus?.last_read_at
+              
+              // Contar mensagens recebidas após a última leitura
+              const countQuery = supabase
+                .from('messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('conversa_id', conversation.id)
+                .eq('direcao', 'received')
+              
+              if (lastReadAt) {
+                countQuery.gt('data_hora', lastReadAt)
+              }
+              
+              const { count } = await countQuery
+              unreadCount = count || 0
             }
 
             return {
@@ -335,7 +352,7 @@ export const useConversations = () => {
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
               status_agent: (conversation as any).status_agent || null,
-              unread_count: unreadCount || 0
+              unread_count: unreadCount
             }
           } catch (error) {
             console.error('Erro ao processar conversa:', error)
@@ -537,12 +554,16 @@ export const useConversations = () => {
 
   const markConversationAsRead = async (conversationId: string) => {
     try {
-      // Mark all unread messages for this conversation as read
+      if (!user?.id) return
+      
+      // Insert or update read status for this user and conversation
       const { error } = await supabase
-        .from('messages')
-        .update({ is_read: true })
-        .eq('conversation_id', conversationId)
-        .eq('is_read', false)
+        .from('conversation_read_status')
+        .upsert({
+          user_id: user.id,
+          conversation_id: conversationId,
+          last_read_at: new Date().toISOString()
+        })
       
       if (error) throw error
       
