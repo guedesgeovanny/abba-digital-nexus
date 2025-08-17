@@ -587,16 +587,33 @@ export const useConversations = () => {
     try {
       if (!user?.id) return
       
-      // Insert or update read status for this user and conversation
-      const { error } = await supabase
+      // First, try to update existing record
+      const { error: updateError } = await supabase
         .from('conversation_read_status')
-        .upsert({
-          user_id: user.id,
-          conversation_id: conversationId,
-          last_read_at: new Date().toISOString()
+        .update({
+          last_read_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
+        .eq('user_id', user.id)
+        .eq('conversation_id', conversationId)
       
-      if (error) throw error
+      // If no rows were affected, insert a new record
+      if (updateError || updateError === null) {
+        const { error: insertError } = await supabase
+          .from('conversation_read_status')
+          .insert({
+            user_id: user.id,
+            conversation_id: conversationId,
+            last_read_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+        
+        // Ignore duplicate key errors as it means another process already created the record
+        if (insertError && insertError.code !== '23505') {
+          throw insertError
+        }
+      }
       
       // Update local state optimistically
       setConversations(prev => prev.map(conv => 
@@ -606,8 +623,8 @@ export const useConversations = () => {
       console.log(`Conversa ${conversationId} marcada como lida`)
     } catch (error) {
       console.error('Erro ao marcar conversa como lida:', error)
-      setError(error as Error)
-      throw error
+      // Don't throw the error to prevent blocking conversation selection
+      // setError(error as Error)
     }
   }
 
