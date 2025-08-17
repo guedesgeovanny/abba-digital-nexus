@@ -167,17 +167,17 @@ export const useConversations = () => {
           },
           (payload) => {
             console.log('Conversa atualizada via realtime:', payload.new)
+            const updatedConversation = payload.new as Conversation
+            
             setConversations(prev => 
               prev.map(conv => {
-                if (conv.id === payload.new.id) {
-                  // Preservar unread_count local se não foi explicitamente atualizado
-                  const updatedConv = payload.new as Conversation
-                  if (updatedConv.unread_count === 0 && conv.unread_count > 0) {
-                    // Se o banco tem 0 mas localmente temos mensagens não lidas,
-                    // preservar o valor local (exceto se foi uma atualização intencional)
-                    updatedConv.unread_count = conv.unread_count
+                if (conv.id === updatedConversation.id) {
+                  // Preservar o unread_count atual se a atualização não incluir explicitamente unread_count
+                  // Isso acontece quando atualizamos status ou outras propriedades mas não queremos resetar o contador
+                  return {
+                    ...updatedConversation,
+                    unread_count: conv.unread_count // Sempre preservar o valor local
                   }
-                  return updatedConv
                 }
                 return conv
               }).sort((a, b) => {
