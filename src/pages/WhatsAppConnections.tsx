@@ -202,6 +202,11 @@ export default function WhatsAppConnections() {
                       ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
       }
       
+      // Se o status for 'close', forçar desconexão
+      if ((data.status === 'close' || target.status === 'close')) {
+        isConnected = false
+      }
+      
       const newStatus = isConnected ? 'connected' : 'disconnected'
       
       // Usar função reutilizável para atualização (passar dados originais)
@@ -250,9 +255,14 @@ export default function WhatsAppConnections() {
               connected = target.status && ['open', 'connected', 'ready', 'active'].includes(target.status.toLowerCase())
             } else {
               // Estrutura antiga: verificar campos diretos
-              connected = data.connected === true || 
-                         (typeof data.status === 'string' && 
-                          ['open', 'connected', 'ready', 'active'].includes(data.status.toLowerCase()))
+              connected = parsedData.connected === true || 
+                         (typeof parsedData.status === 'string' && 
+                          ['open', 'connected', 'ready', 'active'].includes(parsedData.status.toLowerCase()))
+            }
+            
+            // Se o status for 'close', forçar desconexão
+            if ((parsedData.status === 'close' || target.status === 'close')) {
+              connected = false
             }
             
             const newStatus = connected ? 'connected' : 'disconnected'
