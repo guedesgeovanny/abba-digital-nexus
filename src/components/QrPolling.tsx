@@ -150,15 +150,33 @@ export default function QrPolling({
       addLog('info', `🔄 Verificando status da instância: ${instance}`)
       addLog('info', `🔗 URL: ${url}`)
 
-      const r = await fetch(url, {
+      // Adicionar timeout personalizado para produção
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+
+      const fetchPromise = fetch(url, {
         signal: ac.signal,
-        headers: { "cache-control": "no-cache" },
-        method: 'GET'
+        headers: { 
+          "cache-control": "no-cache",
+          "User-Agent": "WhatsApp-Connection-Client/1.0",
+          "Accept": "application/json"
+        },
+        method: 'GET',
+        mode: 'cors' // Garantir CORS está habilitado
       });
+
+      const r = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (!r.ok) {
         addLog('warning', `⚠️ Resposta HTTP ${r.status} - ${r.statusText}`)
         console.warn('⚠️ [QrPolling] Status check failed:', r.status, r.statusText);
+        
+        // Em produção, tentar novamente em caso de erro 503/502/504
+        if ([502, 503, 504].includes(r.status)) {
+          console.log('🔄 [QrPolling] Server error, will retry on next interval');
+          addLog('warning', `🔄 Erro do servidor (${r.status}), tentando novamente...`);
+        }
         return; // Não alterar o estado em caso de erro de rede
       }
 
@@ -214,7 +232,19 @@ export default function QrPolling({
     } catch (error: any) {
       if (error.name !== 'AbortError') {
         console.error('❌ [QrPolling] Polling error:', error);
-        addLog('error', `❌ Erro no polling: ${error}`, error)
+        addLog('error', `❌ Erro no polling: ${error.message || error}`, error)
+        
+        // Log adicional para produção
+        if (error.message === 'Request timeout') {
+          console.log('⏰ [QrPolling] Request timeout in production environment');
+          addLog('warning', '⏰ Timeout na requisição - verifique a conectividade');
+        } else if (error.message?.includes('CORS')) {
+          console.log('🚫 [QrPolling] CORS error detected');
+          addLog('error', '🚫 Erro de CORS - verificar configuração do servidor');
+        } else if (error.message?.includes('NetworkError') || error.message?.includes('fetch')) {
+          console.log('🌐 [QrPolling] Network error in production');
+          addLog('error', '🌐 Erro de rede - verificar conectividade');
+        }
       }
     }
   };
@@ -268,13 +298,22 @@ export default function QrPolling({
       const url = `${endpoint}?instanceName=${encodeURIComponent(instance)}&t=${Date.now()}`;
       console.log('🔗 [QrPolling] New QR request URL:', url);
       
-      const response = await fetch(url, {
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
+      );
+
+      const fetchPromise = fetch(url, {
         method: 'GET',
         headers: { 
           'Content-Type': 'application/json',
-          'cache-control': 'no-cache'
-        }
+          'cache-control': 'no-cache',
+          'User-Agent': 'WhatsApp-Connection-Client/1.0',
+          'Accept': 'application/json'
+        },
+        mode: 'cors'
       });
+
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
       
       console.log('📡 [QrPolling] New QR response status:', response.status);
       

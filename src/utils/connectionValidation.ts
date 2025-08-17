@@ -9,10 +9,11 @@ export const WEBHOOK_URLS = {
 
 // Configurações de polling
 export const POLLING_CONFIG = {
-  interval: 3000,
+  interval: 5000, // Aumentado para produção
   qrExpiration: 60,
   maxRetries: 20,
-  requestTimeout: 15000
+  requestTimeout: 10000, // Timeout mais conservador para produção
+  retryDelay: 2000 // Delay entre tentativas
 }
 
 // Validação de nome de conexão
