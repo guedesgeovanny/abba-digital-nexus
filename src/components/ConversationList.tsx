@@ -137,9 +137,12 @@ export const ConversationList = ({
     
     if (isOwnConversation(conversation)) {
       return (
-        <Badge className="bg-green-100 text-green-800 text-xs px-1 py-0" title="Sua conversa">
-          Minha
-        </Badge>
+        <Avatar className="h-4 w-4" title="Sua conversa">
+          <AvatarImage src={userProfile?.avatar_url || undefined} alt={userProfile?.full_name || 'Usuário'} />
+          <AvatarFallback className="bg-green-100 text-green-800 text-xs">
+            {userProfile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+          </AvatarFallback>
+        </Avatar>
       )
     } else {
       return (
