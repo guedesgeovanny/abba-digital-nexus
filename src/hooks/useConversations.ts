@@ -588,7 +588,7 @@ export const useConversations = () => {
       if (!user?.id) return
       
       // First, try to update existing record
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('conversation_read_status')
         .update({
           last_read_at: new Date().toISOString(),
@@ -596,9 +596,10 @@ export const useConversations = () => {
         })
         .eq('user_id', user.id)
         .eq('conversation_id', conversationId)
+        .select()
       
-      // If no rows were affected, insert a new record
-      if (updateError || updateError === null) {
+      // If no rows were updated, insert a new record
+      if (!updateError && (!updateData || updateData.length === 0)) {
         const { error: insertError } = await supabase
           .from('conversation_read_status')
           .insert({
@@ -606,13 +607,13 @@ export const useConversations = () => {
             conversation_id: conversationId,
             last_read_at: new Date().toISOString()
           })
-          .select()
-          .single()
         
         // Ignore duplicate key errors as it means another process already created the record
         if (insertError && insertError.code !== '23505') {
           throw insertError
         }
+      } else if (updateError) {
+        throw updateError
       }
       
       // Update local state optimistically
