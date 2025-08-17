@@ -1,10 +1,13 @@
 
 import { Card, CardContent } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CRMConversation } from '@/hooks/useCRMConversations'
 import { Phone, Mail, Building, DollarSign, MessageCircle, Instagram, Calendar, Paperclip } from 'lucide-react'
 import { useConversationAttachments } from '@/hooks/useConversationAttachments'
+import { useAuth } from '@/contexts/AuthContext'
+import { useUserById } from '@/hooks/useUserById'
 
 interface LeadCardProps {
   conversation: CRMConversation
@@ -84,20 +87,33 @@ export const LeadCard = ({
     }).format(date)
   }
 
-  const getOwnershipBadge = () => {
+  const { user, userProfile } = useAuth()
+  
+  // Buscar dados do usuário atribuído se não for a conversa do próprio usuário
+  const isOwnConversation = conversation.user_id === currentUserId
+  const assignedUserId = conversation.assigned_to || conversation.user_id
+  const { userProfile: assignedUser } = useUserById(!isOwnConversation ? assignedUserId : null)
+
+  const getOwnershipAvatar = () => {
     if (!isAdmin) return null
-    
-    if (conversation.user_id === currentUserId) {
+
+    if (isOwnConversation) {
       return (
-        <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full">
-          Minha
-        </span>
+        <Avatar className="h-6 w-6" title="Sua conversa">
+          <AvatarImage src={userProfile?.avatar_url || undefined} alt={userProfile?.full_name || 'Usuário'} />
+          <AvatarFallback className="bg-green-100 text-green-800 text-xs">
+            {userProfile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+          </AvatarFallback>
+        </Avatar>
       )
-    } else if (conversation.assigned_to === currentUserId) {
+    } else if (assignedUser) {
       return (
-        <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
-          Atribuída
-        </span>
+        <Avatar className="h-6 w-6" title={`Atribuída a ${assignedUser.full_name || 'Usuário'}`}>
+          <AvatarImage src={assignedUser.avatar_url || undefined} alt={assignedUser.full_name || 'Usuário'} />
+          <AvatarFallback className="bg-blue-100 text-blue-800 text-xs">
+            {assignedUser.full_name?.charAt(0) || 'U'}
+          </AvatarFallback>
+        </Avatar>
       )
     }
     return null
@@ -122,7 +138,7 @@ export const LeadCard = ({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <h4 className="font-medium text-card-foreground truncate">{conversation.contact_name}</h4>
           </div>
-          {getOwnershipBadge()}
+          {getOwnershipAvatar()}
         </div>
         
         {/* Channel - Always display */}
