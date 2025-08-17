@@ -31,23 +31,15 @@ function normalizeResp(resp: RawResp): Sessao {
   return { status, qr, pairingCode };
 }
 
-// Detecta conexão na nova estrutura retornada pelo webhook
+// Detecta conexão baseado apenas no status "open"
 function isTargetConnectedPayload(raw: any): boolean {
-  console.log('🔍 [isTargetConnectedPayload] Checking payload:', JSON.stringify(raw, null, 2));
-  
   const data = Array.isArray(raw) ? raw[0] : raw;
-  const target = data.instance || data;
   
-  if (!target || typeof target !== 'object') {
-    console.log('❌ [isTargetConnectedPayload] Invalid target object');
-    return false;
-  }
+  // Verifica apenas se status é "open"
+  const status = data.status || (data.instance && data.instance.status);
+  const isConnected = status && status.toLowerCase() === "open";
   
-  // Considera conectado se status é "open"
-  const isConnected = target.status && target.status.toLowerCase() === "open";
-  
-  console.log('🎯 [isTargetConnectedPayload] Status:', target.status);
-  console.log('🎯 [isTargetConnectedPayload] Result:', isConnected ? "✅ CONNECTED" : "❌ NOT CONNECTED");
+  console.log('🎯 [isTargetConnectedPayload] Status:', status, '| Connected:', isConnected);
   
   return isConnected;
 }
@@ -93,7 +85,6 @@ export default function QrPolling({
   const [qr, setQr] = useState<string | null>(initialQr || null);
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [isGeneratingNewQr, setIsGeneratingNewQr] = useState<boolean>(false);
-  const [currentInterval, setCurrentInterval] = useState<number>(intervalMs);
   const [consecutiveErrors, setConsecutiveErrors] = useState<number>(0);
 
   // Timer de 1 minuto para expiração do QR
@@ -181,10 +172,7 @@ export default function QrPolling({
           addLog('warning', `🔄 Erro do servidor (${r.status}), tentando novamente...`);
         }
         
-        // Diminuir frequência se muitos erros consecutivos
-        if (consecutiveErrors >= 3) {
-          setCurrentInterval(Math.min(intervalMs * 2, 10000));
-        }
+        // Não alterar frequência em caso de erro
         return; // Não alterar o estado em caso de erro de rede
       }
 
@@ -200,7 +188,7 @@ export default function QrPolling({
         hasArray: Array.isArray(raw)
       })
 
-      // Verifica se recebeu dados de conexão bem-sucedida
+      // Verifica se recebeu dados de conexão bem-sucedida (apenas status "open")
       if (isTargetConnectedPayload(raw)) {
         console.log('🎯 [QrPolling] Connection successful!');
         addLog('success', `🎉 Conexão detectada!`, raw)
@@ -211,31 +199,14 @@ export default function QrPolling({
         stopAllTimers();
         abortRef.current?.abort();
         
-        // Extrair dados da conexão usando a nova função
-        console.log('💾 [QrPolling] Extracting connection data from:', raw);
+        // Extrair dados da conexão
         const connectionData = extractProfileData(raw);
-        console.log('📋 [QrPolling] Final connection data:', connectionData);
-        
         addLog('success', `✅ Dados de conexão extraídos`, connectionData)
         
         if (onConnected) onConnected(connectionData);
         return;
       }
       
-      // Verificar se QR foi escaneado mas ainda não conectado (acelerar polling)
-      const data = Array.isArray(raw) ? raw[0] : raw;
-      const target = data.instance || data;
-      if (target.status === 'connecting' || target.status === 'pairing') {
-        console.log('📱 [QrPolling] QR scanned, accelerating polling...');
-        setCurrentInterval(1000); // Polling a cada 1 segundo quando conectando
-        addLog('info', '📱 QR escaneado! Acelerando verificação...');
-      } else if (target.status === 'open' || target.status === 'ready') {
-        // Polling mais rápido para estados próximos da conexão
-        setCurrentInterval(1500);
-      } else {
-        // Voltar ao intervalo normal
-        setCurrentInterval(intervalMs);
-      }
       const normalizedData = normalizeResp(raw);
       console.log('✅ [QrPolling] Normalized data:', normalizedData);
 
@@ -296,12 +267,12 @@ export default function QrPolling({
     // Parar polling anterior se existir
     stopAllTimers();
     
-    // Iniciar polling com intervalo dinâmico
+    // Iniciar polling com intervalo fixo
     const startPolling = () => {
       timerRef.current = window.setInterval(() => {
-        console.log(`⏰ [QrPolling] Polling tick (interval: ${currentInterval}ms)...`);
+        console.log(`⏰ [QrPolling] Polling tick (interval: ${intervalMs}ms)...`);
         fetchStatus();
-      }, currentInterval);
+      }, intervalMs);
     };
 
     startPolling();
@@ -316,17 +287,6 @@ export default function QrPolling({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance, endpoint, intervalMs]);
-
-  // Efeito separado para mudanças no intervalo
-  useEffect(() => {
-    if (isPollingRef.current && timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = window.setInterval(() => {
-        console.log(`⏰ [QrPolling] Polling tick (interval: ${currentInterval}ms)...`);
-        fetchStatus();
-      }, currentInterval);
-    }
-  }, [currentInterval]);
 
   const generateNewQrCode = async () => {
     console.log('🔁 [QrPolling] Generating new QR code...');
