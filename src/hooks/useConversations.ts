@@ -19,6 +19,8 @@ export interface Conversation {
   unread_count: number
   have_agent: boolean
   status_agent: 'Ativo' | 'Inativo' | null
+  assigned_to: string | null
+  crm_stage: string | null
   created_at: string
   updated_at: string
 }

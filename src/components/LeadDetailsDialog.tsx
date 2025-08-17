@@ -117,6 +117,8 @@ export const LeadDetailsDialog = ({
     unread_count: 0,
     have_agent: false,
     status_agent: null,
+    assigned_to: null,
+    crm_stage: crmConv.crm_stage || null,
     created_at: crmConv.created_at,
     updated_at: crmConv.updated_at,
     contact_id: crmConv.contact_id || null

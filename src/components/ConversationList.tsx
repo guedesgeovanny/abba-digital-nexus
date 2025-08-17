@@ -6,6 +6,8 @@ import { Conversation } from "@/hooks/useConversations"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useAuth } from "@/contexts/AuthContext"
+import { useUserById } from "@/hooks/useUserById"
+import { ConversationOwnershipIndicator } from "./ConversationOwnershipIndicator"
 import { AssignConversationDialog } from "./AssignConversationDialog"
 import {
   AlertDialog,
@@ -131,28 +133,6 @@ export const ConversationList = ({
     return conversation.user_id === user?.id
   }
 
-  // Função para obter o indicador de propriedade da conversa
-  const getOwnershipIndicator = (conversation: Conversation) => {
-    if (!isAdmin) return null
-    
-    if (isOwnConversation(conversation)) {
-      return (
-        <Avatar className="h-4 w-4" title="Sua conversa">
-          <AvatarImage src={userProfile?.avatar_url || undefined} alt={userProfile?.full_name || 'Usuário'} />
-          <AvatarFallback className="bg-green-100 text-green-800 text-xs">
-            {userProfile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-          </AvatarFallback>
-        </Avatar>
-      )
-    } else {
-      return (
-        <Badge className="bg-blue-100 text-blue-800 text-xs px-1 py-0" title="Conversa de outro usuário">
-          Atribuída
-        </Badge>
-      )
-    }
-  }
-
   return (
     <div className="space-y-1">
       {conversations.map((conversation) => (
@@ -184,7 +164,7 @@ export const ConversationList = ({
             
             <div className="flex items-center space-x-2 mb-1">
               {getAccountBadge(conversation.account)}
-              {getOwnershipIndicator(conversation)}
+              <ConversationOwnershipIndicator conversation={conversation} />
             </div>
             
             <div className="flex items-center justify-between mt-1">
