@@ -79,7 +79,7 @@ function extractProfileData(raw: any) {
 export default function QrPolling({
   instance,
   endpoint,
-  intervalMs = 3000,
+  intervalMs = 2000, // Intervalo base mais rápido
   initialQr,
   onConnected
 }: {
@@ -93,6 +93,8 @@ export default function QrPolling({
   const [qr, setQr] = useState<string | null>(initialQr || null);
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [isGeneratingNewQr, setIsGeneratingNewQr] = useState<boolean>(false);
+  const [currentInterval, setCurrentInterval] = useState<number>(intervalMs);
+  const [consecutiveErrors, setConsecutiveErrors] = useState<number>(0);
 
   // Timer de 1 minuto para expiração do QR
   const { timeLeft, formattedTime, isExpired, reset: resetTimer } = useQRCodeTimer({
@@ -169,6 +171,7 @@ export default function QrPolling({
       const r = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (!r.ok) {
+        setConsecutiveErrors(prev => prev + 1);
         addLog('warning', `⚠️ Resposta HTTP ${r.status} - ${r.statusText}`)
         console.warn('⚠️ [QrPolling] Status check failed:', r.status, r.statusText);
         
@@ -177,8 +180,16 @@ export default function QrPolling({
           console.log('🔄 [QrPolling] Server error, will retry on next interval');
           addLog('warning', `🔄 Erro do servidor (${r.status}), tentando novamente...`);
         }
+        
+        // Diminuir frequência se muitos erros consecutivos
+        if (consecutiveErrors >= 3) {
+          setCurrentInterval(Math.min(intervalMs * 2, 10000));
+        }
         return; // Não alterar o estado em caso de erro de rede
       }
+
+      // Reset consecutive errors on success
+      setConsecutiveErrors(0);
 
       const raw = await r.json();
       console.log('📊 [QrPolling] Raw response:', raw);
@@ -209,6 +220,21 @@ export default function QrPolling({
         
         if (onConnected) onConnected(connectionData);
         return;
+      }
+      
+      // Verificar se QR foi escaneado mas ainda não conectado (acelerar polling)
+      const data = Array.isArray(raw) ? raw[0] : raw;
+      const target = data.instance || data;
+      if (target.status === 'connecting' || target.status === 'pairing') {
+        console.log('📱 [QrPolling] QR scanned, accelerating polling...');
+        setCurrentInterval(1000); // Polling a cada 1 segundo quando conectando
+        addLog('info', '📱 QR escaneado! Acelerando verificação...');
+      } else if (target.status === 'open' || target.status === 'ready') {
+        // Polling mais rápido para estados próximos da conexão
+        setCurrentInterval(1500);
+      } else {
+        // Voltar ao intervalo normal
+        setCurrentInterval(intervalMs);
       }
       const normalizedData = normalizeResp(raw);
       console.log('✅ [QrPolling] Normalized data:', normalizedData);
@@ -260,8 +286,6 @@ export default function QrPolling({
     addLog('info', `🚀 Iniciando polling`)
     addLog('info', `⏱️ Intervalo: ${intervalMs}ms`)
 
-    // Timer será resetado pelo resetTimer() abaixo
-
     // Se não temos QR inicial, fazer fetch imediatamente
     if (!initialQr) {
       console.log('🔍 [QrPolling] No initial QR, fetching status immediately...');
@@ -269,13 +293,18 @@ export default function QrPolling({
       fetchStatus();
     }
 
-    // Iniciar polling
-    timerRef.current = window.setInterval(() => {
-      console.log('⏰ [QrPolling] Polling tick...');
-      fetchStatus();
-    }, intervalMs);
+    // Parar polling anterior se existir
+    stopAllTimers();
+    
+    // Iniciar polling com intervalo dinâmico
+    const startPolling = () => {
+      timerRef.current = window.setInterval(() => {
+        console.log(`⏰ [QrPolling] Polling tick (interval: ${currentInterval}ms)...`);
+        fetchStatus();
+      }, currentInterval);
+    };
 
-    // Resetar timer quando começar novo polling
+    startPolling();
     resetTimer();
 
     return () => {
@@ -287,6 +316,17 @@ export default function QrPolling({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance, endpoint, intervalMs]);
+
+  // Efeito separado para mudanças no intervalo
+  useEffect(() => {
+    if (isPollingRef.current && timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = window.setInterval(() => {
+        console.log(`⏰ [QrPolling] Polling tick (interval: ${currentInterval}ms)...`);
+        fetchStatus();
+      }, currentInterval);
+    }
+  }, [currentInterval]);
 
   const generateNewQrCode = async () => {
     console.log('🔁 [QrPolling] Generating new QR code...');
