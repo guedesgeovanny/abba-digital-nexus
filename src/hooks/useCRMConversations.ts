@@ -67,6 +67,7 @@ export const useCRMConversations = () => {
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [allUsers, setAllUsers] = useState<Array<{id: string, full_name: string, email: string}>>([])
+  const [lastRefresh, setLastRefresh] = useState(new Date())
   
   const isAdmin = userProfile?.role === 'admin'
   
@@ -88,6 +89,33 @@ export const useCRMConversations = () => {
         .finally(() => setIsLoading(false))
     }
   }, [user, isAdmin])
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    if (!user) return
+
+    const interval = setInterval(() => {
+      console.log('⏰ Auto-refresh triggered')
+      Promise.all([fetchConversations(), fetchCustomStages()])
+        .then(() => setLastRefresh(new Date()))
+        .catch(error => console.error('Auto-refresh error:', error))
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [user])
+
+  // Refresh when window gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('👁️ Window focus refresh triggered')
+      Promise.all([fetchConversations(), fetchCustomStages()])
+        .then(() => setLastRefresh(new Date()))
+        .catch(error => console.error('Focus refresh error:', error))
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
 
   const fetchConversations = async () => {
     try {
@@ -589,6 +617,29 @@ export const useCRMConversations = () => {
     setFilterUser('all')
   }
 
+  // Manual refresh function
+  const manualRefresh = async () => {
+    console.log('🔄 Manual refresh triggered')
+    setIsLoading(true)
+    try {
+      await Promise.all([fetchConversations(), fetchCustomStages()])
+      setLastRefresh(new Date())
+      toast({
+        title: "Dados Atualizados",
+        description: "Informações sincronizadas com o banco de dados",
+      })
+    } catch (error) {
+      console.error('Error during manual refresh:', error)
+      toast({
+        title: "Erro ao Atualizar",
+        description: "Não foi possível sincronizar os dados",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const hasValueData = conversations.some(c => c.value && c.value > 0)
   const filteredLeadsCount = filteredConversations.length
   const totalLeads = conversations.length
@@ -634,8 +685,10 @@ export const useCRMConversations = () => {
     updateStageOrder,
     updateConversationStatus,
     
-    // Refresh function
+    // Refresh functions
     refetch: fetchConversations,
+    manualRefresh,
+    lastRefresh,
     
     // For backwards compatibility and CRM page compatibility
     basicStages: [ENTRY_STAGE.name],

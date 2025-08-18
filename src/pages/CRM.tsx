@@ -1,7 +1,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, Filter } from "lucide-react"
+import { Plus, Filter, RefreshCw } from "lucide-react"
 import { 
   DndContext, 
   closestCenter, 
@@ -70,7 +70,10 @@ const CRM = () => {
     filteredLeadsCount,
     // User role information
     isAdmin,
-    currentUserId
+    currentUserId,
+    // Refresh functions
+    manualRefresh,
+    lastRefresh
   } = useCRMConversations()
 
   const [isAddingStage, setIsAddingStage] = useState(false)
@@ -306,8 +309,20 @@ const CRM = () => {
           <p className="text-muted-foreground">
             Pipeline de vendas e controle de leads
           </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Última atualização: {lastRefresh.toLocaleTimeString()}
+          </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            onClick={manualRefresh}
+            variant="outline" 
+            className="border-primary text-primary hover:bg-primary hover:text-white"
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
           <Button 
             onClick={() => setShowFilters(!showFilters)}
             variant="outline" 
