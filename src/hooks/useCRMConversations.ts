@@ -339,11 +339,29 @@ export const useCRMConversations = () => {
 
   // Conversation status update with optimistic updates
   const updateConversationStatus = async (conversationId: string, newStage: string) => {
-    if (!user) return
+    console.log('🚀 INICIANDO updateConversationStatus:', {
+      conversationId,
+      newStage,
+      user: user?.id,
+      isAuthenticated: !!user
+    })
+
+    if (!user) {
+      console.error('❌ Usuário não autenticado!')
+      toast({
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado para mover conversas",
+        variant: "destructive",
+      })
+      return
+    }
     
     try {
       const conversation = conversations.find(c => c.id === conversationId)
-      if (!conversation) return
+      if (!conversation) {
+        console.error('❌ Conversa não encontrada:', conversationId)
+        return
+      }
 
       // Determine the target stage name
       let targetStageName = newStage
@@ -351,12 +369,14 @@ export const useCRMConversations = () => {
         targetStageName = `custom:${newStage}`
       }
 
-      console.log('🔄 Atualizando CRM stage:', {
+      console.log('🔄 Detalhes da atualização:', {
         conversationId,
+        contactId: conversation.contact_id,
         fromStage: conversation.crm_stage,
         toStage: targetStageName,
         isAdmin,
-        userId: user.id
+        userId: user.id,
+        userEmail: user.email
       })
 
       // OPTIMISTIC UPDATE: Update local state immediately
@@ -369,13 +389,21 @@ export const useCRMConversations = () => {
       )
 
       // Update conversation
-      const { error: conversationError } = await supabase
+      console.log('📝 Atualizando tabela conversations...')
+      const { error: conversationError, data: conversationData } = await supabase
         .from('conversations')
         .update({ crm_stage: targetStageName })
         .eq('id', conversationId)
+        .select()
 
       if (conversationError) {
-        console.error('❌ Erro ao atualizar conversation:', conversationError)
+        console.error('❌ Erro detalhado ao atualizar conversation:', {
+          error: conversationError,
+          code: conversationError.code,
+          message: conversationError.message,
+          details: conversationError.details,
+          hint: conversationError.hint
+        })
         // Revert optimistic update on error
         setConversations(prev => 
           prev.map(c => 
@@ -387,25 +415,45 @@ export const useCRMConversations = () => {
         throw conversationError
       }
 
+      console.log('✅ Conversation atualizada com sucesso:', conversationData)
+
       // Update associated contact
       if (conversation.contact_id) {
-        const { error: contactError } = await supabase
+        console.log('📝 Atualizando tabela contacts...')
+        const { error: contactError, data: contactData } = await supabase
           .from('contacts')
           .update({ crm_stage: targetStageName })
           .eq('id', conversation.contact_id)
+          .select()
         
         if (contactError) {
-          console.error('❌ Erro ao atualizar contact:', contactError)
+          console.error('❌ Erro detalhado ao atualizar contact:', {
+            error: contactError,
+            code: contactError.code,
+            message: contactError.message,
+            details: contactError.details,
+            hint: contactError.hint,
+            contactId: conversation.contact_id
+          })
+          // Não lança erro aqui para não reverter a conversa se ela foi atualizada com sucesso
+        } else {
+          console.log('✅ Contact atualizado com sucesso:', contactData)
         }
+      } else {
+        console.log('⚠️ Conversa não possui contact_id associado')
       }
 
-      console.log('✅ CRM stage atualizado com sucesso')
+      console.log('✅ CRM stage atualizado com sucesso completo')
       toast({
         title: "Sucesso",
         description: `Conversa movida para "${newStage}"`,
       })
     } catch (error) {
-      console.error('❌ Erro ao atualizar CRM stage:', error)
+      console.error('❌ Erro geral ao atualizar CRM stage:', {
+        error,
+        type: typeof error,
+        message: error instanceof Error ? error.message : String(error)
+      })
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status da conversa",
