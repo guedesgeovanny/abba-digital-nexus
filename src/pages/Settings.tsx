@@ -246,6 +246,9 @@ const Settings = () => {
                             <p className="text-sm font-medium text-card-foreground">{user.full_name || 'Sem nome'}</p>
                             <p className="text-xs text-muted-foreground">{user.email}</p>
                             <p className="text-xs text-muted-foreground">
+                              ID: {user.id}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
                               Criado em: {formatDate(user.created_at)}
                             </p>
                           </div>
