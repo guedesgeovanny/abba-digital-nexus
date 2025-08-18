@@ -340,8 +340,20 @@ export const useCRMConversations = () => {
   // Conversation status update with optimistic updates
   const updateConversationStatus = async (conversationId: string, newStage: string) => {
     try {
+      console.log('🔄 updateConversationStatus chamado:', { conversationId, newStage, isAdmin, userId: user?.id })
+      
       const conversation = conversations.find(c => c.id === conversationId)
-      if (!conversation) return
+      if (!conversation) {
+        console.log('❌ Conversa não encontrada:', conversationId)
+        return
+      }
+
+      console.log('📋 Conversa encontrada:', {
+        id: conversation.id,
+        user_id: conversation.user_id,
+        assigned_to: conversation.assigned_to,
+        current_stage: conversation.crm_stage
+      })
 
       // Determine the target stage name
       let targetStageName = newStage
@@ -349,6 +361,8 @@ export const useCRMConversations = () => {
         // If it's a custom stage, add the prefix
         targetStageName = `custom:${newStage}`
       }
+
+      console.log('🎯 Stage name determinado:', { newStage, targetStageName })
 
       // OPTIMISTIC UPDATE: Update local state immediately
       setConversations(prev => 
@@ -359,13 +373,20 @@ export const useCRMConversations = () => {
         )
       )
 
+      console.log('✅ Update otimista aplicado localmente')
+
       // Update conversation in background
-      const { error } = await supabase
+      console.log('🔄 Tentando atualizar conversations na DB...')
+      const { error, data } = await supabase
         .from('conversations')
         .update({ crm_stage: targetStageName })
         .eq('id', conversationId)
+        .select()
+
+      console.log('📊 Resultado da atualização conversations:', { error, data })
 
       if (error) {
+        console.error('❌ Erro na atualização conversations:', error)
         // Revert optimistic update on error
         setConversations(prev => 
           prev.map(c => 
@@ -379,20 +400,25 @@ export const useCRMConversations = () => {
 
       // Update associated contact if exists
       if (conversation.contact_id) {
-        const { error: contactError } = await supabase
+        console.log('🔄 Tentando atualizar contacts na DB...', conversation.contact_id)
+        const { error: contactError, data: contactData } = await supabase
           .from('contacts')
           .update({ crm_stage: targetStageName })
           .eq('id', conversation.contact_id)
+          .select()
 
-        if (contactError) console.error('Erro ao atualizar contato:', contactError)
+        console.log('📊 Resultado da atualização contacts:', { error: contactError, data: contactData })
+        
+        if (contactError) console.error('❌ Erro ao atualizar contato:', contactError)
       }
 
+      console.log('✅ Atualização concluída com sucesso')
       toast({
         title: "Sucesso",
         description: `Conversa movida para "${newStage}"`,
       })
     } catch (error) {
-      console.error('Erro ao atualizar status da conversa:', error)
+      console.error('❌ Erro geral ao atualizar status da conversa:', error)
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status da conversa",
