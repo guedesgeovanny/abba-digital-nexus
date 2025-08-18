@@ -78,45 +78,6 @@ export const useCRMConversations = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterUser, setFilterUser] = useState<string>('all')
 
-  useEffect(() => {
-    if (user) {
-      const promises = [fetchConversations(), fetchCustomStages()]
-      if (isAdmin) {
-        promises.push(fetchAllUsers())
-      }
-      
-      Promise.all(promises)
-        .finally(() => setIsLoading(false))
-    }
-  }, [user, isAdmin])
-
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    if (!user) return
-
-    const interval = setInterval(() => {
-      console.log('⏰ Auto-refresh triggered')
-      Promise.all([fetchConversations(), fetchCustomStages()])
-        .then(() => setLastRefresh(new Date()))
-        .catch(error => console.error('Auto-refresh error:', error))
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(interval)
-  }, [user])
-
-  // Refresh when window gains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      console.log('👁️ Window focus refresh triggered')
-      Promise.all([fetchConversations(), fetchCustomStages()])
-        .then(() => setLastRefresh(new Date()))
-        .catch(error => console.error('Focus refresh error:', error))
-    }
-
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [])
-
   const fetchConversations = async () => {
     try {
       const { data, error } = await supabase
@@ -180,6 +141,50 @@ export const useCRMConversations = () => {
     }
   }
 
+  useEffect(() => {
+    if (user) {
+      const promises = [fetchConversations(), fetchCustomStages()]
+      if (isAdmin) {
+        promises.push(fetchAllUsers())
+      }
+      
+      Promise.all(promises)
+        .finally(() => setIsLoading(false))
+    }
+  }, [user, isAdmin])
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    if (!user) return
+
+    const interval = setInterval(async () => {
+      try {
+        console.log('⏰ Auto-refresh triggered')
+        await Promise.all([fetchConversations(), fetchCustomStages()])
+        setLastRefresh(new Date())
+      } catch (error) {
+        console.error('Auto-refresh error:', error)
+      }
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [user])
+
+  // Refresh when window gains focus
+  useEffect(() => {
+    const handleFocus = async () => {
+      try {
+        console.log('👁️ Window focus refresh triggered')
+        await Promise.all([fetchConversations(), fetchCustomStages()])
+        setLastRefresh(new Date())
+      } catch (error) {
+        console.error('Focus refresh error:', error)
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
   // Custom stage management functions
   const addCustomStage = async (name: string, color: string) => {
     try {

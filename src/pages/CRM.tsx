@@ -310,7 +310,7 @@ const CRM = () => {
             Pipeline de vendas e controle de leads
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Última atualização: {lastRefresh.toLocaleTimeString()}
+            Última atualização: {lastRefresh?.toLocaleTimeString() || 'Carregando...'}
           </p>
         </div>
         <div className="flex gap-2">
