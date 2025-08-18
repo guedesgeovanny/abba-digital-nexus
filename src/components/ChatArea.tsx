@@ -30,6 +30,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useConnectionInfo } from "@/hooks/useConnectionInfo"
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -47,6 +48,10 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const updateContactName = useUpdateContactName()
   const { user, userProfile } = useAuth()
   const { connectionInfo } = useConnectionInfo(conversation.account)
+  
+  // Enable real-time updates for conversation name changes
+  useRealtimeUpdates()
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputBarRef = useRef<HTMLFormElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
