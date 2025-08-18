@@ -33,7 +33,7 @@ interface CRMStageData {
 
 interface CustomStage {
   id: string
-  user_id: string
+  user_id?: string | null
   name: string
   color: string
   position: number
@@ -163,8 +163,7 @@ export const useCRMConversations = () => {
           {
             name,
             color,
-            position: nextPosition,
-            user_id: user?.id
+            position: nextPosition
           }
         ])
         .select()
