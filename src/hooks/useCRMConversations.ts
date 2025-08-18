@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/hooks/use-toast'
 import { useRealtimeUpdates } from './useRealtimeUpdates'
+import { useQueryClient } from '@tanstack/react-query'
 
 // CRM Conversation interface
 interface CRMConversation {
@@ -59,13 +60,15 @@ const DEFAULT_CUSTOMIZABLE_STAGES = [
 
 export const useCRMConversations = () => {
   const { user, userProfile } = useAuth()
+  const queryClient = useQueryClient()
   
-  // Enable realtime updates
-  useRealtimeUpdates()
+  // Use enhanced realtime updates with debug info
+  const realtimeDebug = useRealtimeUpdates()
   
   const [conversations, setConversations] = useState<CRMConversation[]>([])
   const [customStages, setCustomStages] = useState<CustomStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [allUsers, setAllUsers] = useState<Array<{id: string, full_name: string, email: string}>>([])
   const [lastRefresh, setLastRefresh] = useState(new Date())
   
@@ -622,26 +625,32 @@ export const useCRMConversations = () => {
     setFilterUser('all')
   }
 
-  // Manual refresh function
+  // Enhanced manual refresh function
   const manualRefresh = async () => {
-    console.log('🔄 Manual refresh triggered')
-    setIsLoading(true)
+    setIsRefreshing(true)
+    console.log('🔄 [MANUAL] Manual refresh triggered')
     try {
+      // Clear all cache first for complete refresh
+      queryClient.removeQueries({ queryKey: ['crm-conversations'] })
+      queryClient.removeQueries({ queryKey: ['contacts'] })
+      queryClient.removeQueries({ queryKey: ['contact-details'] })
+      
       await Promise.all([fetchConversations(), fetchCustomStages()])
       setLastRefresh(new Date())
+      console.log('✅ [MANUAL] Manual refresh completed successfully')
       toast({
         title: "Dados Atualizados",
         description: "Informações sincronizadas com o banco de dados",
       })
     } catch (error) {
-      console.error('Error during manual refresh:', error)
+      console.error('❌ [MANUAL] Manual refresh error:', error)
       toast({
         title: "Erro ao Atualizar",
         description: "Não foi possível sincronizar os dados",
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
@@ -694,6 +703,8 @@ export const useCRMConversations = () => {
     refetch: fetchConversations,
     manualRefresh,
     lastRefresh,
+    isRefreshing,
+    realtimeDebug,
     
     // For backwards compatibility and CRM page compatibility
     basicStages: [ENTRY_STAGE.name],

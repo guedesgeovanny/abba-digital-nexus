@@ -73,7 +73,9 @@ const CRM = () => {
     currentUserId,
     // Refresh functions
     manualRefresh,
-    lastRefresh
+    lastRefresh,
+    isRefreshing,
+    realtimeDebug
   } = useCRMConversations()
 
   const [isAddingStage, setIsAddingStage] = useState(false)
@@ -309,19 +311,24 @@ const CRM = () => {
           <p className="text-muted-foreground">
             Pipeline de vendas e controle de leads
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Última atualização: {lastRefresh?.toLocaleTimeString() || 'Carregando...'}
-          </p>
+          <div className="text-xs text-muted-foreground mt-1 space-y-1">
+            <p>Última atualização: {lastRefresh?.toLocaleTimeString() || 'Carregando...'}</p>
+            {realtimeDebug?.lastUpdate && (
+              <p className="text-green-600">
+                🔴 Realtime ativo (última: {new Date(realtimeDebug.lastUpdate).toLocaleTimeString()})
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <Button 
             onClick={manualRefresh}
             variant="outline" 
             className="border-primary text-primary hover:bg-primary hover:text-white"
-            disabled={isLoading}
+            disabled={isRefreshing}
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Atualizar
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Sincronizando...' : 'Atualizar'}
           </Button>
           <Button 
             onClick={() => setShowFilters(!showFilters)}
