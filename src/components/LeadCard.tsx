@@ -136,7 +136,7 @@ export const LeadCard = ({
       <CardContent className="p-4 space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <h4 className="font-medium text-card-foreground truncate">{conversation.contact_name}</h4>
+            <h4 className={`font-medium text-card-foreground truncate ${!isAdmin ? 'blur-sm select-none' : ''}`}>{conversation.contact_name}</h4>
           </div>
           {getOwnershipAvatar()}
         </div>
@@ -149,7 +149,7 @@ export const LeadCard = ({
 
         {/* Phone - Only when available */}
         {conversation.phone && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className={`flex items-center gap-1 text-xs text-muted-foreground ${!isAdmin ? 'blur-sm select-none' : ''}`}>
             <Phone className="w-3 h-3" />
             <span className="truncate">{formatPhone(conversation.phone)}</span>
           </div>
