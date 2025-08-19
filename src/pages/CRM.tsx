@@ -410,6 +410,7 @@ const CRM = () => {
         isOpen={showLeadDetails}
         onClose={handleCloseLeadDetails}
         conversation={selectedConversation}
+        isAdmin={isAdmin}
       />
 
       {/* Kanban Board - Pipeline que ocupa quase toda a tela */}

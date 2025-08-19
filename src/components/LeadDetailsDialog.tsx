@@ -21,6 +21,7 @@ interface LeadDetailsDialogProps {
   onClose: () => void;
   conversation: CRMConversation | null;
   onOpenChat?: (conversation: CRMConversation) => void;
+  isAdmin?: boolean;
 }
 const statusLabels = {
   'novo': 'Novo',
@@ -83,7 +84,8 @@ export const LeadDetailsDialog = ({
   isOpen,
   onClose,
   conversation,
-  onOpenChat
+  onOpenChat,
+  isAdmin = false
 }: LeadDetailsDialogProps) => {
   const {
     data: contact,
@@ -189,10 +191,10 @@ export const LeadDetailsDialog = ({
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <ContactForm trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-text">
+                      {isAdmin && <ContactForm trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-text">
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
-                          </Button>} contact={contact} />
+                          </Button>} contact={contact} />}
                       {conversation && <Button onClick={handleOpenChat} size="sm" className="bg-abba-green text-abba-black hover:bg-abba-green-light">
                           <MessageCircle className="w-4 h-4 mr-2" />
                           Chat
@@ -221,7 +223,7 @@ export const LeadDetailsDialog = ({
                         <Phone className="w-4 h-4 text-abba-green" />
                         <div>
                           <p className="text-sm text-gray-400">Telefone</p>
-                          <p className="text-abba-text">{contact.phone}</p>
+                          <p className={`text-abba-text ${!isAdmin ? 'blur-sm select-none' : ''}`}>{contact.phone}</p>
                         </div>
                       </div>}
 
