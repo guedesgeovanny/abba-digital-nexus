@@ -191,10 +191,10 @@ export const LeadDetailsDialog = ({
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {isAdmin && <ContactForm trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-text">
+                      <ContactForm trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-text">
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
-                          </Button>} contact={contact} />}
+                          </Button>} contact={contact} isAdmin={isAdmin} />
                       {conversation && <Button onClick={handleOpenChat} size="sm" className="bg-abba-green text-abba-black hover:bg-abba-green-light">
                           <MessageCircle className="w-4 h-4 mr-2" />
                           Chat

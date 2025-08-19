@@ -31,9 +31,10 @@ interface ContactFormProps {
   trigger?: React.ReactNode
   contact?: Contact
   onClose?: () => void
+  isAdmin?: boolean
 }
 
-export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => {
+export const ContactForm = ({ trigger, contact, onClose, isAdmin = true }: ContactFormProps) => {
   const { createContact, updateContact, isCreating, isUpdating } = useContacts()
   const [open, setOpen] = useState(false)
   
@@ -207,6 +208,7 @@ export const ContactForm = ({ trigger, contact, onClose }: ContactFormProps) => 
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 className="bg-background border-border text-foreground"
                 placeholder="+55 11 99999-9999"
+                disabled={!isAdmin}
               />
             </div>
             

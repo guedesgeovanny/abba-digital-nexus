@@ -17,11 +17,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { usePagination } from "@/hooks/usePagination"
 import { useContactExport } from "@/hooks/useContactExport"
+import { useUsers } from "@/hooks/useUsers"
 
 const Contacts = () => {
   const { contacts, isLoading, deleteContact, deleteBulkContacts, isDeletingBulk } = useContacts()
   const { tags } = useContactTags()
   const { exportToCSV } = useContactExport()
+  const { isAdmin } = useUsers()
   const [searchTerm, setSearchTerm] = useState("")
   const [filterChannel, setFilterChannel] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
@@ -253,7 +255,7 @@ const Contacts = () => {
             Gerencie todos os leads que interagiram com seus agentes
           </p>
         </div>
-        <ContactForm />
+        <ContactForm isAdmin={isAdmin} />
       </div>
 
       {/* Filters */}
@@ -462,6 +464,7 @@ const Contacts = () => {
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <ContactForm
                           contact={contact}
+                          isAdmin={isAdmin}
                           trigger={
                             <Button variant="ghost" size="sm">
                               <Edit className="w-4 h-4" />

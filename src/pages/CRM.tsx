@@ -357,7 +357,7 @@ const CRM = () => {
               <DialogHeader>
                 <DialogTitle className="text-card-foreground">Criar Novo Lead</DialogTitle>
               </DialogHeader>
-              <ContactForm onClose={() => setShowNewLead(false)} />
+              <ContactForm onClose={() => setShowNewLead(false)} isAdmin={isAdmin} />
             </DialogContent>
           </Dialog>
         </div>
