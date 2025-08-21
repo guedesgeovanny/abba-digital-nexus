@@ -149,13 +149,25 @@ export const LeadDetailsDialog = ({
     }
   };
 
-  const handleContactUpdate = () => {
+  const handleContactUpdate = async () => {
     // Invalidar queries relacionadas ao CRM e recarregar detalhes do contato
-    queryClient.invalidateQueries({ queryKey: ['crm-conversations'] });
-    queryClient.invalidateQueries({ queryKey: ['crm-custom-stages'] });
-    refetch();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['crm-conversations'] }),
+      queryClient.invalidateQueries({ queryKey: ['crm-custom-stages'] }),
+      queryClient.invalidateQueries({ queryKey: ['contacts'] }),
+      refetch()
+    ]);
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
+
+  const handleDialogClose = async () => {
+    // Forçar atualização quando o dialog é fechado
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['crm-conversations'] }),
+      queryClient.invalidateQueries({ queryKey: ['contacts'] })
+    ]);
+    onClose();
+  };
+  return <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogContent className={`bg-abba-gray border-abba-gray ${chatMode ? 'max-w-6xl w-[95vw] h-[90vh]' : 'max-w-2xl max-h-[90vh]'} overflow-hidden`}>
         <DialogHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
