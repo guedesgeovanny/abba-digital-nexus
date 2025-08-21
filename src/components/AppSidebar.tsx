@@ -37,9 +37,9 @@ const allItems = [{
 const getFilteredMenuItems = (userProfile: any) => {
   const isAdmin = userProfile?.role === 'admin';
   
-  // If not admin, filter out Dashboard and Contatos only
+  // If not admin, filter out Contatos only (Dashboard is now available for all users)
   if (!isAdmin) {
-    return allItems.filter(item => item.title !== 'Dashboard' && item.title !== 'Contatos');
+    return allItems.filter(item => item.title !== 'Contatos');
   }
   
   return allItems;
