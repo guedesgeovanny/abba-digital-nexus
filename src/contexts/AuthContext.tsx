@@ -241,12 +241,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       console.log('AuthContext: Signing out')
-      await supabase.auth.signOut()
+      
+      // Limpar estado local primeiro
+      setUser(null)
+      setSession(null)
       setUserProfile(null)
       setIsLoadingProfile(false)
       fetchingProfileRef.current = null
+      
+      // Fazer logout no Supabase com scope 'global' para limpar todas as sessões
+      const { error } = await supabase.auth.signOut({ scope: 'global' })
+      
+      if (error) {
+        console.error('AuthContext: Signout error:', error)
+        throw error
+      }
+      
+      // Limpar localStorage manualmente como precaução adicional
+      localStorage.removeItem('supabase.auth.token')
+      
+      console.log('AuthContext: Signout completed successfully')
     } catch (error) {
       console.error('AuthContext: Signout error:', error)
+      
+      // Mesmo com erro, limpar o estado local
+      setUser(null)
+      setSession(null)
+      setUserProfile(null)
+      setIsLoadingProfile(false)
+      fetchingProfileRef.current = null
+      
+      throw error
     }
   }
 
