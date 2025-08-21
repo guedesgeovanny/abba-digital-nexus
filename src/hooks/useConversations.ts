@@ -575,8 +575,16 @@ export const useConversations = () => {
       
       if (error) throw error
       
-      // Remove conversation from local state since it now belongs to another user
-      setConversations(prev => prev.filter(conv => conv.id !== conversationId))
+      // Se for admin, manter a conversa na lista mas atualizar o user_id
+      // Se não for admin, remover da lista local
+      if (isAdmin) {
+        setConversations(prev => prev.map(conv => 
+          conv.id === conversationId ? { ...conv, user_id: newUserId } : conv
+        ))
+      } else {
+        setConversations(prev => prev.filter(conv => conv.id !== conversationId))
+      }
+      
       console.log(`Conversa ${conversationId} atribuída ao usuário ${newUserId}`)
     } catch (error) {
       console.error('Erro ao atribuir conversa:', error)
