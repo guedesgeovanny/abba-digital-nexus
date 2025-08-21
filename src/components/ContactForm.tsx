@@ -31,10 +31,11 @@ interface ContactFormProps {
   trigger?: React.ReactNode
   contact?: Contact
   onClose?: () => void
+  onSuccess?: () => void
   isAdmin?: boolean
 }
 
-export const ContactForm = ({ trigger, contact, onClose, isAdmin = true }: ContactFormProps) => {
+export const ContactForm = ({ trigger, contact, onClose, onSuccess, isAdmin = true }: ContactFormProps) => {
   const { createContact, updateContact, isCreating, isUpdating } = useContacts()
   const [open, setOpen] = useState(false)
   
@@ -76,7 +77,7 @@ export const ContactForm = ({ trigger, contact, onClose, isAdmin = true }: Conta
     return phoneRegex.test(phone)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.name.trim()) {
@@ -124,10 +125,18 @@ export const ContactForm = ({ trigger, contact, onClose, isAdmin = true }: Conta
       value: formData.value,
     }
 
-    if (contact) {
-      updateContact({ id: contact.id, ...submitData })
-    } else {
-      createContact(submitData)
+    // Executar a operação e aguardar conclusão
+    try {
+      if (contact) {
+        await updateContact({ id: contact.id, ...submitData })
+      } else {
+        await createContact(submitData)
+      }
+      
+      // Chamar callback de sucesso após operação completada
+      onSuccess?.()
+    } catch (error) {
+      console.error('Erro ao salvar contato:', error)
     }
     
     setOpen(false)

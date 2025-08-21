@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Conversation } from "@/hooks/useConversations";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 interface LeadDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -87,19 +88,12 @@ export const LeadDetailsDialog = ({
   onOpenChat,
   isAdmin = false
 }: LeadDetailsDialogProps) => {
-  const {
-    data: contact,
-    isLoading
-  } = useContactDetails(conversation?.contact_id || null);
+  const { data: contact, isLoading, refetch } = useContactDetails(conversation?.contact_id || null);
   const [chatMode, setChatMode] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const {
-    toast
-  } = useToast();
-  const {
-    uploadAttachment,
-    isUploading
-  } = useConversationAttachments(conversation?.id || null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { uploadAttachment, isUploading } = useConversationAttachments(conversation?.id || null);
 
   // Convert CRMConversation to Conversation format for ChatArea
   const convertToConversation = (crmConv: CRMConversation): Conversation => ({
@@ -154,6 +148,13 @@ export const LeadDetailsDialog = ({
       setUploadDialogOpen(false);
     }
   };
+
+  const handleContactUpdate = () => {
+    // Invalidar queries relacionadas ao CRM e recarregar detalhes do contato
+    queryClient.invalidateQueries({ queryKey: ['crm-conversations'] });
+    queryClient.invalidateQueries({ queryKey: ['crm-custom-stages'] });
+    refetch();
+  };
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={`bg-abba-gray border-abba-gray ${chatMode ? 'max-w-6xl w-[95vw] h-[90vh]' : 'max-w-2xl max-h-[90vh]'} overflow-hidden`}>
         <DialogHeader className="flex flex-row items-center justify-between">
@@ -191,10 +192,15 @@ export const LeadDetailsDialog = ({
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <ContactForm trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-text">
+                      <ContactForm 
+                        trigger={<Button variant="outline" size="sm" className="border-abba-green text-abba-green hover:bg-abba-green hover:text-abba-text">
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
-                          </Button>} contact={contact} isAdmin={isAdmin} />
+                          </Button>} 
+                        contact={contact} 
+                        onSuccess={handleContactUpdate}
+                        isAdmin={isAdmin} 
+                      />
                       {conversation && <Button onClick={handleOpenChat} size="sm" className="bg-abba-green text-abba-black hover:bg-abba-green-light">
                           <MessageCircle className="w-4 h-4 mr-2" />
                           Chat
