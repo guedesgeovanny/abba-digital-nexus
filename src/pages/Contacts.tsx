@@ -19,12 +19,14 @@ import { useContactExport } from "@/hooks/useContactExport"
 import { useUsers } from "@/hooks/useUsers"
 import { useCRMConversations } from "@/hooks/useCRMConversations"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useQueryClient } from "@tanstack/react-query"
 
 const Contacts = () => {
   const { contacts, isLoading, deleteContact, deleteBulkContacts, isDeletingBulk } = useContacts()
   const { exportToCSV } = useContactExport()
   const { users, isAdmin } = useUsers()
   const { customStages } = useCRMConversations()
+  const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState("")
   const [filterChannel, setFilterChannel] = useState("all")
   const [filterCRMStage, setFilterCRMStage] = useState("all")
@@ -256,7 +258,14 @@ const Contacts = () => {
             Gerencie todos os leads que interagiram com seus agentes
           </p>
         </div>
-        <ContactForm isAdmin={isAdmin} />
+        <ContactForm 
+          isAdmin={isAdmin} 
+          onSuccess={() => {
+            // Forçar atualização imediata dos dados
+            queryClient.invalidateQueries({ queryKey: ['contacts'] })
+            queryClient.invalidateQueries({ queryKey: ['users'] })
+          }}
+        />
       </div>
 
       {/* Filters */}
@@ -479,6 +488,11 @@ const Contacts = () => {
                         <ContactForm
                           contact={contact}
                           isAdmin={isAdmin}
+                          onSuccess={() => {
+                            // Forçar atualização imediata dos dados
+                            queryClient.invalidateQueries({ queryKey: ['contacts'] })
+                            queryClient.invalidateQueries({ queryKey: ['users'] })
+                          }}
                           trigger={
                             <Button variant="ghost" size="sm">
                               <Edit className="w-4 h-4" />

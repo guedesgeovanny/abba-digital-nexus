@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
 import { useContacts, Contact } from "@/hooks/useContacts"
+import { useUsers } from "@/hooks/useUsers"
 import { toast } from "@/hooks/use-toast"
 
 interface ContactFormData {
@@ -24,6 +25,7 @@ interface ContactFormData {
   channel?: Contact['channel']
   source: string
   agent_assigned: string
+  user_id: string
   value: number
 }
 
@@ -37,6 +39,7 @@ interface ContactFormProps {
 
 export const ContactForm = ({ trigger, contact, onClose, onSuccess, isAdmin = true }: ContactFormProps) => {
   const { createContact, updateContact, isCreating, isUpdating } = useContacts()
+  const { users } = useUsers()
   const [open, setOpen] = useState(false)
   
   const [formData, setFormData] = useState<ContactFormData>({
@@ -53,6 +56,7 @@ export const ContactForm = ({ trigger, contact, onClose, onSuccess, isAdmin = tr
     channel: contact?.channel || undefined,
     source: contact?.source || '',
     agent_assigned: contact?.agent_assigned || '',
+    user_id: contact?.user_id || '',
     value: contact?.value || 0,
   })
 
@@ -122,6 +126,7 @@ export const ContactForm = ({ trigger, contact, onClose, onSuccess, isAdmin = tr
       notes: formData.notes ? sanitizeInput(formData.notes) : undefined,
       source: formData.source ? sanitizeInput(formData.source) : undefined,
       agent_assigned: formData.agent_assigned ? sanitizeInput(formData.agent_assigned) : undefined,
+      user_id: formData.user_id || undefined,
       value: formData.value,
     }
 
@@ -158,6 +163,7 @@ export const ContactForm = ({ trigger, contact, onClose, onSuccess, isAdmin = tr
         channel: undefined,
         source: '',
         agent_assigned: '',
+        user_id: '',
         value: 0,
       })
     }
@@ -307,6 +313,25 @@ export const ContactForm = ({ trigger, contact, onClose, onSuccess, isAdmin = tr
                 placeholder="Stories, Post, Bio Link, etc."
               />
             </div>
+            
+            
+            {isAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="user" className="text-foreground">Usuário Responsável</Label>
+                <Select value={formData.user_id} onValueChange={(value) => setFormData(prev => ({ ...prev, user_id: value }))}>
+                  <SelectTrigger className="bg-background border-border text-foreground">
+                    <SelectValue placeholder="Selecione um usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users?.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.full_name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="agent" className="text-foreground">Agente Responsável</Label>
