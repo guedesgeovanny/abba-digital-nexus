@@ -221,7 +221,7 @@ export const ContactForm = ({ trigger, contact, onClose, onSuccess, isAdmin = tr
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className="bg-background border-border text-foreground"
+                className={`bg-background border-border text-foreground ${!isAdmin ? 'blur-sm' : ''}`}
                 placeholder="+55 11 99999-9999"
                 disabled={!isAdmin}
               />
