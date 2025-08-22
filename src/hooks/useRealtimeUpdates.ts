@@ -124,28 +124,48 @@ export const useRealtimeUpdates = () => {
       )
       .subscribe()
 
-    // Aggressive polling fallback every 10 seconds
+    // Add visibility change listener to prevent unnecessary refetches when tab is not active
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const timeSinceLastUpdate = Date.now() - lastUpdateRef.current
+        // Only refresh if user was away for more than 5 minutes
+        if (timeSinceLastUpdate > 300000) {
+          console.log('⚡ [VISIBILITY] User returned after long absence, refreshing data')
+          queryClient.refetchQueries({ 
+            queryKey: ['crm-conversations'],
+            type: 'active'
+          })
+          lastUpdateRef.current = Date.now()
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Reduced polling - only check every 60 seconds and only refresh if 10 minutes have passed
     const pollInterval = setInterval(() => {
+      // Only poll if the tab is visible
+      if (document.visibilityState !== 'visible') return
+      
       const timeSinceLastUpdate = Date.now() - lastUpdateRef.current
       
-      // If no realtime update in last 30 seconds, force refresh
-      if (timeSinceLastUpdate > 30000) {
-        console.log('⚡ [POLLING] No realtime updates recently, forcing refresh')
-        queryClient.removeQueries({ queryKey: ['crm-conversations'] })
-        queryClient.removeQueries({ queryKey: ['contacts'] })
+      // If no realtime update in last 10 minutes, force refresh
+      if (timeSinceLastUpdate > 600000) {
+        console.log('⚡ [POLLING] No realtime updates in 10 minutes, forcing refresh')
         queryClient.refetchQueries({ 
           queryKey: ['crm-conversations'],
           type: 'active'
         })
         lastUpdateRef.current = Date.now()
       }
-    }, 10000) // Every 10 seconds
+    }, 60000) // Every 60 seconds
 
     console.log('✅ [REALTIME] Enhanced channels subscribed with aggressive caching')
 
     return () => {
       console.log('🔌 [REALTIME] Cleaning up enhanced channels')
       clearInterval(pollInterval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       supabase.removeChannel(contactsChannel)
       supabase.removeChannel(conversationsChannel)
       supabase.removeChannel(stagesChannel)

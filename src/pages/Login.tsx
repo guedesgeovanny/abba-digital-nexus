@@ -168,9 +168,9 @@ const Login = () => {
             
             <p className="text-sm text-gray-400">
               Esqueceu sua senha?{" "}
-              <a href="#" className="text-abba-green hover:underline">
+              <button type="button" className="text-abba-green hover:underline bg-transparent border-none p-0 cursor-pointer">
                 Recuperar senha
-              </a>
+              </button>
             </p>
           </div>
         </CardContent>
