@@ -644,28 +644,56 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
             </div>
             {selectedConnectionName && (
               <div className="flex gap-1">
-                {(userProfile?.role === 'admin' ? defaultConnection !== selectedConnectionName : !isFavorite(selectedConnectionName)) ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSetDefaultConnection}
-                    className="px-2"
-                    title={userProfile?.role === 'admin' ? "Definir como padrão" : "Adicionar aos favoritos"}
-                  >
-                    <Star className="h-3 w-3" />
-                  </Button>
+                {userProfile?.role === 'admin' ? (
+                  // Lógica para admin (localStorage)
+                  defaultConnection !== selectedConnectionName ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleSetDefaultConnection}
+                      className="px-2"
+                      title="Definir como padrão"
+                    >
+                      <Star className="h-3 w-3" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRemoveDefaultConnection}
+                      className="px-2 text-yellow-600"
+                      title="Remover como padrão"
+                    >
+                      <Star className="h-3 w-3 fill-current" />
+                    </Button>
+                  )
                 ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRemoveDefaultConnection}
-                    className="px-2 text-yellow-600"
-                    title={userProfile?.role === 'admin' ? "Remover como padrão" : "Remover dos favoritos"}
-                  >
-                    <Star className="h-3 w-3 fill-current" />
-                  </Button>
+                  // Lógica para não-admin (favoritos do banco)
+                  !isFavorite(selectedConnectionName) ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleSetDefaultConnection}
+                      className="px-2"
+                      title="Adicionar aos favoritos"
+                    >
+                      <Star className="h-3 w-3" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRemoveDefaultConnection}
+                      className="px-2 text-yellow-600"
+                      title="Remover dos favoritos"
+                    >
+                      <Star className="h-3 w-3 fill-current" />
+                    </Button>
+                  )
                 )}
               </div>
             )}
