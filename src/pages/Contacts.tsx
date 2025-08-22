@@ -445,15 +445,12 @@ const Contacts = () => {
                       {(() => {
                         const user = users?.find(u => u.id === contact.user_id)
                         return user ? (
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={user.avatar_url || undefined} alt={user.full_name || 'Usuário'} />
-                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{user.full_name || user.email}</span>
-                          </div>
+                          <Avatar className="h-6 w-6" title={user.full_name || user.email}>
+                            <AvatarImage src={user.avatar_url || undefined} alt={user.full_name || 'Usuário'} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
                         ) : 'N/A'
                       })()}
                     </TableCell>
