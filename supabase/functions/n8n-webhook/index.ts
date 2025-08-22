@@ -35,6 +35,8 @@ interface WebhookMessage {
   contact_phone?: string
   contact_username?: string
   contact_avatar?: string
+  connection_name?: string
+  connection_account?: string
 }
 
 serve(async (req) => {
@@ -88,6 +90,8 @@ serve(async (req) => {
       contact_phone: messageData.contact_phone ? sanitizeInput(messageData.contact_phone) : undefined,
       contact_username: messageData.contact_username ? sanitizeInput(messageData.contact_username) : undefined,
       contact_avatar: messageData.contact_avatar ? sanitizeInput(messageData.contact_avatar) : undefined,
+      connection_name: messageData.connection_name ? sanitizeInput(messageData.connection_name) : undefined,
+      connection_account: messageData.connection_account ? sanitizeInput(messageData.connection_account) : undefined,
     }
 
     // Validate direction
@@ -125,11 +129,13 @@ serve(async (req) => {
     const { data: newMessage, error: messageError } = await supabaseServiceRole
       .from('messages')
       .insert({
-        conversation_id: conversationNumber,
-        content: sanitizedData.content,
-        direction: sanitizedData.direction || 'received',
-        message_type: sanitizedData.message_type || 'text',
-        sender_name: sanitizedData.sender_name || null
+        conversa_id: sanitizedData.conversation_id,
+        mensagem: sanitizedData.content,
+        direcao: sanitizedData.direction || 'received',
+        nome_contato: sanitizedData.sender_name || sanitizedData.contact_name || null,
+        data_hora: new Date().toISOString(),
+        connection_name: sanitizedData.connection_name || null,
+        connection_account: sanitizedData.connection_account || null
       })
       .select()
       .single()

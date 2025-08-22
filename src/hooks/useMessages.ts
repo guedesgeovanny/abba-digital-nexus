@@ -12,6 +12,8 @@ export interface Message {
   created_at: string
   updated_at: string | null
   mensagem_is_agent?: boolean
+  connection_account?: string | null
+  connection_name?: string | null
 }
 
 export const useMessages = (conversationId: string | null) => {
@@ -145,7 +147,9 @@ export const useMessages = (conversationId: string | null) => {
         mensagem: content,
         direcao: 'sent' as const,
         nome_contato: 'Você',
-        data_hora: new Date().toISOString()
+        data_hora: new Date().toISOString(),
+        connection_name: connectionName || null,
+        connection_account: conversation?.account || null
       }
       
       // Adicionar mensagem_is_agent se a coluna existir
