@@ -7,6 +7,7 @@ import { Search, RefreshCw } from "lucide-react"
 import { ConversationList } from "@/components/ConversationList"
 import { ChatArea } from "@/components/ChatArea"
 import { AccountFilter } from "@/components/AccountFilter"
+import { UserFilter } from "@/components/UserFilter"
 import { useConversations, Conversation } from "@/hooks/useConversations"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
@@ -19,6 +20,7 @@ const Chat = () => {
   const [activeTab, setActiveTab] = useState("geral")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedAccount, setSelectedAccount] = useState("all")
+  const [selectedUser, setSelectedUser] = useState("all")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
   const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, assignConversation, markConversationAsRead, isDeleting, refetch } = useConversations()
@@ -42,11 +44,14 @@ const Chat = () => {
     // Filtrar apenas com base na coluna 'account' da tabela conversations
     const matchesAccount = selectedAccount === "all" || conversation.account === selectedAccount
     
-    if (activeTab === "geral") return matchesSearch && matchesAccount
-    if (activeTab === "aberto") return matchesSearch && matchesAccount && conversation.status === "aberta"
-    if (activeTab === "fechado") return matchesSearch && matchesAccount && conversation.status === "fechada"
+    // Filtrar por usuário
+    const matchesUser = selectedUser === "all" || conversation.user_id === selectedUser || conversation.assigned_to === selectedUser
     
-    return matchesSearch && matchesAccount
+    if (activeTab === "geral") return matchesSearch && matchesAccount && matchesUser
+    if (activeTab === "aberto") return matchesSearch && matchesAccount && matchesUser && conversation.status === "aberta"
+    if (activeTab === "fechado") return matchesSearch && matchesAccount && matchesUser && conversation.status === "fechada"
+    
+    return matchesSearch && matchesAccount && matchesUser
   })
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -196,20 +201,6 @@ const Chat = () => {
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground">Chat</h2>
-              {conversations.length === 0 && !isLoading && (
-                <Button
-                  onClick={createSampleConversations}
-                  disabled={isCreatingSample}
-                  size="sm"
-                  className="bg-abba-green text-abba-black hover:bg-abba-green/90"
-                >
-                  {isCreatingSample ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Criar Exemplos"
-                  )}
-                </Button>
-              )}
             </div>
             
             {/* Campo de busca */}
@@ -223,11 +214,15 @@ const Chat = () => {
               />
             </div>
 
-            {/* Filtro por Account */}
-            <div className="mb-4">
+            {/* Filtros */}
+            <div className="mb-4 flex gap-2">
               <AccountFilter 
                 selectedAccount={selectedAccount}
                 onAccountChange={setSelectedAccount}
+              />
+              <UserFilter 
+                selectedUser={selectedUser}
+                onUserChange={setSelectedUser}
               />
             </div>
 
