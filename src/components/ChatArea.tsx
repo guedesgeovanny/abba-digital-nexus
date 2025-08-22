@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useConnectionInfo } from "@/hooks/useConnectionInfo"
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates"
+import { useFavoriteConnections } from "@/hooks/useFavoriteConnections"
 
 interface ChatAreaProps {
   conversation: Conversation
@@ -48,6 +49,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const updateContactName = useUpdateContactName()
   const { user, userProfile } = useAuth()
   const { connectionInfo } = useConnectionInfo(conversation.account)
+  const { favoriteConnections, toggleFavoriteConnection, isFavorite } = useFavoriteConnections()
   
   // Enable real-time updates for conversation name changes
   useRealtimeUpdates()
@@ -60,14 +62,26 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
   const [defaultConnection, setDefaultConnection] = useState<string | undefined>(undefined)
 
-  // Carregar conexão padrão do localStorage
+  // Carregar conexão padrão (localStorage para admin, banco para não-admin)
   useEffect(() => {
-    const savedDefaultConnection = localStorage.getItem('defaultConnection')
-    if (savedDefaultConnection) {
-      setDefaultConnection(savedDefaultConnection)
-      setSelectedConnectionName(savedDefaultConnection)
+    if (!userProfile) return
+
+    if (userProfile.role === 'admin') {
+      // Admin usa localStorage
+      const savedDefaultConnection = localStorage.getItem('defaultConnection')
+      if (savedDefaultConnection) {
+        setDefaultConnection(savedDefaultConnection)
+        setSelectedConnectionName(savedDefaultConnection)
+      }
+    } else {
+      // Não-admin usa a primeira conexão favorita como padrão
+      if (favoriteConnections.length > 0) {
+        const firstFavorite = favoriteConnections[0]
+        setDefaultConnection(firstFavorite)
+        setSelectedConnectionName(firstFavorite)
+      }
     }
-  }, [])
+  }, [userProfile, favoriteConnections])
 
   // Carregar conexões WhatsApp ativas
   useEffect(() => {
@@ -314,23 +328,37 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   }
 
   const handleSetDefaultConnection = () => {
-    if (selectedConnectionName) {
+    if (!selectedConnectionName) return
+
+    if (userProfile?.role === 'admin') {
+      // Admin usa localStorage
       localStorage.setItem('defaultConnection', selectedConnectionName)
       setDefaultConnection(selectedConnectionName)
       toast({
         title: "Conexão padrão definida",
         description: `"${selectedConnectionName}" foi definida como conexão padrão.`,
       })
+    } else {
+      // Não-admin adiciona aos favoritos
+      toggleFavoriteConnection(selectedConnectionName)
     }
   }
 
   const handleRemoveDefaultConnection = () => {
-    localStorage.removeItem('defaultConnection')
-    setDefaultConnection(undefined)
-    toast({
-      title: "Conexão padrão removida",
-      description: "Nenhuma conexão está mais definida como padrão.",
-    })
+    if (!selectedConnectionName) return
+
+    if (userProfile?.role === 'admin') {
+      // Admin remove do localStorage
+      localStorage.removeItem('defaultConnection')
+      setDefaultConnection(undefined)
+      toast({
+        title: "Conexão padrão removida",
+        description: "Nenhuma conexão está mais definida como padrão.",
+      })
+    } else {
+      // Não-admin remove dos favoritos
+      toggleFavoriteConnection(selectedConnectionName)
+    }
   }
 
   const handleStartEditName = () => {
@@ -608,7 +636,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                   {connectionOptions.map((opt) => (
                     <SelectItem key={opt.name} value={opt.name}>
                       {opt.name} • {getChannelIcon(opt.channel)} {opt.channel}
-                      {defaultConnection === opt.name && " ⭐"}
+                      {(userProfile?.role === 'admin' ? defaultConnection === opt.name : isFavorite(opt.name)) && " ⭐"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -616,14 +644,14 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
             </div>
             {selectedConnectionName && (
               <div className="flex gap-1">
-                {defaultConnection !== selectedConnectionName ? (
+                {(userProfile?.role === 'admin' ? defaultConnection !== selectedConnectionName : !isFavorite(selectedConnectionName)) ? (
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
                     onClick={handleSetDefaultConnection}
                     className="px-2"
-                    title="Definir como padrão"
+                    title={userProfile?.role === 'admin' ? "Definir como padrão" : "Adicionar aos favoritos"}
                   >
                     <Star className="h-3 w-3" />
                   </Button>
@@ -634,7 +662,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                     variant="outline"
                     onClick={handleRemoveDefaultConnection}
                     className="px-2 text-yellow-600"
-                    title="Remover como padrão"
+                    title={userProfile?.role === 'admin' ? "Remover como padrão" : "Remover dos favoritos"}
                   >
                     <Star className="h-3 w-3 fill-current" />
                   </Button>
