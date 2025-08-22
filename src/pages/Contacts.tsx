@@ -11,23 +11,24 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Separator } from "@/components/ui/separator"
 import { ContactForm } from "@/components/ContactForm"
 import { useContacts, ContactWithTags } from "@/hooks/useContacts"
-import { useContactTags } from "@/hooks/useContactTags"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { usePagination } from "@/hooks/usePagination"
 import { useContactExport } from "@/hooks/useContactExport"
 import { useUsers } from "@/hooks/useUsers"
+import { useCRMConversations } from "@/hooks/useCRMConversations"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const Contacts = () => {
   const { contacts, isLoading, deleteContact, deleteBulkContacts, isDeletingBulk } = useContacts()
-  const { tags } = useContactTags()
   const { exportToCSV } = useContactExport()
-  const { isAdmin } = useUsers()
+  const { users, isAdmin } = useUsers()
+  const { customStages } = useCRMConversations()
   const [searchTerm, setSearchTerm] = useState("")
   const [filterChannel, setFilterChannel] = useState("all")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterTag, setFilterTag] = useState("all")
+  const [filterCRMStage, setFilterCRMStage] = useState("all")
+  const [filterUser, setFilterUser] = useState("all")
   const [selectedContact, setSelectedContact] = useState<ContactWithTags | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
@@ -40,10 +41,10 @@ const Contacts = () => {
       contact.company?.toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesChannel = filterChannel === "all" || contact.channel === filterChannel
-    const matchesStatus = filterStatus === "all" || contact.status === filterStatus
-    const matchesTag = filterTag === "all" || contact.tags.some(tag => tag.name === filterTag)
+    const matchesCRMStage = filterCRMStage === "all" || contact.crm_stage === filterCRMStage
+    const matchesUser = filterUser === "all" || contact.user_id === filterUser
 
-    return matchesSearch && matchesChannel && matchesStatus && matchesTag
+    return matchesSearch && matchesChannel && matchesCRMStage && matchesUser
   })
 
   const {
@@ -62,7 +63,7 @@ const Contacts = () => {
   // Reset page when filters change
   useEffect(() => {
     resetPage()
-  }, [searchTerm, filterChannel, filterStatus, filterTag, resetPage])
+  }, [searchTerm, filterChannel, filterCRMStage, filterUser, resetPage])
 
   const getChannelIcon = (channel?: string) => {
     switch (channel) {
@@ -291,28 +292,29 @@ const Contacts = () => {
                 <SelectItem value="indicacao">Indicação</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterCRMStage} onValueChange={setFilterCRMStage}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Etapa CRM" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="novo">Novo</SelectItem>
-                <SelectItem value="em_andamento">Em andamento</SelectItem>
-                <SelectItem value="qualificado">Qualificado</SelectItem>
-                <SelectItem value="convertido">Convertido</SelectItem>
-                <SelectItem value="perdido">Perdido</SelectItem>
+                <SelectItem value="all">Todas as etapas</SelectItem>
+                <SelectItem value="novo_lead">Novo Lead</SelectItem>
+                {customStages.map((stage) => (
+                  <SelectItem key={stage.id} value={`custom:${stage.name}`}>
+                    {stage.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select value={filterTag} onValueChange={setFilterTag}>
+            <Select value={filterUser} onValueChange={setFilterUser}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Tag" />
+                <SelectValue placeholder="Usuário" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as tags</SelectItem>
-                {tags.map((tag) => (
-                  <SelectItem key={tag.id} value={tag.name}>
-                    {tag.name}
+                <SelectItem value="all">Todos os usuários</SelectItem>
+                {users?.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.full_name || user.email}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -386,8 +388,8 @@ const Contacts = () => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Canal</TableHead>
                   <TableHead>Contato</TableHead>
-                  <TableHead>Agente</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Etapa CRM</TableHead>
                   <TableHead>Tags</TableHead>
                   <TableHead>Último Contato</TableHead>
                   <TableHead>Ações</TableHead>
@@ -439,7 +441,22 @@ const Contacts = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{contact.agent_assigned || 'N/A'}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const user = users?.find(u => u.id === contact.user_id)
+                        return user ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={user.avatar_url || undefined} alt={user.full_name || 'Usuário'} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">{user.full_name || user.email}</span>
+                          </div>
+                        ) : 'N/A'
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <Badge className={`${getCRMStageColor(contact.crm_stage || 'novo_lead')} text-white`}>
                         {getCRMStageLabel(contact.crm_stage || 'novo_lead')}
@@ -503,7 +520,7 @@ const Contacts = () => {
                 ))}
                 {paginatedContacts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Nenhum contato encontrado
                     </TableCell>
                   </TableRow>
@@ -656,8 +673,21 @@ const Contacts = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Agente:</span>
-                      <span>{selectedContact.agent_assigned || 'N/A'}</span>
+                      <span className="text-muted-foreground">Usuário:</span>
+                      {(() => {
+                        const user = users?.find(u => u.id === selectedContact.user_id)
+                        return user ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={user.avatar_url || undefined} alt={user.full_name || 'Usuário'} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{user.full_name || user.email}</span>
+                          </div>
+                        ) : 'N/A'
+                      })()}
                     </div>
                     {selectedContact.source && (
                       <div className="flex items-center gap-2">
