@@ -457,6 +457,8 @@ export type Database = {
       }
       messages: {
         Row: {
+          connection_account: string | null
+          connection_name: string | null
           conversa_id: string
           created_at: string
           data_hora: string | null
@@ -469,6 +471,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          connection_account?: string | null
+          connection_name?: string | null
           conversa_id: string
           created_at?: string
           data_hora?: string | null
@@ -481,6 +485,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          connection_account?: string | null
+          connection_name?: string | null
           conversa_id?: string
           created_at?: string
           data_hora?: string | null
