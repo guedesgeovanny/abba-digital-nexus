@@ -518,9 +518,16 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                 </div>
               )}
             </div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span>{getChannelIcon(conversation.channel)} {conversation.channel || 'Chat'}</span>
-              {getAccountBadge(conversation.account)}
+            <div className="space-y-1">
+              {conversation.contact_phone && (
+                <div className="text-xs text-muted-foreground">
+                  {conversation.contact_phone}
+                </div>
+              )}
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <span>{getChannelIcon(conversation.channel)} {conversation.channel || 'Chat'}</span>
+                {getAccountBadge(conversation.account)}
+              </div>
             </div>
           </div>
         </div>
