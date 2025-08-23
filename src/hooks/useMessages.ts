@@ -270,7 +270,8 @@ export const useMessages = (conversationId: string | null) => {
               file_url: fileData.file_url,
               file_name: fileData.file_name,
               file_type: fileData.file_type,
-              file_size: fileData.file_size
+              file_size: fileData.file_size,
+              file_extension: fileData.file_name.split('.').pop()?.toLowerCase()
             }
           })
         }
