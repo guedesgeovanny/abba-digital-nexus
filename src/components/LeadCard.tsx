@@ -149,7 +149,7 @@ export const LeadCard = ({
 
         {/* Phone - Only when available */}
         {conversation.phone && (
-          <div className={`flex items-center gap-1 text-xs text-muted-foreground ${!isAdmin ? 'blur-sm select-none' : ''}`}>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Phone className="w-3 h-3" />
             <span className="truncate">{formatPhone(conversation.phone)}</span>
           </div>
