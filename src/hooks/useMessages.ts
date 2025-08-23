@@ -243,6 +243,8 @@ export const useMessages = (conversationId: string | null) => {
             messageType = 'imagem'
           } else if (fileType.startsWith('video/')) {
             messageType = 'video'
+          } else if (fileType === 'application/pdf') {
+            messageType = 'pdf'
           } else {
             messageType = 'arquivo'
           }
