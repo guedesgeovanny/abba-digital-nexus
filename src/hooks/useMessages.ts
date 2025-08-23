@@ -248,7 +248,15 @@ export const useMessages = (conversationId: string | null) => {
           },
           channel: conversation.channel,
           connectionName: connectionName,
-          userId: user.id
+          userId: user.id,
+          ...(fileData && {
+            attachment: {
+              file_url: fileData.file_url,
+              file_name: fileData.file_name,
+              file_type: fileData.file_type,
+              file_size: fileData.file_size
+            }
+          })
         }
         
         // Enviar para webhook sem bloquear a UI
