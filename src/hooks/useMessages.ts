@@ -235,11 +235,25 @@ export const useMessages = (conversationId: string | null) => {
       
       // Enviar dados para o webhook
       if (conversation) {
+        // Determinar o tipo da mensagem
+        let messageType = 'texto'
+        if (fileData) {
+          const fileType = fileData.file_type.toLowerCase()
+          if (fileType.startsWith('image/')) {
+            messageType = 'imagem'
+          } else if (fileType.startsWith('video/')) {
+            messageType = 'video'
+          } else {
+            messageType = 'arquivo'
+          }
+        }
+
         const webhookData = {
           messageId: newMessage.numero,
           conversationId: conversationId,
           content: content,
           direction: 'sent',
+          messageType: messageType,
           timestamp: new Date().toISOString(),
           contact: {
             name: conversation.contact_name,
