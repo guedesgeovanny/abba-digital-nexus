@@ -14,6 +14,10 @@ export interface Message {
   mensagem_is_agent?: boolean
   connection_account?: string | null
   connection_name?: string | null
+  file_url?: string | null
+  file_name?: string | null
+  file_type?: string | null
+  file_size?: number | null
 }
 
 export const useMessages = (conversationId: string | null) => {
@@ -120,7 +124,15 @@ export const useMessages = (conversationId: string | null) => {
     }
   }
 
-  const sendMessage = async ({ content, connectionName }: { content: string, connectionName?: string }) => {
+  const sendMessage = async ({ 
+    content, 
+    connectionName, 
+    file 
+  }: { 
+    content: string, 
+    connectionName?: string,
+    file?: File 
+  }) => {
     if (!conversationId || !user) {
       console.error('Conversa ou usuário não disponível')
       return
@@ -128,7 +140,39 @@ export const useMessages = (conversationId: string | null) => {
 
     try {
       setIsSending(true)
-      console.log('Enviando mensagem:', { content, conversationId })
+      console.log('Enviando mensagem:', { content, conversationId, file: file?.name })
+      
+      let fileData = null
+      
+      // Upload do arquivo se fornecido
+      if (file) {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Date.now()}.${fileExt}`
+        const filePath = `${user.id}/${fileName}`
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('arquivos')
+          .upload(filePath, file)
+        
+        if (uploadError) {
+          console.error('Erro ao fazer upload do arquivo:', uploadError)
+          throw uploadError
+        }
+        
+        // Obter URL público do arquivo
+        const { data: urlData } = supabase.storage
+          .from('arquivos')
+          .getPublicUrl(filePath)
+        
+        fileData = {
+          file_url: urlData.publicUrl,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size
+        }
+        
+        console.log('Arquivo uploaded:', fileData)
+      }
       
       // Buscar dados da conversa para o webhook
       const { data: conversation, error: convError } = await supabase
@@ -149,7 +193,8 @@ export const useMessages = (conversationId: string | null) => {
         nome_contato: 'Você',
         data_hora: new Date().toISOString(),
         connection_name: connectionName || null,
-        connection_account: conversation?.account || null
+        connection_account: conversation?.account || null,
+        ...fileData
       }
       
       // Adicionar mensagem_is_agent se a coluna existir

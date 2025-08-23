@@ -4,15 +4,15 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, User, Trash2, Star, Edit2, Check, X } from "lucide-react"
+import { Send, User, Trash2, Star, Edit2, Check, X, Paperclip } from "lucide-react"
 import { Conversation } from "@/hooks/useConversations"
 import { useMessages } from "@/hooks/useMessages"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import { useUpdateContactName } from "@/hooks/useUpdateContactName"
 import { MediaMessage } from "@/components/MediaMessage"
-import { detectFileInMessage } from "@/utils/fileDetection"
+import { AttachmentMessage } from "@/components/AttachmentMessage"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,11 +41,11 @@ interface ChatAreaProps {
 
 export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStatus }: ChatAreaProps) => {
   const [newMessage, setNewMessage] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUpdatingAgentStatus, setIsUpdatingAgentStatus] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(conversation.contact_name)
   const { messages, isLoading, sendMessage, isSending, clearMessages, isClearing } = useMessages(conversation.id)
-  const { toast } = useToast()
   const updateContactName = useUpdateContactName()
   const { user, userProfile } = useAuth()
   const { connectionInfo } = useConnectionInfo(conversation.account)
@@ -58,6 +58,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const inputBarRef = useRef<HTMLFormElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [connections, setConnections] = useState<any[]>([])
   const [selectedConnectionName, setSelectedConnectionName] = useState<string | undefined>(undefined)
   const [defaultConnection, setDefaultConnection] = useState<string | undefined>(undefined)
@@ -205,11 +206,19 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!newMessage.trim() || isSending) return
+    if ((!newMessage.trim() && !selectedFile) || isSending) return
     
     try {
-      await sendMessage({ content: newMessage.trim(), connectionName: selectedConnectionName })
+      await sendMessage({ 
+        content: newMessage.trim() || (selectedFile ? `📎 ${selectedFile.name}` : ''), 
+        connectionName: selectedConnectionName,
+        file: selectedFile || undefined
+      })
       setNewMessage("")
+      setSelectedFile(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
       
       // Manter o foco no input após enviar mensagem - usar setTimeout para garantir que seja aplicado após a limpeza
       setTimeout(() => {
@@ -219,11 +228,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       }, 10)
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
-      toast({
-        title: "Erro",
-        description: "Erro ao enviar mensagem. Tente novamente.",
-        variant: "destructive"
-      })
+      toast.error("Erro ao enviar mensagem. Tente novamente.")
     }
   }
 
@@ -231,17 +236,10 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     try {
       await clearMessages()
       
-      toast({
-        title: "Mensagens apagadas",
-        description: "Todas as mensagens desta conversa foram apagadas.",
-      })
+      toast.success("Todas as mensagens desta conversa foram apagadas.")
     } catch (error) {
       console.error('Erro ao apagar mensagens:', error)
-      toast({
-        title: "Erro",
-        description: "Erro ao apagar mensagens. Tente novamente.",
-        variant: "destructive"
-      })
+      toast.error("Erro ao apagar mensagens. Tente novamente.")
     }
   }
 
@@ -311,17 +309,10 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     try {
       await onUpdateAgentStatus(conversation.id, newStatus)
       
-      toast({
-        title: "Status atualizado",
-        description: `Agente de IA ${newStatus === 'Ativo' ? 'ativado' : 'desativado'} com sucesso.`,
-      })
+      toast.success(`Agente de IA ${newStatus === 'Ativo' ? 'ativado' : 'desativado'} com sucesso.`)
     } catch (error) {
       console.error('Erro ao atualizar status do agente:', error)
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar status do agente. Tente novamente.",
-        variant: "destructive"
-      })
+      toast.error("Erro ao atualizar status do agente. Tente novamente.")
     } finally {
       setIsUpdatingAgentStatus(false)
     }
@@ -334,10 +325,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       // Admin usa localStorage
       localStorage.setItem('defaultConnection', selectedConnectionName)
       setDefaultConnection(selectedConnectionName)
-      toast({
-        title: "Conexão padrão definida",
-        description: `"${selectedConnectionName}" foi definida como conexão padrão.`,
-      })
+      toast.success(`"${selectedConnectionName}" foi definida como conexão padrão.`)
     } else {
       // Não-admin adiciona aos favoritos
       toggleFavoriteConnection(selectedConnectionName)
@@ -351,10 +339,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       // Admin remove do localStorage
       localStorage.removeItem('defaultConnection')
       setDefaultConnection(undefined)
-      toast({
-        title: "Conexão padrão removida",
-        description: "Nenhuma conexão está mais definida como padrão.",
-      })
+      toast.success("Nenhuma conexão está mais definida como padrão.")
     } else {
       // Não-admin remove dos favoritos
       toggleFavoriteConnection(selectedConnectionName)
@@ -373,11 +358,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
 
   const handleSaveName = async () => {
     if (!editedName.trim()) {
-      toast({
-        title: "Erro",
-        description: "Nome não pode estar vazio",
-        variant: "destructive"
-      })
+      toast.error("Nome não pode estar vazio")
       return
     }
 
@@ -410,6 +391,25 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
       handleSaveName()
     } else if (e.key === 'Escape') {
       handleCancelEdit()
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Verificar tamanho do arquivo (máximo 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Arquivo muito grande. Máximo 10MB permitido.')
+        return
+      }
+      setSelectedFile(file)
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -591,20 +591,22 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                       <span>Usuário: {message.direcao === 'sent' ? 'Você' : (message.nome_contato || conversation.contact_name)}</span>
                     </div>
                   </div>
-                  {(() => {
-                    const fileInfo = detectFileInMessage(message.mensagem)
-                    const linkInfo = detectLinksInMessage(message.mensagem)
-                    
-                    // Se tem arquivo, mostrar o componente de mídia
-                    if (fileInfo) {
+                   {(() => {
+                    // Se a mensagem tem anexo
+                    if (message.file_url) {
                       return (
-                        <MediaMessage
-                          fileInfo={fileInfo}
-                          messageText={message.mensagem}
+                        <AttachmentMessage
+                          fileUrl={message.file_url}
+                          fileName={message.file_name || 'Arquivo'}
+                          fileType={message.file_type}
+                          fileSize={message.file_size}
+                          messageText={message.mensagem !== `📎 ${message.file_name}` ? message.mensagem : undefined}
                           isOutgoing={message.direcao === 'sent'}
                         />
                       )
                     }
+                    
+                    const linkInfo = detectLinksInMessage(message.mensagem)
                     
                     // Se tem links, mostrar o componente de links
                     if (linkInfo.length > 0) {
@@ -619,7 +621,7 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                     
                     // Texto simples
                     return <p className="text-sm">{message.mensagem}</p>
-                  })()}
+                   })()}
                   <p className="text-xs opacity-70 mt-1">
                     {formatMessageTime(message.data_hora)}
                   </p>
@@ -706,6 +708,25 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
             )}
           </div>
           <div className="flex w-full gap-2">
+            {/* Botão de anexo */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileSelect}
+              accept="*/*"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSending || conversation.status === 'fechada'}
+              className="px-3"
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            
             <Input
               ref={messageInputRef}
               value={newMessage}
@@ -716,13 +737,28 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                   handleSendMessage(e)
                 }
               }}
-              placeholder="Digite sua mensagem..."
+              placeholder={selectedFile ? `Arquivo: ${selectedFile.name}` : "Digite sua mensagem..."}
               className="flex-1 bg-background border-border text-foreground focus:border-abba-green"
               disabled={isSending || conversation.status === 'fechada'}
             />
+            
+            {/* Mostrar arquivo selecionado */}
+            {selectedFile && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleRemoveFile}
+                className="px-2 text-red-600"
+                title="Remover arquivo"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            
             <Button 
               type="submit" 
-              disabled={!newMessage.trim() || isSending || conversation.status === 'fechada' || !selectedConnectionName}
+              disabled={(!newMessage.trim() && !selectedFile) || isSending || conversation.status === 'fechada' || !selectedConnectionName}
               className="bg-abba-green text-abba-black hover:bg-abba-green/90"
             >
               <Send className="h-4 w-4" />

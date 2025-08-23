@@ -463,6 +463,10 @@ export type Database = {
           created_at: string
           data_hora: string | null
           direcao: string
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
           mensagem: string
           mensagem_is_agent: boolean | null
           "mensagem-type": Json | null
@@ -477,6 +481,10 @@ export type Database = {
           created_at?: string
           data_hora?: string | null
           direcao: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           mensagem: string
           mensagem_is_agent?: boolean | null
           "mensagem-type"?: Json | null
@@ -491,6 +499,10 @@ export type Database = {
           created_at?: string
           data_hora?: string | null
           direcao?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           mensagem?: string
           mensagem_is_agent?: boolean | null
           "mensagem-type"?: Json | null
