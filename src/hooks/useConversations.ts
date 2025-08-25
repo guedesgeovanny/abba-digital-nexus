@@ -42,16 +42,20 @@ export const useConversations = () => {
     contact_username?: string
     contact_avatar?: string
     channel?: 'whatsapp' | 'instagram' | 'messenger'
+    responsible_user_id?: string // ID do usuário responsável (assigned_to ou user_id da conversa)
   }) => {
     try {
-      // Verificar se já existe um contato com o mesmo nome ou telefone
+      // Usar o usuário responsável da conversa se fornecido, senão usar o usuário atual
+      const responsibleUserId = conversationData.responsible_user_id || user?.id
+
+      // Verificar se já existe um contato com o mesmo nome ou telefone para o usuário responsável
       let existingContact = null
       
       if (conversationData.contact_phone) {
         const { data } = await supabase
           .from('contacts')
           .select('*')
-          .eq('user_id', user?.id)
+          .eq('user_id', responsibleUserId)
           .eq('phone', conversationData.contact_phone)
           .maybeSingle()
         existingContact = data
@@ -61,7 +65,7 @@ export const useConversations = () => {
         const { data } = await supabase
           .from('contacts')
           .select('*')
-          .eq('user_id', user?.id)
+          .eq('user_id', responsibleUserId)
           .ilike('name', conversationData.contact_name)
           .maybeSingle()
         existingContact = data
@@ -85,11 +89,11 @@ export const useConversations = () => {
         if (error) throw error
         return updatedContact
       } else {
-        // Criar novo contato
+        // Criar novo contato com o usuário responsável
         const { data: newContact, error } = await supabase
           .from('contacts')
           .insert({
-            user_id: user?.id,
+            user_id: responsibleUserId,
             name: conversationData.contact_name,
             phone: conversationData.contact_phone,
             email: null,
@@ -137,12 +141,14 @@ export const useConversations = () => {
             
             // Sincronizar contato para conversas recebidas via realtime
             if (newConversation.contact_name && !newConversation.contact_id) {
+              const responsibleUserId = newConversation.assigned_to || newConversation.user_id
               const syncedContact = await syncContactFromConversation({
                 contact_name: newConversation.contact_name,
                 contact_phone: newConversation.contact_phone,
                 contact_username: newConversation.contact_username,
                 contact_avatar: newConversation.contact_avatar,
-                channel: newConversation.channel
+                channel: newConversation.channel,
+                responsible_user_id: responsibleUserId
               })
               
               if (syncedContact) {
@@ -306,12 +312,14 @@ export const useConversations = () => {
         await Promise.all(
           conversationsToSync.map(async (conversation) => {
             try {
+              const responsibleUserId = conversation.assigned_to || conversation.user_id
               const syncedContact = await syncContactFromConversation({
                 contact_name: conversation.contact_name,
                 contact_phone: conversation.contact_phone,
                 contact_username: conversation.contact_username,
                 contact_avatar: conversation.contact_avatar,
-                channel: conversation.channel
+                channel: conversation.channel,
+                responsible_user_id: responsibleUserId
               })
               
               if (syncedContact) {
@@ -517,13 +525,14 @@ export const useConversations = () => {
       console.log('Criando nova conversa:', conversationData)
       console.log('User ID:', user?.id)
       
-      // Sincronizar contato primeiro
+      // Sincronizar contato primeiro - usar user_id atual para novas conversas criadas manualmente
       const syncedContact = await syncContactFromConversation({
         contact_name: conversationData.contact_name,
         contact_phone: conversationData.contact_phone,
         contact_username: conversationData.contact_username,
         contact_avatar: conversationData.contact_avatar,
-        channel: conversationData.channel
+        channel: conversationData.channel,
+        responsible_user_id: user?.id // Para novas conversas, usar sempre o usuário atual
       })
       
       const { data, error } = await supabase
