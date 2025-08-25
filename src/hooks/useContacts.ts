@@ -51,15 +51,18 @@ export interface ContactWithTags extends Contact {
 }
 
 export const useContacts = () => {
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
   const queryClient = useQueryClient()
 
   const { data: contacts = [], isLoading, error } = useQuery({
-    queryKey: ['contacts', user?.id],
+    queryKey: ['contacts', user?.id, userProfile?.role],
     queryFn: async () => {
       if (!user?.id) return []
       
-      const { data, error } = await supabase
+      // Admins can see all contacts, others only their own
+      const isAdmin = userProfile?.role === 'admin'
+      
+      let query = supabase
         .from('contacts')
         .select(`
           *,
@@ -73,15 +76,33 @@ export const useContacts = () => {
             )
           )
         `)
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+
+      // Only filter by user_id if not admin
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id)
+      }
+
+      const { data: contactsData, error } = await query
 
       if (error) throw error
 
-      // Transform the data to include tags properly
-      return data.map(contact => ({
+      // Get user info separately if we have contacts
+      if (!contactsData || contactsData.length === 0) {
+        return []
+      }
+
+      const userIds = [...new Set(contactsData.map(contact => contact.user_id))]
+      const { data: usersData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds)
+
+      // Transform the data to include tags and user info properly
+      return contactsData.map(contact => ({
         ...contact,
-        tags: contact.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || []
+        tags: contact.contact_tag_relations?.map(rel => rel.contact_tags).filter(Boolean) || [],
+        user: usersData?.find(user => user.id === contact.user_id)
       })) as ContactWithTags[]
     },
     enabled: !!user?.id,
