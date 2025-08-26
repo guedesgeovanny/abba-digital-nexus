@@ -240,7 +240,7 @@ export const UserDialog = ({ user, onSave, onResetPassword, trigger }: UserDialo
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="bg-card border-border max-w-md z-50">
+      <DialogContent className="bg-card border-border max-w-md sm:max-w-lg w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto z-50">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {isEditing ? 'Editar Usuário' : 'Adicionar Usuário'}
