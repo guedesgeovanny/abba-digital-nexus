@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { LinkMessage } from "@/components/LinkMessage"
 import { detectLinksInMessage } from "@/utils/linkDetection"
+import { detectFileInMessage } from "@/utils/fileDetection"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -601,6 +602,18 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
                           fileType={message.file_type}
                           fileSize={message.file_size}
                           messageText={message.mensagem !== `📎 ${message.file_name}` ? message.mensagem : undefined}
+                          isOutgoing={message.direcao === 'sent'}
+                        />
+                      )
+                    }
+                    
+                    // Detectar arquivo em URL na mensagem
+                    const fileInfo = detectFileInMessage(message.mensagem)
+                    if (fileInfo) {
+                      return (
+                        <MediaMessage
+                          fileInfo={fileInfo}
+                          messageText={message.mensagem}
                           isOutgoing={message.direcao === 'sent'}
                         />
                       )
