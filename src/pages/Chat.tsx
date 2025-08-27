@@ -3,17 +3,19 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, RefreshCw } from "lucide-react"
+import { Search, RefreshCw, Filter } from "lucide-react"
 import { ConversationList } from "@/components/ConversationList"
 import { ChatArea } from "@/components/ChatArea"
 import { AccountFilter } from "@/components/AccountFilter"
 import { UserFilter } from "@/components/UserFilter"
 import { useConversations, Conversation } from "@/hooks/useConversations"
+import { useConnectedInstances } from "@/hooks/useConnectedInstances"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useLocation } from "react-router-dom"
 import { useEffect } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
 
 const Chat = () => {
   const location = useLocation()
@@ -23,7 +25,9 @@ const Chat = () => {
   const [selectedUser, setSelectedUser] = useState("all")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [isCreatingSample, setIsCreatingSample] = useState(false)
+  const [hideInternalConversations, setHideInternalConversations] = useState(true)
   const { conversations, isLoading, deleteConversation, updateConversationStatus, updateAgentStatus, assignConversation, markConversationAsRead, isDeleting, refetch } = useConversations()
+  const { isConnectedInstanceNumber } = useConnectedInstances()
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -47,11 +51,15 @@ const Chat = () => {
     // Filtrar por usuário
     const matchesUser = selectedUser === "all" || conversation.user_id === selectedUser || conversation.assigned_to === selectedUser
     
-    if (activeTab === "geral") return matchesSearch && matchesAccount && matchesUser
-    if (activeTab === "aberto") return matchesSearch && matchesAccount && matchesUser && conversation.status === "aberta"
-    if (activeTab === "fechado") return matchesSearch && matchesAccount && matchesUser && conversation.status === "fechada"
+    // Filtrar conversas internas (entre instâncias conectadas)
+    const isInternalConversation = isConnectedInstanceNumber(conversation.contact_phone)
+    const passesInternalFilter = !hideInternalConversations || !isInternalConversation
     
-    return matchesSearch && matchesAccount && matchesUser
+    if (activeTab === "geral") return matchesSearch && matchesAccount && matchesUser && passesInternalFilter
+    if (activeTab === "aberto") return matchesSearch && matchesAccount && matchesUser && conversation.status === "aberta" && passesInternalFilter
+    if (activeTab === "fechado") return matchesSearch && matchesAccount && matchesUser && conversation.status === "fechada" && passesInternalFilter
+    
+    return matchesSearch && matchesAccount && matchesUser && passesInternalFilter
   })
 
   const handleSelectConversation = (conversation: Conversation) => {
@@ -224,6 +232,21 @@ const Chat = () => {
                 selectedUser={selectedUser}
                 onUserChange={setSelectedUser}
               />
+            </div>
+
+            {/* Filtro de conversas internas */}
+            <div className="mb-4 flex items-center space-x-2">
+              <Checkbox
+                id="hide-internal"
+                checked={hideInternalConversations}
+                onCheckedChange={(checked) => setHideInternalConversations(checked === true)}
+              />
+              <label
+                htmlFor="hide-internal"
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Ocultar conversas entre instâncias
+              </label>
             </div>
 
             {/* Tabs */}
