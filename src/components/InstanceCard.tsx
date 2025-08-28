@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Trash, Power, Wifi, MoreVertical, Smartphone, Clock } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -33,6 +34,7 @@ interface InstanceCardProps {
   id: string
   name: string
   status: 'connected' | 'disconnected' | 'connecting'
+  active?: boolean
   profileName?: string
   contact?: string
   profilePictureUrl?: string
@@ -45,12 +47,14 @@ interface InstanceCardProps {
   onStatusChange: (id: string, newStatus: 'connected' | 'disconnected' | 'connecting', profileData?: any) => void
   onDelete: (id: string) => void
   onRefresh?: () => void
+  onToggleActive?: (id: string, active: boolean) => void
 }
 
 export function InstanceCard({
   id,
   name,
   status,
+  active = true,
   profileName,
   contact,
   profilePictureUrl,
@@ -59,7 +63,8 @@ export function InstanceCard({
   assignedUser,
   onStatusChange,
   onDelete,
-  onRefresh
+  onRefresh,
+  onToggleActive
 }: InstanceCardProps) {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -361,6 +366,15 @@ export function InstanceCard({
               <span className="font-medium text-foreground">
                 {assignedUser ? (assignedUser.full_name || assignedUser.email) : 'Não atribuído'}
               </span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span>Conexão ativa:</span>
+              <Switch
+                checked={active}
+                onCheckedChange={(checked) => onToggleActive?.(id, checked)}
+                disabled={!onToggleActive}
+              />
             </div>
           </div>
           

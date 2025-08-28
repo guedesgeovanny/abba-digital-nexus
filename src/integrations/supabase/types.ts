@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       conexoes: {
         Row: {
+          active: boolean
           assigned_users: Json | null
           channel: string | null
           configuration: Json | null
@@ -34,6 +35,7 @@ export type Database = {
           whatsapp_profile_picture_url: string | null
         }
         Insert: {
+          active?: boolean
           assigned_users?: Json | null
           channel?: string | null
           configuration?: Json | null
@@ -52,6 +54,7 @@ export type Database = {
           whatsapp_profile_picture_url?: string | null
         }
         Update: {
+          active?: boolean
           assigned_users?: Json | null
           channel?: string | null
           configuration?: Json | null
