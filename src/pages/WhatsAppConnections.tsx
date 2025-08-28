@@ -11,6 +11,7 @@ interface Connection {
   id: string
   name: string
   status: 'connected' | 'disconnected' | 'connecting'
+  active?: boolean
   whatsapp_profile_name?: string
   whatsapp_contact?: string
   whatsapp_profile_picture_url?: string
@@ -38,7 +39,7 @@ export default function WhatsAppConnections() {
       const { data, error } = await supabase
         .from('conexoes')
         .select(`
-          id, name, status, whatsapp_profile_name, whatsapp_contact, 
+          id, name, status, active, whatsapp_profile_name, whatsapp_contact, 
           whatsapp_profile_picture_url, whatsapp_connected_at, created_at, user_id,
           assigned_users
         `)
@@ -72,6 +73,7 @@ export default function WhatsAppConnections() {
             status: ['connected', 'disconnected', 'connecting'].includes(item.status) 
               ? item.status as 'connected' | 'disconnected' | 'connecting'
               : 'disconnected',
+            active: item.active ?? true,
             whatsapp_profile_name: item.whatsapp_profile_name,
             whatsapp_contact: item.whatsapp_contact,
             whatsapp_profile_picture_url: item.whatsapp_profile_picture_url,
@@ -423,6 +425,32 @@ export default function WhatsAppConnections() {
     }
   }
 
+  const handleToggleActive = async (id: string, active: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('conexoes')
+        .update({ active })
+        .eq('id', id)
+      
+      if (error) throw error
+      
+      // Atualizar estado local
+      setConnections(prev => prev.map(c => c.id === id ? { ...c, active } : c))
+      
+      toast({
+        title: active ? "Conexão ativada" : "Conexão desativada",
+        description: `A conexão foi ${active ? 'ativada' : 'desativada'} com sucesso.`
+      })
+    } catch (error) {
+      console.error('Error toggling connection active status:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível alterar o status da conexão.",
+        variant: "destructive"
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -493,6 +521,7 @@ export default function WhatsAppConnections() {
               id={connection.id}
               name={connection.name}
               status={connection.status}
+              active={connection.active}
               profileName={connection.whatsapp_profile_name}
               contact={connection.whatsapp_contact}
               profilePictureUrl={connection.whatsapp_profile_picture_url}
@@ -502,6 +531,7 @@ export default function WhatsAppConnections() {
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
               onRefresh={fetchConnections}
+              onToggleActive={handleToggleActive}
             />
           ))}
         </div>
