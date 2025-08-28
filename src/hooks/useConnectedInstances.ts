@@ -20,6 +20,7 @@ export const useConnectedInstances = () => {
           .from('conexoes')
           .select('id, name, whatsapp_contact')
           .eq('status', 'connected')
+          .eq('active', true)
           .not('whatsapp_contact', 'is', null)
         
         if (error) {
