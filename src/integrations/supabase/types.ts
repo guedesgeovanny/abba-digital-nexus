@@ -715,6 +715,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_profile_fast: {
+        Args: { user_id_param: string }
+        Returns: {
+          avatar_url: string
+          email: string
+          full_name: string
+          id: string
+          role: string
+          status: string
+        }[]
+      }
       log_security_event: {
         Args: {
           p_details?: Json

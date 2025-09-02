@@ -34,10 +34,11 @@ export const useUsers = () => {
       if (isAdmin) {
         console.log('Admin buscando todos os usuários da tabela profiles...')
         
-        // Buscar todos os profiles da tabela para admins
+        // Buscar apenas campos necessários para melhor performance
         const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, email, full_name, avatar_url, role, status, created_at, updated_at')
+          .not('email', 'is', null)
           .order('created_at', { ascending: false })
 
         if (error) {
@@ -45,7 +46,7 @@ export const useUsers = () => {
           throw error
         }
 
-        console.log('Profiles encontrados:', profiles)
+        console.log('Profiles encontrados:', profiles?.length || 0)
 
         // Filtrar e mapear usuários válidos
         const validUsers = (profiles || [])
@@ -63,18 +64,25 @@ export const useUsers = () => {
       } else {
         console.log('Usuário comum buscando apenas seu próprio perfil...')
         
+        if (!currentUserProfile?.id) {
+          console.log('Usuário sem perfil válido')
+          setUsers([])
+          return
+        }
+        
         // Para usuários comuns, buscar apenas seu próprio perfil
         const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('*')
-          .eq('id', currentUserProfile?.id)
+          .select('id, email, full_name, avatar_url, role, status, created_at, updated_at')
+          .eq('id', currentUserProfile.id)
+          .limit(1)
 
         if (error) {
           console.error('Erro ao buscar perfil próprio:', error)
           throw error
         }
 
-        console.log('Perfil próprio encontrado:', profiles)
+        console.log('Perfil próprio encontrado:', profiles?.[0]?.email)
 
         // Mapear perfil próprio
         const userProfile = profiles?.[0]
@@ -94,11 +102,17 @@ export const useUsers = () => {
 
     } catch (error) {
       console.error('Erro ao buscar usuários:', error)
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os usuários',
-        variant: 'destructive'
-      })
+      
+      // Não mostrar toast se for um erro de conexão
+      if (error?.message?.includes('timeout') || error?.code === '57014') {
+        console.warn('Timeout ao carregar usuários, tentando novamente em breve...')
+      } else {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar os usuários',
+          variant: 'destructive'
+        })
+      }
       setUsers([])
     } finally {
       setLoading(false)

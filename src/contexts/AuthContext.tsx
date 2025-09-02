@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const isMountedRef = useRef(true)
   const fetchingProfileRef = useRef<string | null>(null)
 
-  // Função para buscar perfil do usuário com proteção contra loops
+  // Função para buscar perfil do usuário com proteção contra loops e timeout
   const fetchUserProfile = async (userId: string) => {
     // Evitar múltiplas chamadas simultâneas para o mesmo usuário
     if (fetchingProfileRef.current === userId || isLoadingProfile) {
@@ -57,15 +57,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoadingProfile(true)
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+      // Usar timeout local como backup
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+      })
+
+      // Tentar a função otimizada primeiro, fallback para query normal
+      let data, error
+      try {
+        const result = await Promise.race([
+          supabase.rpc('get_user_profile_fast', { user_id_param: userId }),
+          timeoutPromise
+        ]) as any
+
+        if (result.data && result.data.length > 0) {
+          data = result.data[0]
+          error = result.error
+        } else {
+          error = new Error('Profile not found')
+        }
+      } catch (rpcError) {
+        console.warn('AuthContext: RPC failed, using fallback query:', rpcError)
+        // Fallback para query simples
+        const result = await Promise.race([
+          supabase
+            .from('profiles')
+            .select('id, email, full_name, avatar_url, role, status')
+            .eq('id', userId)
+            .maybeSingle(),
+          timeoutPromise
+        ]) as any
+        
+        data = result.data
+        error = result.error
+      }
 
       if (!isMountedRef.current) return null
 
-      if (error) {
+      if (error || !data) {
         console.error('AuthContext: Erro ao buscar perfil:', error)
         setUserProfile(null)
         return null
@@ -76,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserProfile(profile)
       return profile
     } catch (error) {
-      console.error('Erro ao buscar perfil:', error)
+      console.error('AuthContext: Erro ao buscar perfil:', error)
       if (isMountedRef.current) {
         setUserProfile(null)
       }
