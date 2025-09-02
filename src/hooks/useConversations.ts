@@ -273,18 +273,22 @@ export const useConversations = () => {
       setIsLoading(true)
       setError(null)
       
-      console.log('Fazendo query no Supabase para conversas...')
+      console.log('Fazendo query otimizada no Supabase para conversas...')
       console.log('Buscando conversas como admin:', isAdmin)
       
-      // Buscar conversas baseado no papel do usuário
+      // Query otimizada: buscar conversas com última mensagem e contadores em uma única query
       let conversationsQuery = supabase
         .from('conversations')
-        .select('*')
-        .order('updated_at', { ascending: false })
+        .select(`
+          *,
+          latest_message:messages!conversa_id(mensagem, data_hora, direcao)
+        `)
+        .order('last_message_at', { ascending: false })
+        .limit(100) // Limitar para evitar timeout
       
-      // Se não for admin, filtrar apenas as conversas do usuário ou atribuídas a ele
+      // Aplicar filtros baseado no papel do usuário (usando nova policy que inclui unassigned)
       if (!isAdmin) {
-        conversationsQuery = conversationsQuery.or(`user_id.eq.${user?.id},assigned_to.eq.${user?.id}`)
+        conversationsQuery = conversationsQuery.or(`user_id.eq.${user?.id},assigned_to.eq.${user?.id},assigned_to.is.null`)
       }
       
       const { data: conversationsData, error: conversationsError } = await conversationsQuery
@@ -294,7 +298,7 @@ export const useConversations = () => {
         throw conversationsError
       }
       
-      console.log('Conversas retornadas:', conversationsData)
+      console.log('Conversas retornadas:', conversationsData?.length || 0)
       
       if (!conversationsData || conversationsData.length === 0) {
         setConversations([])
@@ -339,56 +343,56 @@ export const useConversations = () => {
         )
       }
 
-      // Para cada conversa, buscar a mensagem mais recente e contar não lidas
+      // Processar conversas de forma otimizada
       const conversationsWithMessages = await Promise.all(
         conversationsData.map(async (conversation) => {
           try {
-            // Buscar a mensagem mais recente desta conversa usando os novos nomes das colunas
-            const { data: lastMessage, error: messageError } = await supabase
-              .from('messages')
-              .select('mensagem, data_hora, direcao')
-              .eq('conversa_id', conversation.id)
-              .order('data_hora', { ascending: false })
-              .limit(1)
-              .maybeSingle()
+            // Usar a mensagem mais recente da query principal se disponível
+            const latestMessage = (conversation as any).latest_message?.[0]
 
-            if (messageError) {
-              console.error('Erro ao buscar última mensagem:', messageError)
-            }
-
-            // Contar mensagens não lidas (recebidas após a última leitura do usuário)
+            // Calcular unread count de forma mais eficiente
             let unreadCount = 0
             if (user?.id) {
-              // Verificar quando o usuário leu a conversa pela última vez
-              const { data: readStatus } = await supabase
-                .from('conversation_read_status')
-                .select('last_read_at')
-                .eq('user_id', user.id)
-                .eq('conversation_id', conversation.id)
-                .maybeSingle()
+              try {
+                // Query otimizada para contar mensagens não lidas
+                const { data: readStatus } = await supabase
+                  .from('conversation_read_status')
+                  .select('last_read_at')
+                  .eq('user_id', user.id)
+                  .eq('conversation_id', conversation.id)
+                  .maybeSingle()
 
-              const lastReadAt = readStatus?.last_read_at
-              
-              // Contar mensagens recebidas após a última leitura
-              const countQuery = supabase
-                .from('messages')
-                .select('*', { count: 'exact', head: true })
-                .eq('conversa_id', conversation.id)
-                .eq('direcao', 'received')
-              
-              if (lastReadAt) {
-                countQuery.gt('data_hora', lastReadAt)
+                if (readStatus?.last_read_at) {
+                  // Contar apenas se há timestamp de leitura
+                  const { count } = await supabase
+                    .from('messages')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('conversa_id', conversation.id)
+                    .eq('direcao', 'received')
+                    .gt('data_hora', readStatus.last_read_at)
+                  
+                  unreadCount = count || 0
+                } else {
+                  // Se nunca leu, contar todas as mensagens recebidas
+                  const { count } = await supabase
+                    .from('messages')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('conversa_id', conversation.id)
+                    .eq('direcao', 'received')
+                  
+                  unreadCount = count || 0
+                }
+              } catch (error) {
+                console.error('Erro ao calcular unread count:', error)
+                unreadCount = 0
               }
-              
-              const { count } = await countQuery
-              unreadCount = count || 0
             }
 
             return {
               ...conversation,
               status: (conversation.status === 'fechada' ? 'fechada' : 'aberta') as 'aberta' | 'fechada',
-              last_message: lastMessage?.mensagem || conversation.last_message,
-              last_message_at: lastMessage?.data_hora || conversation.last_message_at,
+              last_message: latestMessage?.mensagem || conversation.last_message,
+              last_message_at: latestMessage?.data_hora || conversation.last_message_at,
               profile: (conversation as any).profile || null,
               account: (conversation as any).account || null,
               have_agent: (conversation as any).have_agent || false,
@@ -397,15 +401,16 @@ export const useConversations = () => {
             }
           } catch (error) {
             console.error('Erro ao processar conversa:', error)
+            // Retornar conversa com valores padrão em caso de erro
             return {
               ...conversation,
               status: (conversation.status === 'fechada' ? 'fechada' : 'aberta') as 'aberta' | 'fechada',
               last_message: conversation.last_message,
               last_message_at: conversation.last_message_at,
-              profile: (conversation as any).profile || null,
-              account: (conversation as any).account || null,
-              have_agent: (conversation as any).have_agent || false,
-              status_agent: (conversation as any).status_agent || null,
+              profile: null,
+              account: null,
+              have_agent: false,
+              status_agent: null,
               unread_count: 0
             }
           }
