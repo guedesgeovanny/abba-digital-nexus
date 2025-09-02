@@ -40,11 +40,17 @@ export const useOptimizedConversations = () => {
 
       console.log('🚀 Fetching conversations with optimized query...')
 
-      // Single optimized query with all necessary data
-      const { data, error: queryError } = await supabase.rpc('get_optimized_conversations', {
-        user_id_param: user.id,
-        is_admin_param: isAdmin
-      })
+      // Simple query for conversations
+      let query = supabase
+        .from('conversations')
+        .select('*')
+        .order('updated_at', { ascending: false })
+
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id)
+      }
+
+      const { data, error: queryError } = await query
 
       if (queryError) {
         console.error('❌ Query error:', queryError)
@@ -57,7 +63,7 @@ export const useOptimizedConversations = () => {
       const transformedConversations = (data || []).map((conv: any) => ({
         ...conv,
         status: conv.status === 'fechada' ? 'fechada' : 'aberta',
-        unread_count: conv.unread_count || 0
+        unread_count: Array.isArray(conv.unread_count) ? conv.unread_count.length : 0
       })) as OptimizedConversation[]
 
       setConversations(transformedConversations)

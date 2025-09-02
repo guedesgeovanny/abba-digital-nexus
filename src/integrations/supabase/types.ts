@@ -694,6 +694,27 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_optimized_conversations: {
+        Args: { is_admin_param?: boolean; user_id_param: string }
+        Returns: {
+          assigned_to: string
+          channel: string
+          contact_avatar: string
+          contact_id: string
+          contact_name: string
+          contact_phone: string
+          contact_username: string
+          created_at: string
+          crm_stage: string
+          id: string
+          last_message: string
+          last_message_at: string
+          status: string
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }[]
+      }
       log_security_event: {
         Args: {
           p_details?: Json
