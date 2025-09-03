@@ -39,8 +39,8 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
     )
   } else {
     return (
-      <Badge className="bg-blue-100 text-blue-800 text-xs px-1 py-0" title="Conversa de outro usuário">
-        Atribuída
+      <Badge className="bg-blue-100 text-blue-800 text-xs px-1 py-0" title="Conversa aguardando atribuição">
+        Aguardando
       </Badge>
     )
   }
