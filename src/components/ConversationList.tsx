@@ -154,9 +154,12 @@ export const ConversationList = ({
 
           <div className="ml-3 flex-1 min-w-0" onClick={() => handleSelectConversation(conversation)}>
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-medium text-foreground truncate">
-                {conversation.contact_name}
-              </h3>
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                <h3 className="text-sm font-medium text-foreground truncate">
+                  {conversation.contact_name}
+                </h3>
+                <ConversationOwnershipIndicator conversation={conversation} />
+              </div>
               <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                 {formatTime(conversation.last_message_at)}
               </span>
@@ -164,7 +167,6 @@ export const ConversationList = ({
             
             <div className="flex items-center space-x-2 mb-1">
               {getAccountBadge(conversation.account)}
-              <ConversationOwnershipIndicator conversation={conversation} />
             </div>
             
             <div className="flex items-center justify-between mt-1">
