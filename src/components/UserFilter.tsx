@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useUsers } from "@/hooks/useUsers"
+import { useOptimizedUsers } from "@/hooks/useOptimizedUsers"
+import { SkeletonUserList, ErrorState } from "@/components/LoadingStates"
 
 interface UserFilterProps {
   selectedUser: string
@@ -7,7 +8,7 @@ interface UserFilterProps {
 }
 
 export const UserFilter = ({ selectedUser, onUserChange }: UserFilterProps) => {
-  const { users, loading } = useUsers()
+  const { users, loading, error, refetch } = useOptimizedUsers()
 
   if (loading) {
     return (
@@ -15,6 +16,18 @@ export const UserFilter = ({ selectedUser, onUserChange }: UserFilterProps) => {
         <Select disabled>
           <SelectTrigger className="bg-background border-border text-foreground">
             <SelectValue placeholder="Carregando..." />
+          </SelectTrigger>
+        </Select>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="w-40">
+        <Select disabled>
+          <SelectTrigger className="bg-background border-border text-foreground border-destructive">
+            <SelectValue placeholder="Erro ao carregar" />
           </SelectTrigger>
         </Select>
       </div>
