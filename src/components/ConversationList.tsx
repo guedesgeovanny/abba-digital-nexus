@@ -143,14 +143,16 @@ export const ConversationList = ({
             ${selectedConversation?.id === conversation.id ? 'bg-muted border-r-2 border-abba-green' : ''}
           `}
         >
-          <div className="relative" onClick={() => handleSelectConversation(conversation)}>
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
-              <AvatarFallback className="bg-muted">
-                <User className="h-6 w-6 text-muted-foreground" />
-              </AvatarFallback>
-            </Avatar>
-          </div>
+          {(conversation.assigned_to || conversation.user_id) && (
+            <div className="relative" onClick={() => handleSelectConversation(conversation)}>
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={conversation.contact_avatar || undefined} alt={conversation.contact_name} />
+                <AvatarFallback className="bg-muted">
+                  <User className="h-6 w-6 text-muted-foreground" />
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
 
           <div className="ml-3 flex-1 min-w-0" onClick={() => handleSelectConversation(conversation)}>
             <div className="flex items-center justify-between mb-1">
