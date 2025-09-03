@@ -17,9 +17,10 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
   const assignedUserId = conversation.assigned_to || conversation.user_id
   const { userProfile: assignedUser } = useUserById(!isOwnConversation ? assignedUserId : null)
 
-  if (!isAdmin) return null
+  // Mostrar avatares apenas para admins, mas status "Aguardando" para todos
+  const showAvatars = isAdmin
 
-  if (isOwnConversation) {
+  if (isOwnConversation && showAvatars) {
     return (
       <Avatar className="h-4 w-4" title="Sua conversa">
         <AvatarImage src={userProfile?.avatar_url || undefined} alt={userProfile?.full_name || 'Usuário'} />
@@ -28,7 +29,7 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
         </AvatarFallback>
       </Avatar>
     )
-  } else if (assignedUser) {
+  } else if (assignedUser && showAvatars) {
     return (
       <Avatar className="h-4 w-4" title={`Atribuída a ${assignedUser.full_name || 'Usuário'}`}>
         <AvatarImage src={assignedUser.avatar_url || undefined} alt={assignedUser.full_name || 'Usuário'} />
@@ -37,11 +38,14 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
         </AvatarFallback>
       </Avatar>
     )
-  } else {
+  } else if (!assignedUserId) {
+    // Mostrar "Aguardando" para todos os usuários quando não há responsável
     return (
       <Badge className="bg-blue-100 text-blue-800 text-xs px-1 py-0" title="Conversa aguardando atribuição">
         Aguardando
       </Badge>
     )
   }
+  
+  return null
 }
