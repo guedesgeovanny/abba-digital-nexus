@@ -19,6 +19,7 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
 
   if (!isAdmin) return null
 
+  // Se for conversa própria, mostrar avatar próprio
   if (isOwnConversation) {
     return (
       <Avatar className="h-4 w-4" title="Sua conversa">
@@ -28,7 +29,10 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
         </AvatarFallback>
       </Avatar>
     )
-  } else if (hasAssignedUser && assignedUser) {
+  }
+  
+  // Se há usuário atribuído, mostrar avatar do usuário atribuído
+  if (hasAssignedUser && assignedUser) {
     return (
       <Avatar className="h-4 w-4" title={`Atribuída a ${assignedUser.full_name || 'Usuário'}`}>
         <AvatarImage src={assignedUser.avatar_url || undefined} alt={assignedUser.full_name || 'Usuário'} />
@@ -37,8 +41,8 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
         </AvatarFallback>
       </Avatar>
     )
-  } else {
-    // Não mostrar indicador para conversas sem responsável
-    return null
   }
+  
+  // Se não há responsável atribuído, não mostrar nada
+  return null
 }
