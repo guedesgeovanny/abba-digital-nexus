@@ -14,12 +14,11 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
   
   // Buscar dados do usuário atribuído se não for a conversa do próprio usuário
   const isOwnConversation = conversation.user_id === user?.id
-  const hasAssignedUser = conversation.assigned_to !== null && conversation.assigned_to !== undefined
-  const { userProfile: assignedUser } = useUserById(conversation.assigned_to || null)
+  const assignedUserId = conversation.assigned_to || conversation.user_id
+  const { userProfile: assignedUser } = useUserById(!isOwnConversation ? assignedUserId : null)
 
   if (!isAdmin) return null
 
-  // Se for conversa própria, mostrar avatar próprio
   if (isOwnConversation) {
     return (
       <Avatar className="h-4 w-4" title="Sua conversa">
@@ -29,10 +28,7 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
         </AvatarFallback>
       </Avatar>
     )
-  }
-  
-  // Se há usuário atribuído, mostrar avatar do usuário atribuído
-  if (hasAssignedUser && assignedUser) {
+  } else if (assignedUser) {
     return (
       <Avatar className="h-4 w-4" title={`Atribuída a ${assignedUser.full_name || 'Usuário'}`}>
         <AvatarImage src={assignedUser.avatar_url || undefined} alt={assignedUser.full_name || 'Usuário'} />
@@ -41,8 +37,11 @@ export const ConversationOwnershipIndicator = ({ conversation }: ConversationOwn
         </AvatarFallback>
       </Avatar>
     )
+  } else {
+    return (
+      <Badge className="bg-blue-100 text-blue-800 text-xs px-1 py-0" title="Conversa de outro usuário">
+        Atribuída
+      </Badge>
+    )
   }
-  
-  // Se não há responsável atribuído, não mostrar nada
-  return null
 }
