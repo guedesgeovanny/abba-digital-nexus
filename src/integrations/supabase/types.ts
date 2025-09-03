@@ -682,6 +682,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_old_data: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_sample_conversations: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -689,6 +693,31 @@ export type Database = {
       get_conversation_number: {
         Args: { conversation_uuid: string }
         Returns: number
+      }
+      get_conversations_optimized: {
+        Args: {
+          is_admin_param?: boolean
+          limit_param?: number
+          user_id_param: string
+        }
+        Returns: {
+          assigned_to: string
+          channel: string
+          contact_avatar: string
+          contact_id: string
+          contact_name: string
+          contact_phone: string
+          contact_username: string
+          created_at: string
+          crm_stage: string
+          id: string
+          last_message: string
+          last_message_at: string
+          status: string
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }[]
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
