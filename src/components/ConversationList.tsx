@@ -182,6 +182,24 @@ export const ConversationList = ({
           </div>
 
           <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
+            {/* Botão de Auto-atribuir para usuários não-admin em conversas sem responsável */}
+            {!isAdmin && !conversation.assigned_to && !conversation.user_id && onAssignConversation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-green-500"
+                title="Atribuir para mim"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (user?.id) {
+                    onAssignConversation(conversation.id, user.id)
+                  }
+                }}
+              >
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            )}
+            
             {/* Botão de Atribuir Conversa (apenas para admins) */}
             {isAdmin && onAssignConversation && (
               <AssignConversationDialog
