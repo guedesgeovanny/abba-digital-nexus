@@ -27,7 +27,7 @@ interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void
   onDeleteConversation?: (conversationId: string) => void
   onCloseConversation?: (conversationId: string) => void
-  onAssignConversation?: (conversationId: string, userId: string) => Promise<void>
+  onAssignConversation?: (conversationId: string, userId: string | null) => Promise<void>
   onMarkAsRead?: (conversationId: string) => Promise<void>
   isLoading?: boolean
 }
@@ -197,6 +197,24 @@ export const ConversationList = ({
                 }}
               >
                 <UserPlus className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* Botão de Desatribuir para usuários não-admin em conversas atribuídas para eles */}
+            {!isAdmin && (conversation.assigned_to === user?.id || conversation.user_id === user?.id) && onAssignConversation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-orange-500"
+                title="Remover atribuição"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAssignConversation(conversation.id, null)
+                }}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </Button>
             )}
             

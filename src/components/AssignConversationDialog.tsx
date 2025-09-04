@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 interface AssignConversationDialogProps {
   conversationId: string
   conversationContactName: string
-  onAssign: (conversationId: string, userId: string) => Promise<void>
+  onAssign: (conversationId: string, userId: string | null) => Promise<void>
 }
 
 export const AssignConversationDialog = ({ 
@@ -30,7 +30,7 @@ export const AssignConversationDialog = ({
     if (!selectedUserId) {
       toast({
         title: "Erro",
-        description: "Selecione um usuário para atribuir a conversa",
+        description: "Selecione uma opção para atribuir a conversa",
         variant: "destructive"
       })
       return
@@ -38,13 +38,21 @@ export const AssignConversationDialog = ({
 
     try {
       setIsAssigning(true)
-      await onAssign(conversationId, selectedUserId)
+      const userIdToAssign = selectedUserId === "unassign" ? null : selectedUserId
+      await onAssign(conversationId, userIdToAssign)
       
-      const selectedUser = activeUsers.find(u => u.id === selectedUserId)
-      toast({
-        title: "Sucesso",
-        description: `Conversa com ${conversationContactName} atribuída para ${selectedUser?.full_name || 'usuário selecionado'}`
-      })
+      if (selectedUserId === "unassign") {
+        toast({
+          title: "Sucesso",
+          description: `Conversa com ${conversationContactName} removida de qualquer responsável`
+        })
+      } else {
+        const selectedUser = activeUsers.find(u => u.id === selectedUserId)
+        toast({
+          title: "Sucesso",
+          description: `Conversa com ${conversationContactName} atribuída para ${selectedUser?.full_name || 'usuário selecionado'}`
+        })
+      }
       
       setOpen(false)
       setSelectedUserId("")
@@ -89,17 +97,27 @@ export const AssignConversationDialog = ({
             <SelectContent>
               {loading ? (
                 <SelectItem value="loading" disabled>Carregando usuários...</SelectItem>
-              ) : activeUsers.length === 0 ? (
-                <SelectItem value="empty" disabled>Nenhum usuário ativo disponível</SelectItem>
               ) : (
-                activeUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
+                <>
+                  <SelectItem value="unassign">
                     <div className="flex flex-col">
-                      <span>{user.full_name || user.email}</span>
-                      <span className="text-xs text-muted-foreground">{user.email}</span>
+                      <span className="text-muted-foreground">Sem responsável</span>
+                      <span className="text-xs text-muted-foreground">Deixar conversa sem atribuição</span>
                     </div>
                   </SelectItem>
-                ))
+                  {activeUsers.length === 0 ? (
+                    <SelectItem value="empty" disabled>Nenhum usuário ativo disponível</SelectItem>
+                  ) : (
+                    activeUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex flex-col">
+                          <span>{user.full_name || user.email}</span>
+                          <span className="text-xs text-muted-foreground">{user.email}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </>
               )}
             </SelectContent>
           </Select>
