@@ -249,7 +249,34 @@ export const ChatArea = ({ conversation, onDeleteConversation, onUpdateAgentStat
     
     try {
       const date = new Date(dateString)
-      return formatDistanceToNow(date, { addSuffix: true, locale: ptBR })
+      const today = new Date()
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      
+      // Se é hoje, mostrar apenas a hora
+      if (date.toDateString() === today.toDateString()) {
+        return date.toLocaleTimeString('pt-BR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      }
+      
+      // Se é ontem, mostrar "Ontem" e a hora
+      if (date.toDateString() === yesterday.toDateString()) {
+        return `Ontem ${date.toLocaleTimeString('pt-BR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })}`
+      }
+      
+      // Para datas mais antigas, mostrar data e hora
+      return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     } catch {
       return ''
     }
